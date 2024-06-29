@@ -2,9 +2,9 @@ package book
 
 import (
 	"github.com/google/uuid"
-	bookEntities "<package_name>/internal/entities/book"
-	bookModels "<package_name>/internal/models/book"
-	"<package_name>/internal/repositories/book"
+	bookEntities "github.com/ilfey/hikilist-go/internal/entities/book"
+	bookModels "github.com/ilfey/hikilist-go/internal/models/book"
+	"github.com/ilfey/hikilist-go/internal/repositories/book"
 )
 
 type Service struct {

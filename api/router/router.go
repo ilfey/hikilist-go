@@ -2,7 +2,7 @@ package router
 
 import (
 	"github.com/gorilla/mux"
-	"<package_name>/api/controllers/book"
+	"github.com/ilfey/hikilist-go/api/controllers/book"
 )
 
 type Router struct {

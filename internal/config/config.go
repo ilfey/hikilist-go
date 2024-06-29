@@ -1,6 +1,6 @@
 package config
 
-import "<package_name>/internal/config/database"
+import "github.com/ilfey/hikilist-go/internal/config/database"
 
 // Global config
 type Config struct {

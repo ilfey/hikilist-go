@@ -1,9 +1,9 @@
 package main
 
 import (
-	"<package_name>/internal/app"
-	"<package_name>/internal/config"
-	"<package_name>/server"
+	"github.com/ilfey/hikilist-go/internal/app"
+	"github.com/ilfey/hikilist-go/internal/config"
+	"github.com/ilfey/hikilist-go/server"
 )
 
 func main() {

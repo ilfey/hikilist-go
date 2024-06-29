@@ -2,12 +2,12 @@ package app
 
 import (
 	"go.uber.org/dig"
-	"<package_name>/api/controllers/book"
-	"<package_name>/api/router"
-	"<package_name>/internal/config"
-	bookRepository "<package_name>/internal/repositories/book"
-	bookService "<package_name>/internal/services/book"
-	"<package_name>/server"
+	"github.com/ilfey/hikilist-go/api/controllers/book"
+	"github.com/ilfey/hikilist-go/api/router"
+	"github.com/ilfey/hikilist-go/internal/config"
+	bookRepository "github.com/ilfey/hikilist-go/internal/repositories/book"
+	bookService "github.com/ilfey/hikilist-go/internal/services/book"
+	"github.com/ilfey/hikilist-go/server"
 )
 
 func BuildContainer() *dig.Container {

@@ -1,8 +1,8 @@
 package server
 
 import (
-	"<package_name>/api/router"
-	"<package_name>/internal/config"
+	"github.com/ilfey/hikilist-go/api/router"
+	"github.com/ilfey/hikilist-go/internal/config"
 
 	"github.com/codegangsta/negroni"
 

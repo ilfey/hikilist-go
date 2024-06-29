@@ -3,8 +3,8 @@ package book
 import (
 	"encoding/json"
 	"net/http"
-	bookModels "<package_name>/internal/models/book"
-	"<package_name>/internal/services/book"
+	bookModels "github.com/ilfey/hikilist-go/internal/models/book"
+	"github.com/ilfey/hikilist-go/internal/services/book"
 )
 
 type Controller struct {

@@ -2,7 +2,7 @@ package book
 
 import (
 	"fmt"
-	"<package_name>/internal/entities/book"
+	"github.com/ilfey/hikilist-go/internal/entities/book"
 )
 
 type Repository struct {
