@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/codegangsta/negroni"
 
@@ -16,6 +17,15 @@ type Server struct {
 
 // Конфиг сервера
 type Config struct {
+	// Максимальная продолжительность чтения всего запроса в миллисекундах
+	ReadTimeout time.Duration
+	// Максимальная продолжительность до истечения времени ожидания записи ответа в миллисекундах
+	WriteTimeout time.Duration
+	// Максимальное время ожидания следующего запроса при включенном режиме keep-alive в миллисекундах
+	IdleTimeout time.Duration
+	// Количество времени, отведенное на чтение заголовков запроса в миллисекундах
+	ReadHeaderTimeout time.Duration
+
 	// IP-адрес
 	Host string
 	// Порт
@@ -48,5 +58,15 @@ func (server *Server) Run() error {
 
 	ngClassic.UseHandler(ngRouter)
 
-	return http.ListenAndServe(server.config.Address(), ngClassic)
+	srv := &http.Server{
+		ReadTimeout:       server.config.ReadTimeout * time.Millisecond,
+		WriteTimeout:      server.config.WriteTimeout * time.Millisecond,
+		IdleTimeout:       server.config.IdleTimeout * time.Millisecond,
+		ReadHeaderTimeout: server.config.ReadHeaderTimeout * time.Millisecond,
+
+		Addr:    server.config.Address(),
+		Handler: ngClassic,
+	}
+
+	return srv.ListenAndServe()
 }

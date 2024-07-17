@@ -4,39 +4,60 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/ilfey/hikilist-go/api/controllers"
+	animeController "github.com/ilfey/hikilist-go/api/controllers/anime"
+	authController "github.com/ilfey/hikilist-go/api/controllers/auth"
+	userController "github.com/ilfey/hikilist-go/api/controllers/user"
+
+	// "github.com/ilfey/hikilist-go/internal/resx"
 	animeService "github.com/ilfey/hikilist-go/services/anime"
 	authService "github.com/ilfey/hikilist-go/services/auth"
 	userService "github.com/ilfey/hikilist-go/services/user"
-	"github.com/ilfey/hikilist-go/internal/utils/resx"
+	// userService "github.com/ilfey/hikilist-go/services/user"
 )
 
 // Роутер
 type Router struct {
-	AnimeService *animeService.Service
-	AuthService  *authService.Service
-	UserService  *userService.Service
+	AnimeService animeService.Service
+	AuthService  authService.Service
+	UserService  userService.Service
 }
 
 // Привязка роутера
 func (r *Router) Bind() http.Handler {
 	router := mux.NewRouter()
 
-	router.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)
-	router.MethodNotAllowedHandler = http.HandlerFunc(r.NotFoundHandler)
+	// router.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)
+	// router.MethodNotAllowedHandler = http.HandlerFunc(r.NotFoundHandler)
 
 	// router.Use(AuthorizationMiddleware(r.jwt))
 
-	router = controllers.NewAnimeController(r.AnimeService).Bind(router)
-	router = controllers.NewAuthController(r.AuthService, r.UserService).Bind(router)
-	router = controllers.NewUserController(r.AuthService, r.UserService).Bind(router)
+	router = animeController.NewController(
+		&animeController.Dependencies{
+			Auth:  r.AuthService,
+			Anime: r.AnimeService,
+		},
+	).Bind(router)
+
+	router = authController.NewController(
+		&authController.Dependencies{
+			Auth: r.AuthService,
+			User: r.UserService,
+		},
+	).Bind(router)
+
+	router = userController.NewController(
+		&userController.Dependencies{
+			Auth: r.AuthService,
+			User: r.UserService,
+		},
+	).Bind(router)
 
 	return router
 }
 
-func (*Router) NotFoundHandler(w http.ResponseWriter, r *http.Request) {
-	resx.ResponseNotFound.JSON(w)
-}
+// func (*Router) NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+// 	resx.ResponseNotFound.JSON(w)
+// }
 
 // func AuthorizationMiddleware(j *jwt.JWT) func(http.Handler) http.Handler {
 // 	return func(next http.Handler) http.Handler {

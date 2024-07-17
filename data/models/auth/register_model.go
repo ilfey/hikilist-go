@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/ilfey/validator"
+	"github.com/ilfey/hikilist-go/internal/validator"
 )
 
 // Модель регистрации
@@ -23,24 +23,18 @@ func RegisterModelFromRequest(request *http.Request) *RegisterModel {
 }
 
 // Валидация модели
-func (m RegisterModel) Validate() ([]byte, bool) {
-	e := validator.ValidateStruct(
+func (m RegisterModel) Validate() validator.ValidateError {
+	return validator.Validate(
 		m,
 		map[string][]validator.Option{
 			"Username": {
-				validator.LenLessThan(32),
-				validator.LenGreaterThan(3),
+				validator.LenLessThat(32),
+				validator.LenGreaterThat(3),
 			},
 			"Password": {
-				validator.LenLessThan(32),
-				validator.LenGreaterThan(5),
+				validator.LenLessThat(32),
+				validator.LenGreaterThat(5),
 			},
 		},
 	)
-
-	if e.Success() {
-		return nil, true
-	}
-
-	return e.JSON(), false
 }

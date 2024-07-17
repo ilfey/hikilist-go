@@ -1,13 +1,20 @@
 package entities
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type User struct {
 	gorm.Model
 
-	Tokens   []*Token
+	// Имя пользователя
 	Username string `gorm:"unique;not null"`
+	// Хешированный пароль
 	Password string
+	// Последняя активность пользователя
+	LastOnline *time.Time
 }
 
 func (User) TableName() string {

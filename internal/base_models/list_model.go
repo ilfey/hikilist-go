@@ -3,8 +3,7 @@ package baseModels
 import (
 	"encoding/json"
 
-	"github.com/ilfey/hikilist-go/internal/utils/errorsx"
-	"github.com/ilfey/hikilist-go/internal/utils/resx"
+	"github.com/ilfey/hikilist-go/internal/errorsx"
 )
 
 type ListModel[T any] struct {
@@ -13,10 +12,6 @@ type ListModel[T any] struct {
 	Count int64 `json:"count"`
 }
 
-func (m *ListModel[T]) JSON() []byte {
+func (m *ListModel[T]) ToJSON() []byte {
 	return errorsx.Must(json.Marshal(m))
-}
-
-func (m *ListModel[T]) Response() *resx.Response {
-	return resx.NewResponse(200, m.JSON())
 }

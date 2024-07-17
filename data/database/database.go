@@ -2,7 +2,7 @@ package database
 
 import (
 	databaseConfig "github.com/ilfey/hikilist-go/config/database"
-	"github.com/ilfey/hikilist-go/internal/utils/errorsx"
+	"github.com/ilfey/hikilist-go/internal/errorsx"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
