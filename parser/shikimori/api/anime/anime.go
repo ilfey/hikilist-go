@@ -3,13 +3,14 @@ package anime
 import (
 	"fmt"
 
+	animeModels "github.com/ilfey/hikilist-go/data/models/anime"
 	"github.com/ilfey/hikilist-go/internal/async"
 	requestbuilder "github.com/ilfey/hikilist-go/internal/request_builder"
 )
 
 type IAnimeAPI interface {
-	GetList(opts ...ListOption) *async.Promise[[]*ListItemModel]
-	GetByID(id uint64) *async.Promise[*AnimeDetailModel]
+	GetList(opts ...ListOption) *async.Promise[[]*animeModels.ShikiListItemModel]
+	GetByID(id uint64) *async.Promise[*animeModels.ShikiDetailModel]
 }
 
 type AnimeAPI struct {
@@ -24,7 +25,7 @@ func NewAnimeAPI(builder *requestbuilder.RequestBuilder) IAnimeAPI {
 }
 
 // https://shikimori.one/api/doc/1.0/animes/index
-func (a *AnimeAPI) GetList(opts ...ListOption) *async.Promise[[]*ListItemModel] {
+func (a *AnimeAPI) GetList(opts ...ListOption) *async.Promise[[]*animeModels.ShikiListItemModel] {
 	options := &ListOptions{
 		Page:     1,
 		Limit:    50,
@@ -38,7 +39,7 @@ func (a *AnimeAPI) GetList(opts ...ListOption) *async.Promise[[]*ListItemModel] 
 		opt(options)
 	}
 
-	return async.New(func() ([]*ListItemModel, error) {
+	return async.New(func() ([]*animeModels.ShikiListItemModel, error) {
 		// Get list
 		res, err := a.builder.
 			Get("/").
@@ -50,7 +51,7 @@ func (a *AnimeAPI) GetList(opts ...ListOption) *async.Promise[[]*ListItemModel] 
 		}
 
 		// Parse response
-		var data []*ListItemModel
+		var data []*animeModels.ShikiListItemModel
 
 		res.JSON(&data)
 
@@ -59,8 +60,8 @@ func (a *AnimeAPI) GetList(opts ...ListOption) *async.Promise[[]*ListItemModel] 
 }
 
 // https://shikimori.one/api/doc/1.0/animes/show
-func (a *AnimeAPI) GetByID(id uint64) *async.Promise[*AnimeDetailModel] {
-	return async.New(func() (*AnimeDetailModel, error) {
+func (a *AnimeAPI) GetByID(id uint64) *async.Promise[*animeModels.ShikiDetailModel] {
+	return async.New(func() (*animeModels.ShikiDetailModel, error) {
 		res, err := a.builder.
 			Get(fmt.Sprintf("/%d", id)).
 			Async().
@@ -69,7 +70,7 @@ func (a *AnimeAPI) GetByID(id uint64) *async.Promise[*AnimeDetailModel] {
 			return nil, err
 		}
 
-		var data AnimeDetailModel
+		var data animeModels.ShikiDetailModel
 
 		res.JSON(&data)
 

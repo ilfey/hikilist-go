@@ -38,11 +38,6 @@ func DetailModelFromEntity(entity *entities.User) *DetailModel {
 	}
 }
 
-// Преобразовать в json
-func (m *DetailModel) ToJSON() []byte {
-	return m.DetailModel.ToJSON(m)
-}
-
 func (m *DetailModel) ToEntity() *entities.User {
 	return &entities.User{
 		Model: gorm.Model{

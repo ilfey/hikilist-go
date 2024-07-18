@@ -82,7 +82,7 @@ func LessThat[T int64 | float64](num T) Option {
 	}
 }
 
-/* 
+/*
 GreaterThat checks if the value is greater than `num`.
 
 Works with all numeric types.
@@ -110,7 +110,7 @@ func GreaterThat[T int64 | float64](num T) Option {
 	}
 }
 
-/* 
+/*
 LenLessThat checks if the length of the value is less than `num`.
 
 Works with all collection types.
@@ -136,7 +136,7 @@ func LenLessThat(num int) Option {
 	}
 }
 
-/* 
+/*
 LenGreaterThat checks if the length of the value is greater than `num`.
 
 Works with all collection types.
@@ -158,6 +158,50 @@ func LenGreaterThat(num int) Option {
 
 		default:
 			return "Field \"%s\" has invalid type", false
+		}
+	}
+}
+
+/* 
+InList checks if the value is in the list.
+
+`list` can be a slice or a list of strings, int64 or float64.
+If `list` is wrong type, it will return panic.
+
+Works with string and numeric types.
+
+Pointers are not supported.
+*/
+func InList(list any) Option {
+	return func(v reflect.Value) (string, bool) {
+		switch v.Kind() {
+		case reflect.String:
+			for _, item := range list.([]string) {
+				if item == v.String() {
+					return "", true
+				}
+			}
+
+			return "Field \"%s\" must be in list " + fmt.Sprintf("%v", list), false
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			for _, item := range list.([]int64) {
+				if item == v.Int() {
+					return "", true
+				}
+			}
+
+			return "Field \"%s\" must be in list " + fmt.Sprintf("%v", list), false
+
+		case reflect.Float32, reflect.Float64:
+			for _, item := range list.([]float64) {
+				if item == v.Float() {
+					return "", true
+				}
+			}
+
+			return "Field \"%s\" must be in list " + fmt.Sprintf("%v", list), false
+		default:
+			return "Field \"%s\" must be in list %v", false
 		}
 	}
 }

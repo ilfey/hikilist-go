@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/ilfey/hikilist-go/data/entities"
 	"github.com/ilfey/hikilist-go/internal/validator"
 )
 
@@ -47,4 +48,30 @@ func (model CreateModel) Validate() validator.ValidateError {
 			// },
 		},
 	)
+}
+
+func (m *CreateModel) ToEntity() *entities.Anime {
+	var related []*entities.Anime // Массив связанных аниме (пустые сущности с указанными id)
+
+	if m.Related != nil { // Если в модели указан массив связанных аниме
+		related = make([]*entities.Anime, len(*m.Related))
+
+		for i, item := range *m.Related { // Заполняем массив моделями
+			related[i] = &entities.Anime{}
+			related[i].ID = item
+		}
+	}
+
+	return &entities.Anime{
+		Title:            m.Title,
+		Description:      m.Description,
+		Poster:           m.Poster,
+		Episodes:         m.Episodes,
+		EpisodesReleased: m.EpisodesReleased,
+
+		MalID:   m.MalID,
+		ShikiID: m.ShikiID,
+
+		Related: related,
+	}
 }

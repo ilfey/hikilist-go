@@ -37,39 +37,25 @@ func NewShikimoriService(config *shikiConfig.Config) *Service {
 	}
 }
 
-func (s *Service) ParseAnimes(opts ...func(*anime.ListOptions)) ([]*animeModels.CreateModel, error) {
+func (s *Service) ParseAnimes(opts ...func(*anime.ListOptions)) ([]*animeModels.ShikiDetailModel, error) {
 
-	var models []*animeModels.CreateModel
+	var models []*animeModels.ShikiDetailModel
 
 	var err error
 
 	// Get list
 	s.Animes.GetList(opts...).
-		Then(func(list []*anime.ListItemModel) {
-			models = make([]*animeModels.CreateModel, len(list))
+		Then(func(list []*animeModels.ShikiListItemModel) {
+			models = make([]*animeModels.ShikiDetailModel, len(list))
 
 			for i, item := range list {
-				s.Animes.GetByID(*item.ID).
-					Then(func(anime *anime.AnimeDetailModel) {
-						model := animeModels.CreateModel{
-							Title:            *anime.Russian,
-							Description:      anime.Description,
-							Poster:           anime.Image.Original,
-							Episodes:         anime.Episodes,
-							EpisodesReleased: *anime.EpisodesAired,
-							MalID:            anime.MyanimelistID,
-							ShikiID:          anime.ID,
-						}
+				model, _err := s.Animes.GetByID(*item.ID).Await()
+				if _err != nil {
+					err = _err
+					return
+				}
 
-						if anime.CompareStatus("released") {
-							model.EpisodesReleased = *anime.Episodes
-						}
-
-						models[i] = &model
-					}).
-					Catch(func(_err error) {
-						err = _err
-					})
+				models[i] = model
 			}
 		}).
 		Catch(func(_err error) {

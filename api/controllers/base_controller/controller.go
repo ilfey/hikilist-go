@@ -6,10 +6,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/handler"
 	authService "github.com/ilfey/hikilist-go/services/auth"
+	userActionService "github.com/ilfey/hikilist-go/services/user_action"
 )
 
 type Controller struct {
-	AuthService authService.Service
+	AuthService       authService.Service
+	UserActionService userActionService.Service
 
 	router *mux.Router
 }

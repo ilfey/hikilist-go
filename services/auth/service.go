@@ -61,7 +61,7 @@ type Dependencies struct {
 }
 
 // Конструктор сервиса аутентификации
-func NewService(config *authConfig.Config, deps *Dependencies) Service {
+func New(config *authConfig.Config, deps *Dependencies) Service {
 	return &service{
 		config:       config,
 		Dependencies: deps,
@@ -145,11 +145,11 @@ func (s *service) GenerateTokens(model *userModels.DetailModel) (*authModels.Tok
 	// Сохранение в БД
 	tokenSlice := strings.Split(refreshToken, ".")
 
-	tx := s.Token.Create(&entities.Token{
+	err := s.Token.Create(&entities.Token{
 		Token: tokenSlice[len(tokenSlice)-1],
 	})
-	if tx.Error != nil {
-		return nil, tx.Error
+	if err != nil {
+		return nil, err
 	}
 
 	return &authModels.TokensModel{
@@ -161,12 +161,13 @@ func (s *service) GenerateTokens(model *userModels.DetailModel) (*authModels.Tok
 func (s *service) DeleteToken(token string) error {
 	tokenSlice := strings.Split(token, ".")
 
+	var entity entities.Token
 	// Get token
-	entity, tx := s.Token.Get(map[string]any{
+	err := s.Token.Get(&entity, map[string]any{
 		"Token": tokenSlice[len(tokenSlice)-1],
 	})
-	if tx.Error != nil {
-		return tx.Error
+	if err != nil {
+		return err
 	}
 
 	// Check if token is deleted already
@@ -175,9 +176,7 @@ func (s *service) DeleteToken(token string) error {
 	}
 
 	// Delete token
-	tx = s.Token.Delete(entity)
-
-	return tx.Error
+	return s.Token.Delete(entity)
 }
 
 func (s *service) generateToken(claims *Claims) string {
@@ -211,17 +210,16 @@ func (s *service) ParseToken(token string) (*Claims, error) {
 }
 
 func (s *service) GetUser(claims *Claims) (*userModels.DetailModel, error) {
-	entity, tx := s.User.Get(map[string]any{
+	var model userModels.DetailModel
+
+	err := s.User.Get(&model, map[string]any{
 		"ID": claims.UserID,
 	})
-
-	if tx.Error != nil {
-		return nil, tx.Error
+	if err != nil {
+		return nil, err
 	}
 
-	model := userModels.DetailModelFromEntity(entity)
-
-	return model, nil
+	return &model, nil
 }
 
 func (s *service) UpdateUserOnline(user *userModels.DetailModel) error {
@@ -229,10 +227,5 @@ func (s *service) UpdateUserOnline(user *userModels.DetailModel) error {
 
 	user.LastOnline = &currentTime
 
-	tx := s.User.Update(user.ToEntity())
-	if tx.Error != nil {
-		return tx.Error
-	}
-
-	return nil
+	return s.User.Update(user.ToEntity())
 }

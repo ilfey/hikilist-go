@@ -1,4 +1,4 @@
-package userModels
+package userActionModels
 
 import (
 	baseModels "github.com/ilfey/hikilist-go/internal/base_models"
@@ -7,7 +7,8 @@ import (
 type ListItemModel struct {
 	ID uint `json:"id"`
 
-	Username string `json:"username"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
 
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`

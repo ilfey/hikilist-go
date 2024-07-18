@@ -7,7 +7,6 @@ import (
 	"github.com/ilfey/hikilist-go/internal/errorsx"
 	userRepository "github.com/ilfey/hikilist-go/repositories/user"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
 // Сервис пользователей.
@@ -17,22 +16,17 @@ type Service interface {
 	// Create создание пользователя.
 	//
 	// Возвращает модель созданного пользователя и транзакцию.
-	Create(model *authModels.RegisterModel) (*userModels.DetailModel, *gorm.DB)
-	
+	Create(model *authModels.RegisterModel) (*userModels.DetailModel, error)
+
 	// GetByID получение пользователя по ID.
 	//
 	// Возвращает модель пользователя и транзакцию.
-	GetByID(uint64) (*userModels.DetailModel, *gorm.DB)
-
-	// GetByUsername получение пользователя по Username.
-	//
-	// Возвращает модель пользователя и транзакцию.
-	GetByUsername(string) (*userModels.DetailModel, *gorm.DB)
+	Get(...any) (*userModels.DetailModel, error)
 
 	// Find получение списка пользователей.
 	//
 	// Возвращает модель списка пользователей и транзакцию.
-	Find() (*userModels.ListModel, *gorm.DB)
+	Find(...any) (*userModels.ListModel, error)
 }
 
 // Сервис пользователя
@@ -41,14 +35,14 @@ type service struct {
 }
 
 // Конструктор сервиса пользователя
-func NewService(repository userRepository.Repository) Service {
+func New(repository userRepository.Repository) Service {
 	return &service{
 		repository,
 	}
 }
 
 // Создание пользователя
-func (s *service) Create(model *authModels.RegisterModel) (*userModels.DetailModel, *gorm.DB) {
+func (s *service) Create(model *authModels.RegisterModel) (*userModels.DetailModel, error) {
 	hashedPassword := errorsx.Must(
 		bcrypt.GenerateFromPassword(
 			[]byte(model.Password),
@@ -62,40 +56,37 @@ func (s *service) Create(model *authModels.RegisterModel) (*userModels.DetailMod
 		Password: string(hashedPassword),
 	}
 
-	tx := s.repository.Create(userEntity)
+	err := s.repository.Create(userEntity)
+	if err != nil {
+		return nil, err
+	}
 
 	detailModel := userModels.DetailModelFromEntity(userEntity)
 
-	return detailModel, tx
+	return detailModel, nil
 }
 
-// Получение пользователя по ID
-func (s *service) GetByID(id uint64) (*userModels.DetailModel, *gorm.DB) {
-	entity, tx := s.repository.Get(map[string]any{
-		"ID": id,
-	})
+func (s *service) Get(conds ...any) (*userModels.DetailModel, error) {
+	var model userModels.DetailModel
 
-	model := userModels.DetailModelFromEntity(entity)
+	err := s.repository.Get(&model, conds...)
+	if err != nil {
+		return nil, err
+	}
 
-	return model, tx
-}
-
-// Получение пользользователя по Username
-func (s *service) GetByUsername(username string) (*userModels.DetailModel, *gorm.DB) {
-	entity, tx := s.repository.Get(map[string]any{
-		"Username": username,
-	})
-
-	model := userModels.DetailModelFromEntity(entity)
-
-	return model, tx
+	return &model, nil
 }
 
 // Получение всех пользователей
-func (s *service) Find() (*userModels.ListModel, *gorm.DB) {
-	entities, tx := s.repository.Find()
+func (s *service) Find(conds ...any) (*userModels.ListModel, error) {
+	var items []*userModels.ListItemModel
 
-	model := userModels.UserListModelFromEntities(entities, tx.RowsAffected)
+	err := s.repository.Find(&items, conds...)
+	if err != nil {
+		return nil, err
+	}
 
-	return model, tx
+	model := userModels.NewListModel(items)
+
+	return model, nil
 }

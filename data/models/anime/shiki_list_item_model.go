@@ -1,6 +1,6 @@
-package anime
+package animeModels
 
-type ListItemModel struct {
+type ShikiListItemModel struct {
 	ID      *uint64   `json:"id"`
 	Name    *string `json:"name"`
 	Russian *string `json:"russian"`
@@ -21,6 +21,6 @@ type ListItemModel struct {
 }
 
 // Сравнить статус
-func (m *ListItemModel) CompareStatus(status string) bool {
+func (m *ShikiListItemModel) CompareStatus(status string) bool {
 	return *m.Status == status
 }

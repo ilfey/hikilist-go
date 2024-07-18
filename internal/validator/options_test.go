@@ -261,3 +261,20 @@ func TestLenLessThan(t *testing.T) {
 	rValue = reflect.ValueOf(map[string]string{"t": "t", "e": "e"})
 	assert.Equal(t, validate(rValue, LenLessThat(1)), false)
 }
+
+func TestInList(t *testing.T) {
+	rValue := reflect.ValueOf("t")
+	assert.Equal(t, validate(rValue, InList([]string{"t"})), true)
+	assert.Equal(t, validate(rValue, InList([]string{"t", "e"})), true)
+	assert.Equal(t, validate(rValue, InList([]string{"e"})), false)
+
+	rValue = reflect.ValueOf(int64(1))
+	assert.Equal(t, validate(rValue, InList([]int64{1})), true)
+	assert.Equal(t, validate(rValue, InList([]int64{1, 2})), true)
+	assert.Equal(t, validate(rValue, InList([]int64{2})), false)
+
+	rValue = reflect.ValueOf(float64(1.1))
+	assert.Equal(t, validate(rValue, InList([]float64{1.1})), true)
+	assert.Equal(t, validate(rValue, InList([]float64{1.1, 2.2})), true)
+	assert.Equal(t, validate(rValue, InList([]float64{2.2})), false)
+}

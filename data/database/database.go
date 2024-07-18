@@ -11,7 +11,9 @@ func NewDatabase(config *databaseConfig.Config) *gorm.DB {
 	return errorsx.Must(
 		gorm.Open(
 			sqlite.Open(config.DBName),
-			&gorm.Config{},
+			&gorm.Config{
+				TranslateError: true,
+			},
 		),
 	)
 }

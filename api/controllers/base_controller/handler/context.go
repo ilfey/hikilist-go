@@ -51,6 +51,14 @@ func (ctx *Context) Get(key string) *string {
 	return &value
 }
 
+func (ctx *Context) Queries(key string) string {
+	return ctx.Request.URL.Query().Encode()
+}
+
+func (ctx *Context) QueriesMap() map[string][]string {
+	return ctx.Request.URL.Query()
+}
+
 // Set устанавливает заголовок ответа.
 func (ctx *Context) Set(key, value string) {
 	ctx.Writer.Header().Set(key, value)

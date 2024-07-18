@@ -15,13 +15,14 @@ type Repository interface {
 	//
 	// Принимает сущность.
 	// Возвращает транзакцию.
-	Create(*entities.Token) *gorm.DB
+	Create(*entities.Token) error
 
 	// Получение токена.
 	//
 	// Принимает фильтр.
 	// Возвращает сущность и транзакцию.
-	Get(map[string]any) (*entities.Token, *gorm.DB)
+	Get(v any, conds ...any) error
+	// Find(v any, conds ...any) error
 
 	// // Получение токенов.
 	// //
@@ -38,7 +39,7 @@ type Repository interface {
 	//
 	// Принимает сущность.
 	// Возвращает транзакцию.
-	Delete(*entities.Token) *gorm.DB
+	Delete(...any) error
 }
 
 // Имплементация.
@@ -48,49 +49,29 @@ type repository struct {
 }
 
 // Конструктор репозитория пользователя
-func NewRepository(db *gorm.DB) Repository {
+func New(db *gorm.DB) Repository {
 	return &repository{
 		db: db,
 	}
 }
 
 // Создание пользователя
-func (r *repository) Create(entity *entities.Token) *gorm.DB {
-	tx := r.db.Create(entity)
+func (r *repository) Create(entity *entities.Token) error {
+	result := r.db.Create(entity)
 
-	return tx
+	return result.Error
 }
 
 // Получение одного пользователя
-func (r *repository) Get(query map[string]any) (*entities.Token, *gorm.DB) {
-	entity := &entities.Token{}
+func (r *repository) Get(v any, conds ...any) error {
+	result := r.db.Model(&entities.Token{}).First(v, conds...)
 
-	tx := r.db.First(entity, query)
-
-	return entity, tx
-}
-
-// Получение токенов.
-func (r *repository) Find() ([]*entities.Token, *gorm.DB) {
-	var entities []*entities.Token
-	tx := r.db.Find(&entities)
-
-	return entities, tx
-}
-
-// Обновление токена.
-//
-// Принимает сущность. У сущности должен быть ID.
-// Возвращает транзакцию.
-func (r *repository) Update(entity *entities.Token) *gorm.DB {
-	tx := r.db.Save(entity)
-
-	return tx
+	return result.Error
 }
 
 // Удаление токена.
-func (r *repository) Delete(entity *entities.Token) *gorm.DB {
-	tx := r.db.Delete(entity)
+func (r *repository) Delete(conds ...any) error {
+	result := r.db.Delete(&entities.Token{}, conds...)
 
-	return tx
+	return result.Error
 }

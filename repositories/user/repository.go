@@ -15,25 +15,24 @@ type Repository interface {
 	//
 	// Принимает сущность.
 	// Возвращает транзакцию.
-	Create(*entities.User) *gorm.DB
+	Create(*entities.User) error
 
 	// Получение пользователя.
 	//
 	// Принимает фильтр.
 	// Возвращает сущность и транзакцию.
-	Get(map[string]any) (*entities.User, *gorm.DB)
+	Get(v any, conds ...any) error
 
 	// Получение пользователей.
 	//
 	// Возвращает список сущностей и транзакцию.
-	Find() ([]*entities.User, *gorm.DB)
+	Find(v any, conds ...any) error
 
 	// Обновление пользователя.
 	//
 	// Принимает ID и сущность.
 	// Возвращает транзакцию.
-	Update(*entities.User) *gorm.DB
-
+	Update(*entities.User) error
 }
 
 // Имплементация.
@@ -43,42 +42,40 @@ type repository struct {
 }
 
 // Конструктор репозитория пользователя
-func NewRepository(db *gorm.DB) Repository {
+func New(db *gorm.DB) Repository {
 	return &repository{
 		db: db,
 	}
 }
 
 // Создание пользователя
-func (r *repository) Create(entity *entities.User) *gorm.DB {
-	tx := r.db.Create(entity)
+func (r *repository) Create(entity *entities.User) error {
+	result := r.db.Create(entity)
 
-	return tx
+	return result.Error
 }
 
 // Получение одного пользователя
-func (r *repository) Get(query map[string]any) (*entities.User, *gorm.DB) {
-	entity := &entities.User{}
+func (r *repository) Get(v any, conds ...any) error {
 
-	tx := r.db.First(entity, query)
+	result := r.db.Model(&entities.User{}).First(v, conds...)
 
-	return entity, tx
+	return result.Error
 }
 
 // Получение пользователей
-func (r *repository) Find() ([]*entities.User, *gorm.DB) {
-	var entities []*entities.User
-	tx := r.db.Find(&entities)
+func (r *repository) Find(v any, conds ...any) error {
+	result := r.db.Model(&entities.User{}).Find(v, conds...)
 
-	return entities, tx
+	return result.Error
 }
 
 // Обновление пользователя.
 //
 // Принимает сущность. У сущности должен быть ID.
 // Возвращает транзакцию.
-func (r *repository) Update(entity *entities.User) *gorm.DB {
-	tx := r.db.Save(entity)
+func (r *repository) Update(entity *entities.User) error {
+	result := r.db.Save(entity)
 
-	return tx
+	return result.Error
 }

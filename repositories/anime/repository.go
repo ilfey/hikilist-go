@@ -1,6 +1,8 @@
 package animeRepository
 
 import (
+	"database/sql"
+
 	"github.com/ilfey/hikilist-go/data/entities"
 	"gorm.io/gorm"
 )
@@ -11,23 +13,27 @@ import (
 // Следует использовать абстракцию в виде сервиса,
 // реализующего данный функционал через модели.
 type Repository interface {
-	// Create создание аниме. 
+	// Create создание аниме.
 	//
 	// Принимает сущность, возвращает транзакцию.
 	// Возвращает транзакцию.
 	// Также обновляет переданной поля сущности.
-	Create(*entities.Anime) *gorm.DB
+	Create(*entities.Anime) error
 
 	// Get получение аниме.
 	//
 	// Принимает фильтры.
 	// Возвращает сущность и транзакцию.
-	Get(map[string]any) (*entities.Anime, *gorm.DB)
+	Get(v any, conds ...any) error
 
 	// Find получение аниме.
 	//
 	// Возвращает массив сущностей и транзакцию.
-	Find() ([]*entities.Anime, *gorm.DB)
+	Find(v any, conds ...any) error
+	ScopedFind(v any, scope func(*gorm.DB) *gorm.DB, whereArgs ...any) error
+	Count(whereArgs ...any) (int64, error)
+
+	Transaction(func(tx *gorm.DB) error, ...*sql.TxOptions) error
 }
 
 // Имплементация
@@ -40,33 +46,47 @@ type repository struct {
 }
 
 // Конструктор репозитория аниме
-func NewRepository(db *gorm.DB) Repository {
+func New(db *gorm.DB) Repository {
 	return &repository{
 		db: db,
 	}
 }
 
 // Создание аниме
-func (r *repository) Create(entity *entities.Anime) *gorm.DB {
+func (r *repository) Create(entity *entities.Anime) error {
+	result := r.db.Preload("Related").Create(entity).First(entity)
 
-	tx := r.db.Preload("Related").Create(entity).First(entity)
-
-	return tx
+	return result.Error
 }
 
 // Получение одного аниме
-func (r *repository) Get(query map[string]any) (*entities.Anime, *gorm.DB) {
-	entity := &entities.Anime{}
+func (r *repository) Get(v any, conds ...any) error {
+	result := r.db.Model(&entities.Anime{}).Preload("Related").First(v, conds...)
 
-	tx := r.db.Preload("Related").First(entity, query)
-
-	return entity, tx
+	return result.Error
 }
 
 // Получение аниме
-func (r *repository) Find() ([]*entities.Anime, *gorm.DB) {
-	var entities []*entities.Anime
-	tx := r.db.Find(&entities)
+func (r *repository) Find(v any, conds ...any) error {
+	result := r.db.Model(&entities.Anime{}).Find(v, conds...)
 
-	return entities, tx
+	return result.Error
+}
+
+func (r *repository) ScopedFind(v any, scope func(*gorm.DB) *gorm.DB, whereArgs ...any) error {
+	result := r.db.Model(&entities.Anime{}).Scopes(scope).Where(whereArgs).Find(v)
+
+	return result.Error
+}
+
+func (r *repository) Count(whereArgs ...any) (int64, error) {
+	var count int64
+
+	result := r.db.Model(&entities.Anime{}).Where(whereArgs).Count(&count)
+
+	return count, result.Error
+}
+
+func (r *repository) Transaction(fn func(tx *gorm.DB) error, opts ...*sql.TxOptions) error {
+	return r.db.Transaction(fn, opts...)
 }

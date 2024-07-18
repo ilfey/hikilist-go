@@ -61,8 +61,3 @@ func DetailModelFromEntity(entity *entities.Anime) *DetailModel {
 		UpdatedAt: entity.UpdatedAt,
 	}
 }
-
-// Преобразовать в json
-func (m *DetailModel) ToJSON() []byte {
-	return m.DetailModel.ToJSON(m)
-}

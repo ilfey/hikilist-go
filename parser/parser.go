@@ -1,8 +1,11 @@
 package parser
 
 import (
+	"time"
+
 	"github.com/ilfey/hikilist-go/internal/logger"
 	shikiService "github.com/ilfey/hikilist-go/parser/shikimori"
+	"github.com/ilfey/hikilist-go/parser/shikimori/api/anime"
 	animeService "github.com/ilfey/hikilist-go/services/anime"
 )
 
@@ -11,26 +14,43 @@ type Parser struct {
 	Shiki *shikiService.Service
 }
 
-func (p *Parser) Parse() error {
+func (p *Parser) Parse() (uint64, error) {
+	page := uint64(1)
 
-	animes, err := p.Shiki.ParseAnimes()
-	if err != nil {
-		return err
-	}
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
 
-	for _, anime := range animes {
-		logger.Debugf("Saving shikiID: %v", *anime.ShikiID)
+	for {
+		// Wait for ticker
+		<-ticker.C
 
-		_, tx := p.Anime.Create(anime)
-		if tx.Error != nil {
-			logger.Errorf("Failed to save shikiID: %v, error: %v", *anime.ShikiID, tx.Error)
+		animes, err := p.Shiki.ParseAnimes(anime.PageOption(page))
+		if err != nil {
+			return page, err
 		}
+
+		if len(animes) == 0 {
+			break
+		}
+
+		for _, anime := range animes {
+			logger.Debugf("Saving shikiID: %v", *anime.ID)
+
+			err := p.Anime.ResolveShiki(anime)
+			if err != nil {
+				logger.Errorf("Failed to save shikiID: %v, error: %v", *anime.ID, err)
+			}
+		}
+
+		page++
 	}
 
-	return nil
+	return page, nil
 }
 
 // Run parser
 func (parser *Parser) Run() error {
-	return parser.Parse()
+	_, err := parser.Parse()
+
+	return err
 }

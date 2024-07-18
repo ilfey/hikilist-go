@@ -22,8 +22,8 @@ func main() {
 
 	db := database.NewDatabase(config.Database)
 
-	animeService := animeService.NewService(
-		animeRepository.NewRepository(db),
+	animeService := animeService.New(
+		animeRepository.New(db),
 	)
 
 	shikiService := shikiService.NewShikimoriService(

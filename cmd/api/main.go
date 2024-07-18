@@ -7,16 +7,21 @@ import (
 	"github.com/ilfey/hikilist-go/api/router"
 	"github.com/ilfey/hikilist-go/config"
 	"github.com/ilfey/hikilist-go/data/database"
+	"github.com/ilfey/hikilist-go/internal/logger"
 	"github.com/ilfey/hikilist-go/internal/server"
 	animeRepository "github.com/ilfey/hikilist-go/repositories/anime"
 	tokenRepository "github.com/ilfey/hikilist-go/repositories/token"
 	userRepository "github.com/ilfey/hikilist-go/repositories/user"
+	userActionRepository "github.com/ilfey/hikilist-go/repositories/user_action"
 	animeService "github.com/ilfey/hikilist-go/services/anime"
 	authService "github.com/ilfey/hikilist-go/services/auth"
 	userService "github.com/ilfey/hikilist-go/services/user"
+	userActionService "github.com/ilfey/hikilist-go/services/user_action"
 )
 
 func main() {
+	logger.SetLevel(logger.LevelDebug)
+
 	config.LoadEnvironment()
 
 	config := config.NewConfig()
@@ -25,19 +30,21 @@ func main() {
 
 	// Create repositories.
 
-	animeRepository := animeRepository.NewRepository(db)
+	animeRepository := animeRepository.New(db)
 
-	userRepository := userRepository.NewRepository(db)
+	userRepository := userRepository.New(db)
 
-	tokenRepository := tokenRepository.NewRepository(db)
+	userActionRepository := userActionRepository.New(db)
+
+	tokenRepository := tokenRepository.New(db)
 
 	// Create services.
 
-	animeService := animeService.NewService(animeRepository)
+	animeService := animeService.New(animeRepository)
 
-	userService := userService.NewService(userRepository)
+	userService := userService.New(userRepository)
 
-	authService := authService.NewService(
+	authService := authService.New(
 		config.Auth,
 		&authService.Dependencies{
 			User:  userRepository,
@@ -46,11 +53,14 @@ func main() {
 		// authRepository.NewRepository(db),
 	)
 
+	userActionService := userActionService.New(userActionRepository)
+
 	// Create router.
 	router := &router.Router{
 		AnimeService: animeService,
 		AuthService:  authService,
 		UserService:  userService,
+		UserActionService: userActionService,
 	}
 
 	// Create server.
