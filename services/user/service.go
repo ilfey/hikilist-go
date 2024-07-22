@@ -5,7 +5,9 @@ import (
 	authModels "github.com/ilfey/hikilist-go/data/models/auth"
 	userModels "github.com/ilfey/hikilist-go/data/models/user"
 	"github.com/ilfey/hikilist-go/internal/errorsx"
+	"github.com/ilfey/hikilist-go/internal/logger"
 	userRepository "github.com/ilfey/hikilist-go/repositories/user"
+	userActionRepository "github.com/ilfey/hikilist-go/repositories/user_action"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -31,13 +33,18 @@ type Service interface {
 
 // Сервис пользователя
 type service struct {
-	repository userRepository.Repository
+	user       userRepository.Repository
+	userAction userActionRepository.Repository
 }
 
 // Конструктор сервиса пользователя
-func New(repository userRepository.Repository) Service {
+func New(
+	user userRepository.Repository,
+	userAction userActionRepository.Repository,
+) Service {
 	return &service{
-		repository,
+		user:       user,
+		userAction: userAction,
 	}
 }
 
@@ -56,12 +63,19 @@ func (s *service) Create(model *authModels.RegisterModel) (*userModels.DetailMod
 		Password: string(hashedPassword),
 	}
 
-	err := s.repository.Create(userEntity)
+	err := s.user.Create(userEntity)
 	if err != nil {
 		return nil, err
 	}
 
 	detailModel := userModels.DetailModelFromEntity(userEntity)
+
+	err = s.createRegisterAction(detailModel)
+	if err != nil {
+		logger.Errorf("Failed to create register action: %v", err)
+
+		return detailModel, nil
+	}
 
 	return detailModel, nil
 }
@@ -69,7 +83,7 @@ func (s *service) Create(model *authModels.RegisterModel) (*userModels.DetailMod
 func (s *service) Get(conds ...any) (*userModels.DetailModel, error) {
 	var model userModels.DetailModel
 
-	err := s.repository.Get(&model, conds...)
+	err := s.user.Get(&model, conds...)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +95,7 @@ func (s *service) Get(conds ...any) (*userModels.DetailModel, error) {
 func (s *service) Find(conds ...any) (*userModels.ListModel, error) {
 	var items []*userModels.ListItemModel
 
-	err := s.repository.Find(&items, conds...)
+	err := s.user.Find(&items, conds...)
 	if err != nil {
 		return nil, err
 	}
@@ -89,4 +103,12 @@ func (s *service) Find(conds ...any) (*userModels.ListModel, error) {
 	model := userModels.NewListModel(items)
 
 	return model, nil
+}
+
+func (s *service) createRegisterAction(user *userModels.DetailModel) error {
+	return s.userAction.Create(&entities.UserAction{
+		UserID:      user.ID,
+		Title:       "Регистрация аккаунта",
+		Description: "Начало вашего пути на сайте Hikilist",
+	})
 }

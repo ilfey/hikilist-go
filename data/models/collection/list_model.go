@@ -1,22 +1,22 @@
-package userModels
+package collectionModels
 
 import (
-	"time"
-
+	userModels "github.com/ilfey/hikilist-go/data/models/user"
 	baseModels "github.com/ilfey/hikilist-go/internal/base_models"
 )
 
 type ListItemModel struct {
 	ID uint `json:"id"`
 
-	Username string `json:"username"`
+	UserID uint `json:"user_id"`
 
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-}
+	User *userModels.ListItemModel `json:"user" gorm:""`
 
-func (ListItemModel) TableName() string {
-	return "users"
+	Name string `json:"name"`
+
+	Description *string `json:"description"`
+
+	IsPublic bool `json:"is_public"`
 }
 
 type ListModel = baseModels.ListModel[ListItemModel]

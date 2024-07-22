@@ -4,22 +4,24 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+
 	animeController "github.com/ilfey/hikilist-go/api/controllers/anime"
 	authController "github.com/ilfey/hikilist-go/api/controllers/auth"
+	collectionController "github.com/ilfey/hikilist-go/api/controllers/collection"
 	userController "github.com/ilfey/hikilist-go/api/controllers/user"
 
-	// "github.com/ilfey/hikilist-go/internal/resx"
 	animeService "github.com/ilfey/hikilist-go/services/anime"
 	authService "github.com/ilfey/hikilist-go/services/auth"
+	collectionService "github.com/ilfey/hikilist-go/services/collection"
 	userService "github.com/ilfey/hikilist-go/services/user"
 	userActionService "github.com/ilfey/hikilist-go/services/user_action"
-	// userService "github.com/ilfey/hikilist-go/services/user"
 )
 
 // Роутер
 type Router struct {
 	AnimeService      animeService.Service
 	AuthService       authService.Service
+	CollectionService collectionService.Service
 	UserService       userService.Service
 	UserActionService userActionService.Service
 }
@@ -33,28 +35,26 @@ func (r *Router) Bind() http.Handler {
 
 	// router.Use(AuthorizationMiddleware(r.jwt))
 
-	router = animeController.NewController(
-		&animeController.Dependencies{
-			Auth:       r.AuthService,
-			Anime:      r.AnimeService,
-			UserAction: r.UserActionService,
-		},
+	router = animeController.New(
+		r.AuthService,
+		r.AnimeService,
 	).Bind(router)
 
-	router = authController.NewController(
-		&authController.Dependencies{
-			Auth:       r.AuthService,
-			User:       r.UserService,
-			UserAction: r.UserActionService,
-		},
+	router = authController.New(
+		r.AuthService,
+		r.UserService,
 	).Bind(router)
 
-	router = userController.NewController(
-		&userController.Dependencies{
-			Auth:       r.AuthService,
-			User:       r.UserService,
-			UserAction: r.UserActionService,
-		},
+	router = userController.New(
+		r.AuthService,
+		r.CollectionService,
+		r.UserService,
+		r.UserActionService,
+	).Bind(router)
+
+	router = collectionController.New(
+		r.AuthService,
+		r.CollectionService,
 	).Bind(router)
 
 	return router

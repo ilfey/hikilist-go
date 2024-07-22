@@ -148,7 +148,7 @@ func LenGreaterThat(num int) Option {
 	return func(v reflect.Value) (string, bool) {
 		switch v.Kind() {
 		case reflect.String, reflect.Array, reflect.Map, reflect.Slice:
-			return "Field \"%s\" must be less that " + fmt.Sprint(num), v.Len() > num
+			return "Field \"%s\" must be greater that " + fmt.Sprint(num), v.Len() > num
 		case reflect.Ptr:
 			if !v.IsNil() {
 				return LenGreaterThat(num)(v.Elem())

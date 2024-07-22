@@ -4,14 +4,11 @@ import (
 	"time"
 
 	"github.com/ilfey/hikilist-go/data/entities"
-	baseModels "github.com/ilfey/hikilist-go/internal/base_models"
 	"gorm.io/gorm"
 )
 
 // Модель пользователя
 type DetailModel struct {
-	baseModels.DetailModel
-
 	ID uint `json:"id"`
 
 	Username string `json:"username"`

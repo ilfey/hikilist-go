@@ -6,7 +6,7 @@ type Anime struct {
 	gorm.Model
 
 	// Название аниме
-	Title string
+	Title string `gorm:"not null"`
 	
 	// Описание
 	Description *string
@@ -18,7 +18,7 @@ type Anime struct {
 	Episodes *uint
 
 	// Количество вышедших эпизодов
-	EpisodesReleased uint
+	EpisodesReleased uint `gorm:"not null"`
 
 	// ID в MAL
 	//

@@ -15,6 +15,8 @@ type User struct {
 	Password string
 	// Последняя активность пользователя
 	LastOnline *time.Time
+
+	Collections []*Collection
 }
 
 func (User) TableName() string {

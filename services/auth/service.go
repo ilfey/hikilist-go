@@ -51,66 +51,26 @@ type Service interface {
 // Сервис аутентификации
 type service struct {
 	config *authConfig.Config
-	*Dependencies
-}
-
-// Зависимости сервиса
-type Dependencies struct {
-	User  userRepository.Repository
-	Token tokenRepository.Repository
+	user   userRepository.Repository
+	token  tokenRepository.Repository
 }
 
 // Конструктор сервиса аутентификации
-func New(config *authConfig.Config, deps *Dependencies) Service {
+func New(
+	config *authConfig.Config,
+	user userRepository.Repository,
+	token tokenRepository.Repository,
+) Service {
 	return &service{
-		config:       config,
-		Dependencies: deps,
+		config: config,
+		user:   user,
+		token:  token,
 	}
 }
-
-// Create Token
-// func (s *AuthService) Create(model *authModels.TokenCreateModel) (*authModels.TokenDetailModel, *gorm.DB) {
-// 	userEntity := &entities.User{}
-// 	userEntity.ID = model.User.ID
-
-// 	// Create entity
-// 	tokenEntity := &entities.Token{
-// 		Token: model.Token,
-// 		User:  userEntity,
-// 	}
-
-// 	tx := s.repository.Create(tokenEntity)
-
-// 	detailModel := authModels.TokenDetailModelFromEntity(tokenEntity)
-
-// 	return detailModel, tx
-// }
 
 func (s *service) CompareUserPassword(model *userModels.DetailModel, password string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(model.Password), []byte(password)) == nil
 }
-
-// GetByID Token
-// func (s *AuthService) GetByID(id uint64) (*authModels.TokenDetailModel, *gorm.DB) {
-// 	entity, tx := s.repository.Get(map[string]any{
-// 		"ID": id,
-// 	})
-
-// 	model := authModels.TokenDetailModelFromEntity(entity)
-
-// 	return model, tx
-// }
-
-// GetByID Token
-// func (s *AuthService) GetByToken(token string) (*authModels.TokenDetailModel, *gorm.DB) {
-// 	entity, tx := s.repository.Get(map[string]any{
-// 		"Token": token,
-// 	})
-
-// 	model := authModels.TokenDetailModelFromEntity(entity)
-
-// 	return model, tx
-// }
 
 // Данные, хранящиеся в токене
 type Claims struct {
@@ -145,7 +105,7 @@ func (s *service) GenerateTokens(model *userModels.DetailModel) (*authModels.Tok
 	// Сохранение в БД
 	tokenSlice := strings.Split(refreshToken, ".")
 
-	err := s.Token.Create(&entities.Token{
+	err := s.token.Create(&entities.Token{
 		Token: tokenSlice[len(tokenSlice)-1],
 	})
 	if err != nil {
@@ -163,7 +123,7 @@ func (s *service) DeleteToken(token string) error {
 
 	var entity entities.Token
 	// Get token
-	err := s.Token.Get(&entity, map[string]any{
+	err := s.token.Get(&entity, map[string]any{
 		"Token": tokenSlice[len(tokenSlice)-1],
 	})
 	if err != nil {
@@ -176,7 +136,7 @@ func (s *service) DeleteToken(token string) error {
 	}
 
 	// Delete token
-	return s.Token.Delete(entity)
+	return s.token.Delete(entity)
 }
 
 func (s *service) generateToken(claims *Claims) string {
@@ -212,9 +172,7 @@ func (s *service) ParseToken(token string) (*Claims, error) {
 func (s *service) GetUser(claims *Claims) (*userModels.DetailModel, error) {
 	var model userModels.DetailModel
 
-	err := s.User.Get(&model, map[string]any{
-		"ID": claims.UserID,
-	})
+	err := s.user.Get(&model, claims.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -227,5 +185,5 @@ func (s *service) UpdateUserOnline(user *userModels.DetailModel) error {
 
 	user.LastOnline = &currentTime
 
-	return s.User.Update(user.ToEntity())
+	return s.user.Update(user.ToEntity())
 }

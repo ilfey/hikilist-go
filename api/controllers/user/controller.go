@@ -5,39 +5,47 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	baseController "github.com/ilfey/hikilist-go/api/controllers/base_controller"
+	"gorm.io/gorm"
+
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/handler"
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/responses"
-	userActionModels "github.com/ilfey/hikilist-go/data/models/user_action"
 	"github.com/ilfey/hikilist-go/internal/errorsx"
 	"github.com/ilfey/hikilist-go/internal/logger"
+
+	baseController "github.com/ilfey/hikilist-go/api/controllers/base_controller"
+
+	userActionModels "github.com/ilfey/hikilist-go/data/models/user_action"
+
 	authService "github.com/ilfey/hikilist-go/services/auth"
+	collectionService "github.com/ilfey/hikilist-go/services/collection"
 	userService "github.com/ilfey/hikilist-go/services/user"
 	userActionService "github.com/ilfey/hikilist-go/services/user_action"
-	"gorm.io/gorm"
 )
 
 // Контроллер пользователя
 type UserController struct {
 	*baseController.Controller
 
-	*Dependencies
-}
-
-type Dependencies struct {
-	Auth       authService.Service
-	UserAction userActionService.Service
-	User       userService.Service
+	collection collectionService.Service
+	user       userService.Service
+	userAction userActionService.Service
 }
 
 // Конструктор контроллера пользователя
-func NewController(deps *Dependencies) *UserController {
+func New(
+	auth authService.Service,
+	collection collectionService.Service,
+	user userService.Service,
+	userAction userActionService.Service,
+) *UserController {
 	return &UserController{
 		Controller: &baseController.Controller{
-			AuthService:       deps.Auth,
-			UserActionService: deps.UserAction,
+			AuthService: auth,
 		},
-		Dependencies: deps,
+
+		collection: collection,
+		user:       user,
+		userAction: userAction,
 	}
 }
 
@@ -55,7 +63,7 @@ func (c *UserController) Bind(router *mux.Router) *mux.Router {
 
 // Список пользователей
 func (controller *UserController) List(ctx *handler.Context) {
-	model, err := controller.User.Find()
+	model, err := controller.user.Find()
 	if err != nil {
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -71,7 +79,7 @@ func (controller *UserController) Detail(ctx *handler.Context) {
 
 	id := errorsx.Must(strconv.ParseUint(vars["id"], 10, 64))
 
-	model, err := controller.User.Get(id)
+	model, err := controller.user.Get(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logger.Debug("User not found")
@@ -127,7 +135,7 @@ func (c *UserController) Actions(ctx *handler.Context) {
 		return
 	}
 
-	model, err := c.UserAction.Paginate(paginate, "user_id = ?", user.ID)
+	model, err := c.userAction.Paginate(paginate, "user_id = ?", user.ID)
 	if err != nil {
 		logger.Errorf("Failed to get user actions: %v", err)
 

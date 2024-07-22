@@ -8,11 +8,9 @@ import (
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/handler"
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/responses"
 	authModels "github.com/ilfey/hikilist-go/data/models/auth"
-	userActionModels "github.com/ilfey/hikilist-go/data/models/user_action"
 	"github.com/ilfey/hikilist-go/internal/logger"
 	authService "github.com/ilfey/hikilist-go/services/auth"
 	userService "github.com/ilfey/hikilist-go/services/user"
-	userActionService "github.com/ilfey/hikilist-go/services/user_action"
 	"gorm.io/gorm"
 )
 
@@ -20,23 +18,21 @@ import (
 type Controller struct {
 	*baseController.Controller
 
-	*Dependencies
-}
-
-type Dependencies struct {
-	Auth       authService.Service
-	UserAction userActionService.Service
-	User       userService.Service
+	auth authService.Service
+	user userService.Service
 }
 
 // Конструктор контроллера
-func NewController(deps *Dependencies) *Controller {
+func New(
+	auth authService.Service,
+	user userService.Service,
+) *Controller {
 	return &Controller{
 		Controller: &baseController.Controller{
-			AuthService:       deps.Auth,
-			UserActionService: deps.UserAction,
+			AuthService: auth,
 		},
-		Dependencies: deps,
+		auth: auth,
+		user: user,
 	}
 }
 
@@ -67,7 +63,7 @@ func (c *Controller) Register(ctx *handler.Context) {
 		return
 	}
 
-	userModel, err := c.User.Create(req)
+	userModel, err := c.user.Create(req)
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			logger.Debug("User already exists")
@@ -86,16 +82,7 @@ func (c *Controller) Register(ctx *handler.Context) {
 		return
 	}
 
-	_, err = c.UserAction.Create(&userActionModels.CreateModel{
-		UserID:      userModel.ID,
-		Title:       "Регистрация аккаунта",
-		Description: "Начало вашего пути на сайте Hikilist",
-	})
-	if err != nil {
-		logger.Errorf("Failed to create user action: %v", err)
-	}
-
-	tokensModel, err := c.Auth.GenerateTokens(userModel)
+	tokensModel, err := c.auth.GenerateTokens(userModel)
 	if err != nil {
 		logger.Debugf("Failed to generate tokens: %v", err)
 
@@ -124,7 +111,7 @@ func (c *Controller) Login(ctx *handler.Context) {
 		return
 	}
 
-	userModel, err := c.User.Get(map[string]any{
+	userModel, err := c.user.Get(map[string]any{
 		"Username": req.Username,
 	})
 	if err != nil {
@@ -143,13 +130,13 @@ func (c *Controller) Login(ctx *handler.Context) {
 		return
 	}
 
-	if ok := c.Auth.CompareUserPassword(userModel, req.Password); !ok {
+	if ok := c.auth.CompareUserPassword(userModel, req.Password); !ok {
 		ctx.SendJSON(responses.ResponseForbidden())
 
 		return
 	}
 
-	tokensModel, err := c.Auth.GenerateTokens(userModel)
+	tokensModel, err := c.auth.GenerateTokens(userModel)
 	if err != nil {
 		logger.Errorf("Failed to generate tokens: %v", err)
 
@@ -178,7 +165,7 @@ func (c *Controller) Refresh(ctx *handler.Context) {
 		return
 	}
 
-	claims, err := c.Auth.ParseToken(req.Refresh)
+	claims, err := c.auth.ParseToken(req.Refresh)
 	if err != nil {
 		logger.Debugf("Failed to parse token: %v", vErr)
 
@@ -189,7 +176,7 @@ func (c *Controller) Refresh(ctx *handler.Context) {
 		return
 	}
 
-	userModel, err := c.User.Get(claims.UserID)
+	userModel, err := c.user.Get(claims.UserID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logger.Debug("User not found")
@@ -205,7 +192,7 @@ func (c *Controller) Refresh(ctx *handler.Context) {
 	}
 
 	// Delete old token
-	if err = c.Auth.DeleteToken(req.Refresh); err != nil {
+	if err = c.auth.DeleteToken(req.Refresh); err != nil {
 		logger.Errorf("Failed to delete token: %v", err)
 
 		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
@@ -216,7 +203,7 @@ func (c *Controller) Refresh(ctx *handler.Context) {
 	}
 
 	// Generate new tokens
-	tokensModel, err := c.Auth.GenerateTokens(userModel)
+	tokensModel, err := c.auth.GenerateTokens(userModel)
 	if err != nil {
 		logger.Debugf("Failed to generate tokens: %v", err)
 
@@ -244,7 +231,7 @@ func (c *Controller) Logout(ctx *handler.Context) {
 		return
 	}
 
-	_, err := c.Auth.ParseToken(req.Refresh)
+	_, err := c.auth.ParseToken(req.Refresh)
 	if err != nil {
 		logger.Debugf("Failed to parse token: %v", vErr)
 
@@ -256,7 +243,7 @@ func (c *Controller) Logout(ctx *handler.Context) {
 	}
 
 	// Delete old token
-	if err = c.Auth.DeleteToken(req.Refresh); err != nil {
+	if err = c.auth.DeleteToken(req.Refresh); err != nil {
 		logger.Debugf("Failed to delete token: %v", err)
 
 		ctx.SendJSON(responses.ResponseBadRequest(responses.J{

@@ -1,58 +1,69 @@
-package animeController
+package collectionController
 
 import (
 	"errors"
 	"strconv"
 
 	"github.com/gorilla/mux"
-	baseController "github.com/ilfey/hikilist-go/api/controllers/base_controller"
+	"gorm.io/gorm"
+
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/handler"
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/responses"
-	animeModels "github.com/ilfey/hikilist-go/data/models/anime"
 	"github.com/ilfey/hikilist-go/internal/errorsx"
 	"github.com/ilfey/hikilist-go/internal/logger"
-	animeService "github.com/ilfey/hikilist-go/services/anime"
+
+	baseController "github.com/ilfey/hikilist-go/api/controllers/base_controller"
+
+	collectionModels "github.com/ilfey/hikilist-go/data/models/collection"
 	authService "github.com/ilfey/hikilist-go/services/auth"
-	"gorm.io/gorm"
+	collectionService "github.com/ilfey/hikilist-go/services/collection"
 )
 
 // Контроллер аниме
 type Controller struct {
 	*baseController.Controller
 
-	anime animeService.Service
+	collection collectionService.Service
 }
 
 // Конструктор контроллера
 func New(
 	auth authService.Service,
-	anime animeService.Service,
+	collection collectionService.Service,
 ) *Controller {
 	return &Controller{
 		Controller: &baseController.Controller{
 			AuthService: auth,
 		},
-		anime: anime,
+		collection: collection,
 	}
 }
 
-// Привязка контроллера
 func (c *Controller) Bind(router *mux.Router) *mux.Router {
 	c.Controller.Bind(router)
 
-	// c.HandleFunc("/api/animes", c.Create).Methods("POST")
-	c.HandleFunc("/api/animes", c.List).Methods("GET")
-	c.HandleFunc("/api/animes/{id:[0-9]+}", c.Detail).Methods("GET")
+	c.HandleFunc("/api/collections", c.Create).Methods("POST")
+	c.HandleFunc("/api/collections", c.List).Methods("GET")
+	c.HandleFunc("/api/collections/{id:[0-9]+}", c.Detail).Methods("GET")
 
 	return router
 }
 
-func (controller *Controller) Create(ctx *handler.Context) {
-	req := animeModels.CreateModelFromRequest(ctx.Request)
+func (c *Controller) Create(ctx *handler.Context) {
+	user, err := ctx.AuthorizedOnly()
+	if err != nil {
+		logger.Debug("Not authorized")
+
+		ctx.SendJSON(responses.ResponseUnauthorized())
+
+		return
+	}
+
+	req := collectionModels.NewCreateModelFromRequest(ctx.Request)
 
 	vErr := req.Validate()
 	if vErr != nil {
-		logger.Debugf("Failed to validate request: %v", vErr)
+		logger.Debugf("Failed to validate create model: %v", vErr)
 
 		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 			"error": vErr,
@@ -61,21 +72,22 @@ func (controller *Controller) Create(ctx *handler.Context) {
 		return
 	}
 
-	dm, err := controller.anime.Create(req)
+	req.UserID = user.ID
+
+	model, err := c.collection.Create(req)
 	if err != nil {
-		logger.Errorf("Failed to create user: %v", err)
+		logger.Errorf("Failed to create collection: %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
 		return
 	}
 
-	ctx.SendJSON(dm)
+	ctx.SendJSON(model)
 }
 
-// Список аниме
 func (controller *Controller) List(ctx *handler.Context) {
-	paginate := animeModels.NewPaginateFromQuery(ctx.QueriesMap())
+	paginate := collectionModels.NewPaginateFromQuery(ctx.QueriesMap())
 
 	vErr := paginate.Validate()
 	if vErr != nil {
@@ -88,7 +100,7 @@ func (controller *Controller) List(ctx *handler.Context) {
 		return
 	}
 
-	model, err := controller.anime.Paginate(paginate)
+	model, err := controller.collection.Paginate(paginate)
 	if err != nil {
 		logger.Errorf("Failed to get animes: %v", err)
 
@@ -100,13 +112,12 @@ func (controller *Controller) List(ctx *handler.Context) {
 	ctx.SendJSON(model)
 }
 
-// Подробная информация об аниме
 func (controller *Controller) Detail(ctx *handler.Context) {
 	vars := mux.Vars(ctx.Request)
 
 	id := errorsx.Must(strconv.ParseUint(vars["id"], 10, 64))
 
-	model, err := controller.anime.Get(id)
+	model, err := controller.collection.Get(id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logger.Debug("Anime not found")

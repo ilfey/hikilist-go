@@ -10,11 +10,13 @@ import (
 	"github.com/ilfey/hikilist-go/internal/logger"
 	"github.com/ilfey/hikilist-go/internal/server"
 	animeRepository "github.com/ilfey/hikilist-go/repositories/anime"
+	collectionRepository "github.com/ilfey/hikilist-go/repositories/collection"
 	tokenRepository "github.com/ilfey/hikilist-go/repositories/token"
 	userRepository "github.com/ilfey/hikilist-go/repositories/user"
 	userActionRepository "github.com/ilfey/hikilist-go/repositories/user_action"
 	animeService "github.com/ilfey/hikilist-go/services/anime"
 	authService "github.com/ilfey/hikilist-go/services/auth"
+	collectionService "github.com/ilfey/hikilist-go/services/collection"
 	userService "github.com/ilfey/hikilist-go/services/user"
 	userActionService "github.com/ilfey/hikilist-go/services/user_action"
 )
@@ -38,28 +40,33 @@ func main() {
 
 	tokenRepository := tokenRepository.New(db)
 
+	collectionRepository := collectionRepository.New(db)
+
 	// Create services.
 
 	animeService := animeService.New(animeRepository)
 
-	userService := userService.New(userRepository)
+	userService := userService.New(
+		userRepository,
+		userActionRepository,
+	)
 
 	authService := authService.New(
 		config.Auth,
-		&authService.Dependencies{
-			User:  userRepository,
-			Token: tokenRepository,
-		},
-		// authRepository.NewRepository(db),
+		userRepository,
+		tokenRepository,
 	)
+
+	collectionService := collectionService.New(collectionRepository)
 
 	userActionService := userActionService.New(userActionRepository)
 
 	// Create router.
 	router := &router.Router{
-		AnimeService: animeService,
-		AuthService:  authService,
-		UserService:  userService,
+		AnimeService:      animeService,
+		AuthService:       authService,
+		CollectionService: collectionService,
+		UserService:       userService,
 		UserActionService: userActionService,
 	}
 

@@ -7,7 +7,7 @@ type UserAction struct {
 
 	// ID пользователя
 	UserID uint
-	User   *User `gorm:"foreignKey:UserID;not null"`
+	User   *User `gorm:"foreignKey:UserID;not null;constraint:onDelete:CASCADE"`
 
 	Title       string `gorm:"not null"`
 	Description string `gorm:"not null"`

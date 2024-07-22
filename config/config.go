@@ -33,8 +33,8 @@ func NewConfig() *Config {
 			DBName:   getEnv("DB_CONFIG_DBNAME", "hiki.db"),
 		},
 		Server: &server.Config{
-			ReadTimeout:       time.Duration(getEnvAsInt("SERVER_CONFIG_READ_TIMEOUT", 1000)),
-			WriteTimeout:      time.Duration(getEnvAsInt("SERVER_CONFIG_WRITE_TIMEOUT", 1000)),
+			ReadTimeout:       time.Duration(getEnvAsInt("SERVER_CONFIG_READ_TIMEOUT", 10000)),
+			WriteTimeout:      time.Duration(getEnvAsInt("SERVER_CONFIG_WRITE_TIMEOUT", 10000)),
 			IdleTimeout:       time.Duration(getEnvAsInt("SERVER_CONFIG_IDLE_TIMEOUT", 30_000)),
 			ReadHeaderTimeout: time.Duration(getEnvAsInt("SERVER_CONFIG_READ_HEADER_TIMEOUT", 2000)),
 

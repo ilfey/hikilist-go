@@ -4,13 +4,10 @@ import (
 	"time"
 
 	"github.com/ilfey/hikilist-go/data/entities"
-	baseModels "github.com/ilfey/hikilist-go/internal/base_models"
 )
 
 // Модель аниме
 type DetailModel struct {
-	baseModels.DetailModel
-
 	ID uint `json:"id"`
 
 	Title            string  `json:"title"`
