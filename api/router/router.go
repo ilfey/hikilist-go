@@ -54,6 +54,7 @@ func (r *Router) Bind() http.Handler {
 
 	router = collectionController.New(
 		r.AuthService,
+		// r.AnimeService,
 		r.CollectionService,
 	).Bind(router)
 

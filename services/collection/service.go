@@ -1,85 +1,123 @@
 package collectionService
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/ilfey/hikilist-go/data/entities"
 	collectionModels "github.com/ilfey/hikilist-go/data/models/collection"
-	"github.com/ilfey/hikilist-go/internal/logger"
-	collectionRepository "github.com/ilfey/hikilist-go/repositories/collection"
+	"github.com/rotisserie/eris"
+	"gorm.io/gorm"
 )
 
 type Service interface {
-	Create(model *collectionModels.CreateModel) (*collectionModels.DetailModel, error)
-	Get(conds ...any) (*collectionModels.DetailModel, error)
-	Find(conds ...any) ([]*collectionModels.ListItemModel, error)
-	Paginate(p *collectionModels.Paginate, whereArgs ...any) (*collectionModels.ListModel, error)
-	Count(whereArgs ...any) (int64, error)
+	Create(ctx context.Context, cm *collectionModels.CreateModel) (*collectionModels.DetailModel, error)
+	Get(ctx context.Context, conds ...any) (*collectionModels.DetailModel, error)
+	Paginate(ctx context.Context, p *collectionModels.Paginate, whereArgs ...any) (*collectionModels.ListModel, error)
 }
 
 type service struct {
-	repository collectionRepository.Repository
+	db *gorm.DB
 }
 
-func New(repository collectionRepository.Repository) Service {
+func New(db *gorm.DB) Service {
 	return &service{
-		repository: repository,
+		db: db,
 	}
 }
 
-func (s *service) Create(model *collectionModels.CreateModel) (*collectionModels.DetailModel, error) {
-	entity := model.ToEntity()
+func (s *service) Create(ctx context.Context, cm *collectionModels.CreateModel) (*collectionModels.DetailModel, error) {
+	var dm collectionModels.DetailModel
 
-	err := s.repository.Create(entity)
-	if err != nil {
-		return nil, err
-	}
+	err := s.db.WithContext(ctx).
+		Transaction(func(tx *gorm.DB) error {
+			// Create collection
+			entity := cm.ToEntity()
 
-	detailModel := collectionModels.NewDetailModelFromEntity(entity)
+			result := tx.Create(entity)
+			if result.Error != nil {
+				return eris.Wrap(result.Error, "failed create entity")
+			}
 
-	return detailModel, nil
+			// Create userAction
+			result = tx.Create(&entities.UserAction{
+				UserID:      entity.UserID,
+				Title:       "Создание коллекции",
+				Description: fmt.Sprintf("Вы создали коллекцию \"%s\".", entity.Name),
+			})
+			if result.Error != nil {
+				return eris.Wrap(result.Error, "failed create userAction")
+			}
+
+			// Get created detail collection
+			result = tx.Model(&entities.Collection{}).
+				Preload("User", func(tx *gorm.DB) *gorm.DB { // TODO: Test this
+					return tx.Select("*")
+				}).
+				First(&dm, entity.ID)
+			if result.Error != nil {
+				return eris.Wrap(result.Error, "failed get detail model after create collection")
+			}
+
+			return result.Error
+		})
+
+	return &dm, err
 }
 
-func (s *service) Get(conds ...any) (*collectionModels.DetailModel, error) {
-	var model collectionModels.DetailModel
+func (s *service) Get(ctx context.Context, conds ...any) (*collectionModels.DetailModel, error) {
+	var dm collectionModels.DetailModel
 
-	err := s.repository.Get(&model, conds...)
-	if err != nil {
-		return nil, err
+	result := s.db.WithContext(ctx).
+		Model(&entities.Collection{}).
+		Preload("User", func(tx *gorm.DB) *gorm.DB { // TODO: Test this
+			return tx.Select("*")
+		}).
+		Preload("Animes", func(tx *gorm.DB) *gorm.DB { // TODO: Test this
+			return tx.Select("*")
+		}).
+		First(&dm, conds...)
+	if result.Error != nil {
+		return nil, eris.Wrapf(result.Error, "failed get collection with conds: %+v", conds)
 	}
 
-	return &model, nil
+	return &dm, nil
 }
+func (s *service) Paginate(ctx context.Context, p *collectionModels.Paginate, whereArgs ...any) (*collectionModels.ListModel, error) {
+	var lm *collectionModels.ListModel
 
-func (s *service) Find(conds ...any) ([]*collectionModels.ListItemModel, error) {
-	var data []*collectionModels.ListItemModel
+	err := s.db.WithContext(ctx).
+		Transaction(func(tx *gorm.DB) error {
+			var (
+				items []*collectionModels.ListItemModel
+				count int64
+			)
 
-	err := s.repository.Find(&data, conds...)
-	if err != nil {
-		return nil, err
-	}
+			// Build query
+			query := s.db.Model(&entities.Collection{}).Scopes(p.Scope)
 
-	return data, nil
-}
+			if len(whereArgs) != 0 {
+				query = query.Where(whereArgs[0], whereArgs[1:]...)
+			}
 
-func (s *service) Paginate(p *collectionModels.Paginate, whereArgs ...any) (*collectionModels.ListModel, error) {
-	var items []*collectionModels.ListItemModel
+			// Get list of animes like whereArgs
+			result := query.Find(&items)
+			if result.Error != nil {
+				return eris.Wrapf(result.Error, "failed get list of animes with whereArgs: %+v", whereArgs)
+			}
 
-	err := s.repository.ScopedFind(&items, p.Scope, whereArgs...)
-	if err != nil {
-		return nil, err
-	}
+			lm = collectionModels.NewListModel(items)
 
-	model := collectionModels.NewListModel(items)
+			// Get count of animes like whereArgs
+			result = query.Count(&count)
+			if result.Error != nil {
+				return eris.Wrapf(result.Error, "failed get count with whereArgs: %+v", whereArgs)
+			}
 
-	count, err := s.repository.Count(whereArgs...)
-	if err != nil {
-		logger.Errorf("Error getting count: %v", err)
-		return model, nil
-	}
+			lm.WithCount(count)
 
-	model.WithCount(count)
+			return nil
+		})
 
-	return model, nil
-}
-
-func (s *service) Count(whereArgs ...any) (int64, error) {
-	return s.repository.Count(whereArgs...)
+	return lm, err
 }

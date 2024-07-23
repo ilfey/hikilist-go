@@ -15,6 +15,7 @@ import (
 	baseController "github.com/ilfey/hikilist-go/api/controllers/base_controller"
 
 	collectionModels "github.com/ilfey/hikilist-go/data/models/collection"
+	animeService "github.com/ilfey/hikilist-go/services/anime"
 	authService "github.com/ilfey/hikilist-go/services/auth"
 	collectionService "github.com/ilfey/hikilist-go/services/collection"
 )
@@ -23,18 +24,21 @@ import (
 type Controller struct {
 	*baseController.Controller
 
+	anime      animeService.Service
 	collection collectionService.Service
 }
 
 // Конструктор контроллера
 func New(
 	auth authService.Service,
+	// anime animeService.Service,
 	collection collectionService.Service,
 ) *Controller {
 	return &Controller{
 		Controller: &baseController.Controller{
 			AuthService: auth,
 		},
+		// anime:      anime,
 		collection: collection,
 	}
 }
@@ -45,6 +49,7 @@ func (c *Controller) Bind(router *mux.Router) *mux.Router {
 	c.HandleFunc("/api/collections", c.Create).Methods("POST")
 	c.HandleFunc("/api/collections", c.List).Methods("GET")
 	c.HandleFunc("/api/collections/{id:[0-9]+}", c.Detail).Methods("GET")
+	// c.HandleFunc("/api/collections/{id:[0-9]+}/animes", c.Animes).Methods("GET")
 
 	return router
 }
@@ -74,7 +79,7 @@ func (c *Controller) Create(ctx *handler.Context) {
 
 	req.UserID = user.ID
 
-	model, err := c.collection.Create(req)
+	model, err := c.collection.Create(ctx, req)
 	if err != nil {
 		logger.Errorf("Failed to create collection: %v", err)
 
@@ -100,9 +105,9 @@ func (controller *Controller) List(ctx *handler.Context) {
 		return
 	}
 
-	model, err := controller.collection.Paginate(paginate)
+	model, err := controller.collection.Paginate(ctx, paginate, "is_public = ?", true)
 	if err != nil {
-		logger.Errorf("Failed to get animes: %v", err)
+		logger.Errorf("Failed to get collections: %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -117,10 +122,13 @@ func (controller *Controller) Detail(ctx *handler.Context) {
 
 	id := errorsx.Must(strconv.ParseUint(vars["id"], 10, 64))
 
-	model, err := controller.collection.Get(id)
+	model, err := controller.collection.Get(ctx, map[string]any{
+		"id":        id,
+		"is_public": true,
+	})
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			logger.Debug("Anime not found")
+			logger.Debug("Collection not found")
 
 			ctx.SendJSON(responses.ResponseNotFound())
 
@@ -136,3 +144,41 @@ func (controller *Controller) Detail(ctx *handler.Context) {
 
 	ctx.SendJSON(model)
 }
+
+// func (controller *Controller) Animes(ctx *handler.Context) {
+// 	vars := mux.Vars(ctx.Request)
+
+// 	id := errorsx.Must(strconv.ParseUint(vars["id"], 10, 64))
+
+// 	req := animeModels.NewPaginateFromQuery(ctx.QueriesMap())
+
+// 	vErr := req.Validate()
+// 	if vErr != nil {
+// 		logger.Debugf("Failed to validate paginate: %v", vErr)
+
+// 		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
+// 			"error": vErr.Error(),
+// 		}))
+
+// 		return
+// 	}
+
+// 	model, err := controller.anime.Paginate(ctx, req, id)
+// 	if err != nil {
+// 		if errors.Is(err, gorm.ErrRecordNotFound) {
+// 			logger.Debug("Collection not found")
+
+// 			ctx.SendJSON(responses.ResponseNotFound())
+
+// 			return
+// 		}
+
+// 		logger.Errorf("Failed to get animes: %v", err)
+
+// 		ctx.SendJSON(responses.ResponseInternalServerError())
+
+// 		return
+// 	}
+
+// 	ctx.SendJSON(model)
+// }

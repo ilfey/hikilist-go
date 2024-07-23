@@ -9,7 +9,6 @@ import (
 	"github.com/ilfey/hikilist-go/internal/logger"
 	"github.com/ilfey/hikilist-go/parser"
 	shikiService "github.com/ilfey/hikilist-go/parser/shikimori"
-	animeRepository "github.com/ilfey/hikilist-go/repositories/anime"
 	animeService "github.com/ilfey/hikilist-go/services/anime"
 )
 
@@ -23,7 +22,7 @@ func main() {
 	db := database.NewDatabase(config.Database)
 
 	animeService := animeService.New(
-		animeRepository.New(db),
+		db,
 	)
 
 	shikiService := shikiService.NewShikimoriService(

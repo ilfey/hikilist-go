@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	userModels "github.com/ilfey/hikilist-go/data/models/user"
 	"github.com/ilfey/hikilist-go/internal/errorsx"
@@ -98,7 +99,7 @@ func (ctx *Context) AuthorizedOnly() (*userModels.DetailModel, error) {
 		return nil, err
 	}
 
-	userModel, err := ctx.AuthService.GetUser(claims)
+	userModel, err := ctx.AuthService.GetUser(ctx, claims)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +118,7 @@ func (ctx *Context) GetUser() (*userModels.DetailModel, error) {
 		return nil, err
 	}
 
-	user, err := ctx.AuthService.GetUser(claims)
+	user, err := ctx.AuthService.GetUser(ctx, claims)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +126,7 @@ func (ctx *Context) GetUser() (*userModels.DetailModel, error) {
 	// Store user
 	ctx.store.user = user
 
-	err = ctx.AuthService.UpdateUserOnline(user)
+	err = ctx.AuthService.UpdateUserOnline(ctx, user)
 	if err != nil {
 		return nil, err
 	}
@@ -181,4 +182,44 @@ func (ctx *Context) GetClaims() (*authService.Claims, error) {
 	ctx.store.claims = claims
 
 	return claims, nil
+}
+
+/*
+Implementation context.Context
+*/
+
+func (c *Context) hasRequestContext() bool {
+	return c.Request != nil && c.Request.Context() != nil
+}
+
+func (c *Context) Deadline() (time.Time, bool) {
+	if !c.hasRequestContext() {
+		return time.Time{}, false
+	}
+
+	return c.Request.Context().Deadline()
+}
+
+func (c *Context) Done() <-chan struct{} {
+	if !c.hasRequestContext() {
+		return nil
+	}
+
+	return c.Request.Context().Done()
+}
+
+func (c *Context) Err() error {
+	if !c.hasRequestContext() {
+		return nil
+	}
+
+	return c.Request.Context().Err()
+}
+
+func (c *Context) Value(key any) any {
+	if !c.hasRequestContext() {
+		return nil
+	}
+
+	return c.Request.Context().Value(key)
 }

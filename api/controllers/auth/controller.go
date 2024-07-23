@@ -63,7 +63,7 @@ func (c *Controller) Register(ctx *handler.Context) {
 		return
 	}
 
-	userModel, err := c.user.Create(req)
+	userModel, err := c.user.Create(ctx, req)
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			logger.Debug("User already exists")
@@ -82,7 +82,7 @@ func (c *Controller) Register(ctx *handler.Context) {
 		return
 	}
 
-	tokensModel, err := c.auth.GenerateTokens(userModel)
+	tokensModel, err := c.auth.GenerateTokens(ctx, userModel)
 	if err != nil {
 		logger.Debugf("Failed to generate tokens: %v", err)
 
@@ -111,7 +111,7 @@ func (c *Controller) Login(ctx *handler.Context) {
 		return
 	}
 
-	userModel, err := c.user.Get(map[string]any{
+	userModel, err := c.user.Get(ctx, map[string]any{
 		"Username": req.Username,
 	})
 	if err != nil {
@@ -136,7 +136,7 @@ func (c *Controller) Login(ctx *handler.Context) {
 		return
 	}
 
-	tokensModel, err := c.auth.GenerateTokens(userModel)
+	tokensModel, err := c.auth.GenerateTokens(ctx, userModel)
 	if err != nil {
 		logger.Errorf("Failed to generate tokens: %v", err)
 
@@ -176,7 +176,7 @@ func (c *Controller) Refresh(ctx *handler.Context) {
 		return
 	}
 
-	userModel, err := c.user.Get(claims.UserID)
+	userModel, err := c.user.Get(ctx, claims.UserID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			logger.Debug("User not found")
@@ -192,7 +192,7 @@ func (c *Controller) Refresh(ctx *handler.Context) {
 	}
 
 	// Delete old token
-	if err = c.auth.DeleteToken(req.Refresh); err != nil {
+	if err = c.auth.DeleteToken(ctx, req.Refresh); err != nil {
 		logger.Errorf("Failed to delete token: %v", err)
 
 		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
@@ -203,7 +203,7 @@ func (c *Controller) Refresh(ctx *handler.Context) {
 	}
 
 	// Generate new tokens
-	tokensModel, err := c.auth.GenerateTokens(userModel)
+	tokensModel, err := c.auth.GenerateTokens(ctx, userModel)
 	if err != nil {
 		logger.Debugf("Failed to generate tokens: %v", err)
 
@@ -243,7 +243,7 @@ func (c *Controller) Logout(ctx *handler.Context) {
 	}
 
 	// Delete old token
-	if err = c.auth.DeleteToken(req.Refresh); err != nil {
+	if err = c.auth.DeleteToken(ctx, req.Refresh); err != nil {
 		logger.Debugf("Failed to delete token: %v", err)
 
 		ctx.SendJSON(responses.ResponseBadRequest(responses.J{

@@ -41,10 +41,7 @@ func (m *CreateModel) ToEntity() *entities.Collection {
 		UserID:      m.UserID,
 		Name:        m.Name,
 		Description: m.Description,
-	}
-
-	if m.IsPublic == nil {
-		entity.IsPublic = true
+		IsPublic:    bool	(m.IsPublic != nil && *m.IsPublic),
 	}
 
 	return &entity

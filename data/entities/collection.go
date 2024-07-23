@@ -12,9 +12,9 @@ type Collection struct {
 
 	Description *string
 
-	IsPublic bool `gorm:"not null;default:true"`
+	IsPublic bool `gorm:"not null"`
 
-	Animes []*Anime `gorm:"many2many:animes_lists"`
+	Animes []*Anime `gorm:"many2many:animes_collections"`
 }
 
 func (Collection) TableName() string {
