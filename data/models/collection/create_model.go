@@ -1,18 +1,46 @@
 package collectionModels
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
-	"github.com/ilfey/hikilist-go/data/entities"
+	"github.com/ilfey/hikilist-go/data/database"
+	"github.com/ilfey/hikilist-go/internal/orm"
 	"github.com/ilfey/hikilist-go/internal/validator"
 )
 
 type CreateModel struct {
-	UserID      uint    `json:"-"`
-	Name        string  `json:"name"`
+	ID uint `json:"-"`
+
+	UserID uint `json:"-"`
+
+	Title        string  `json:"title"`
 	Description *string `json:"description"`
 	IsPublic    *bool   `json:"is_public"`
+
+	CreatedAt time.Time `json:"-"`
+}
+
+func (CreateModel) TableName() string {
+	return "collections"
+}
+
+func (cm *CreateModel) Insert(ctx context.Context) error {
+	cm.CreatedAt = time.Now()
+
+	id, err := orm.Insert(cm).
+		Ignore("ID").
+		Exec(ctx, database.Instance())
+
+	if err != nil {
+		return err
+	}
+
+	cm.ID = id
+
+	return nil
 }
 
 func NewCreateModelFromRequest(request *http.Request) *CreateModel {
@@ -34,15 +62,4 @@ func (model CreateModel) Validate() validator.ValidateError {
 			},
 		},
 	)
-}
-
-func (m *CreateModel) ToEntity() *entities.Collection {
-	entity := entities.Collection{
-		UserID:      m.UserID,
-		Name:        m.Name,
-		Description: m.Description,
-		IsPublic:    bool	(m.IsPublic != nil && *m.IsPublic),
-	}
-
-	return &entity
 }

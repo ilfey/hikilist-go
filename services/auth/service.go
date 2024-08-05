@@ -3,18 +3,19 @@ package authService
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	authConfig "github.com/ilfey/hikilist-go/config/auth"
-	"github.com/ilfey/hikilist-go/data/entities"
+	"github.com/ilfey/hikilist-go/data/database"
 	authModels "github.com/ilfey/hikilist-go/data/models/auth"
+	tokenModels "github.com/ilfey/hikilist-go/data/models/token"
 	userModels "github.com/ilfey/hikilist-go/data/models/user"
 	"github.com/ilfey/hikilist-go/internal/errorsx"
 	"github.com/rotisserie/eris"
 	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 )
 
 // Сервис авторизации.
@@ -43,6 +44,8 @@ type Service interface {
 	// Возвращает модель пользователя и транзакцию.
 	GetUser(ctx context.Context, claims *Claims) (*userModels.DetailModel, error)
 
+	CreateUser(ctx context.Context, registerModel *authModels.RegisterModel) (*userModels.CreateModel, error)
+
 	// UpdateUserOnline обновляет время последней активности пользователя.
 	//
 	// Возвращает транзакцию
@@ -52,17 +55,14 @@ type Service interface {
 // Сервис аутентификации
 type service struct {
 	config *authConfig.Config
-	db     *gorm.DB
 }
 
 // Конструктор сервиса аутентификации
 func New(
 	config *authConfig.Config,
-	db *gorm.DB,
 ) Service {
 	return &service{
 		config: config,
-		db:     db,
 	}
 }
 
@@ -103,12 +103,13 @@ func (s *service) GenerateTokens(ctx context.Context, model *userModels.DetailMo
 	// Save token in database
 	tokenSlice := strings.Split(refreshToken, ".")
 
-	result := s.db.WithContext(ctx).
-		Create(&entities.Token{
-			Token: tokenSlice[len(tokenSlice)-1],
-		})
-	if result.Error != nil {
-		return nil, eris.Wrap(result.Error, "failed create token")
+	cm := &tokenModels.CreateModel{
+		Token: tokenSlice[len(tokenSlice)-1],
+	}
+
+	err := cm.Insert(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	return &authModels.TokensModel{
@@ -120,35 +121,13 @@ func (s *service) GenerateTokens(ctx context.Context, model *userModels.DetailMo
 func (s *service) DeleteToken(ctx context.Context, token string) error {
 	tokenSlice := strings.Split(token, ".")
 
-	var entity entities.Token
+	_, err := database.Instance().Exec(
+		ctx,
+		"DELETE FROM tokens WHERE token = ?",
+		tokenSlice[len(tokenSlice)-1],
+	)
 
-	return s.db.WithContext(ctx).
-		Transaction(func(tx *gorm.DB) error {
-			// Get token from database
-			result := tx.First(&entity, map[string]any{
-				"Token": tokenSlice[len(tokenSlice)-1],
-			})
-			if result.Error != nil {
-				if eris.Is(result.Error, gorm.ErrRecordNotFound) {
-					return eris.Wrap(result.Error, "token not found")
-				}
-
-				return eris.Wrap(result.Error, "failed get token")
-			}
-
-			// Check if token is deleted already
-			if entity.DeletedAt.Valid {
-				return eris.New("token already deleted")
-			}
-
-			// Delete token
-			result = tx.Delete(entity)
-			if result.Error != nil {
-				return eris.Wrap(result.Error, "failed delete token")
-			}
-
-			return nil
-		})
+	return err
 }
 
 func (s *service) generateToken(claims *Claims) string {
@@ -185,14 +164,33 @@ func (s *service) GetUser(ctx context.Context, claims *Claims) (*userModels.Deta
 	var dm userModels.DetailModel
 
 	// Get user from database
-	result := s.db.WithContext(ctx).
-		Model(&entities.User{}).
-		First(&dm, claims.UserID)
-	if result.Error != nil {
-		return nil, eris.Wrapf(result.Error, "failed get user with id: %d", claims.UserID)
+	err := dm.Get(ctx, fmt.Sprintf("%s.id = %d", dm.TableName(), claims.UserID))
+	if err != nil {
+		return nil, eris.Wrapf(err, "failed get user with id: %d", claims.UserID)
 	}
 
 	return &dm, nil
+}
+
+func (s *service) CreateUser(ctx context.Context, registerModel *authModels.RegisterModel) (*userModels.CreateModel, error) {
+	hash := errorsx.Must(
+		bcrypt.GenerateFromPassword(
+			[]byte(registerModel.Password),
+			bcrypt.DefaultCost,
+		),
+	)
+
+	cm := userModels.CreateModel{
+		Username: registerModel.Username,
+		Password: string(hash),
+	}
+
+	err := cm.Insert(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cm, nil
 }
 
 func (s *service) UpdateUserOnline(ctx context.Context, user *userModels.DetailModel) error {
@@ -200,10 +198,9 @@ func (s *service) UpdateUserOnline(ctx context.Context, user *userModels.DetailM
 
 	user.LastOnline = &currentTime
 
-	result := s.db.WithContext(ctx).
-		Save(user.ToEntity())
-	if result.Error != nil {
-		return eris.Wrapf(result.Error, "failed update online for user with id: %d", user.ID)
+	err := user.Update(ctx)
+	if err != nil {
+		return eris.Wrapf(err, "failed update online for user with id: %d", user.ID)
 	}
 
 	return nil

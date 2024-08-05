@@ -1,17 +1,17 @@
 package authController
 
 import (
-	"errors"
+	"database/sql"
 
 	"github.com/gorilla/mux"
 	baseController "github.com/ilfey/hikilist-go/api/controllers/base_controller"
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/handler"
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/responses"
 	authModels "github.com/ilfey/hikilist-go/data/models/auth"
+	userModels "github.com/ilfey/hikilist-go/data/models/user"
 	"github.com/ilfey/hikilist-go/internal/logger"
 	authService "github.com/ilfey/hikilist-go/services/auth"
-	userService "github.com/ilfey/hikilist-go/services/user"
-	"gorm.io/gorm"
+	"github.com/rotisserie/eris"
 )
 
 // Контроллер аутентификации
@@ -19,20 +19,17 @@ type Controller struct {
 	*baseController.Controller
 
 	auth authService.Service
-	user userService.Service
 }
 
 // Конструктор контроллера
 func New(
 	auth authService.Service,
-	user userService.Service,
 ) *Controller {
 	return &Controller{
 		Controller: &baseController.Controller{
 			AuthService: auth,
 		},
 		auth: auth,
-		user: user,
 	}
 }
 
@@ -63,18 +60,8 @@ func (c *Controller) Register(ctx *handler.Context) {
 		return
 	}
 
-	userModel, err := c.user.Create(ctx, req)
+	cm, err := c.auth.CreateUser(ctx, req)
 	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			logger.Debug("User already exists")
-
-			ctx.SendJSON(responses.J{
-				"detail": "User already exists",
-			}, 400)
-
-			return
-		}
-
 		logger.Errorf("Failed to create user: %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
@@ -82,7 +69,20 @@ func (c *Controller) Register(ctx *handler.Context) {
 		return
 	}
 
-	tokensModel, err := c.auth.GenerateTokens(ctx, userModel)
+	var dm userModels.DetailModel
+
+	err = dm.Get(ctx, map[string]any{
+		"ID": cm.ID,
+	})
+	if err != nil {
+		logger.Errorf("Failed to get user: %v", err)
+
+		ctx.SendJSON(responses.ResponseInternalServerError())
+
+		return
+	}
+
+	tokensModel, err := c.auth.GenerateTokens(ctx, &dm)
 	if err != nil {
 		logger.Debugf("Failed to generate tokens: %v", err)
 
@@ -111,11 +111,13 @@ func (c *Controller) Login(ctx *handler.Context) {
 		return
 	}
 
-	userModel, err := c.user.Get(ctx, map[string]any{
+	var dm userModels.DetailModel
+
+	err := dm.Get(ctx, map[string]any{
 		"Username": req.Username,
 	})
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if eris.Is(err, sql.ErrNoRows) {
 			logger.Debug("User not found")
 
 			ctx.SendJSON(responses.ResponseUnauthorized())
@@ -130,13 +132,13 @@ func (c *Controller) Login(ctx *handler.Context) {
 		return
 	}
 
-	if ok := c.auth.CompareUserPassword(userModel, req.Password); !ok {
+	if ok := c.auth.CompareUserPassword(&dm, req.Password); !ok {
 		ctx.SendJSON(responses.ResponseForbidden())
 
 		return
 	}
 
-	tokensModel, err := c.auth.GenerateTokens(ctx, userModel)
+	tokensModel, err := c.auth.GenerateTokens(ctx, &dm)
 	if err != nil {
 		logger.Errorf("Failed to generate tokens: %v", err)
 
@@ -176,9 +178,13 @@ func (c *Controller) Refresh(ctx *handler.Context) {
 		return
 	}
 
-	userModel, err := c.user.Get(ctx, claims.UserID)
+	var dm userModels.DetailModel
+
+	err = dm.Get(ctx, map[string]any{
+		"ID": claims.UserID,
+	})
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if eris.Is(err, sql.ErrNoRows) {
 			logger.Debug("User not found")
 
 			ctx.SendJSON(responses.ResponseUnauthorized())
@@ -203,7 +209,7 @@ func (c *Controller) Refresh(ctx *handler.Context) {
 	}
 
 	// Generate new tokens
-	tokensModel, err := c.auth.GenerateTokens(ctx, userModel)
+	tokensModel, err := c.auth.GenerateTokens(ctx, &dm)
 	if err != nil {
 		logger.Debugf("Failed to generate tokens: %v", err)
 

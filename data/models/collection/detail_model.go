@@ -1,54 +1,61 @@
 package collectionModels
 
 import (
+	"context"
+	"fmt"
 	"time"
 
-	"github.com/ilfey/hikilist-go/data/entities"
-	animeModels "github.com/ilfey/hikilist-go/data/models/anime"
+	"github.com/ilfey/hikilist-go/data/database"
+	"github.com/ilfey/hikilist-go/internal/orm"
+
+	// animeModels "github.com/ilfey/hikilist-go/data/models/anime"
 	userModels "github.com/ilfey/hikilist-go/data/models/user"
 )
 
 type DetailModel struct {
 	ID uint `json:"id"`
 
+	UserID uint `json:"-"`
+
 	User *userModels.ListItemModel `json:"user"`
 
-	Name string `json:"name"`
+	Title string `json:"title"`
 
 	Description *string `json:"description"`
 
 	IsPublic bool `json:"is_public"`
 
-	Animes []*animeModels.ListItemModel `json:"animes"`
+	// Animes []*animeModels.ListItemModel `json:"animes"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func NewDetailModelFromEntity(entity *entities.Collection) *DetailModel {
-	model := DetailModel{
-		ID: entity.ID,
+func (DetailModel) TableName() string {
+	return "collections"
+}
 
-		Name: entity.Name,
+func (dm *DetailModel) Get(ctx context.Context, conds any) error {
+	m, err := orm.Select(dm).
+		Resolve("User", func(ctx context.Context, dm *DetailModel) error {
+			var user userModels.ListItemModel
 
-		Description: entity.Description,
+			err := user.Get(ctx, fmt.Sprintf("%s.id = %d", user.TableName(), dm.UserID))
+			if err != nil {
+				return err
+			}
 
-		IsPublic: entity.IsPublic,
+			dm.User = &user
 
-		Animes: make([]*animeModels.ListItemModel, 0, len(entity.Animes)),
-
-		CreatedAt: entity.CreatedAt,
-		UpdatedAt: entity.UpdatedAt,
+			return nil
+		}).
+		Where(conds).
+		QueryRow(ctx, database.Instance())
+	if err != nil {
+		return err
 	}
 
-	if entity.User != nil {
-		model.User = &userModels.ListItemModel{
-			ID:        entity.User.ID,
-			Username:  entity.User.Username,
-			CreatedAt: entity.User.CreatedAt,
-			UpdatedAt: entity.User.UpdatedAt,
-		}
-	}
+	*dm = *m
 
-	return &model
+	return nil
 }

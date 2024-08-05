@@ -1,22 +1,80 @@
 package animeModels
 
 import (
-	baseModels "github.com/ilfey/hikilist-go/internal/base_models"
+	"context"
+	"fmt"
+
+	"github.com/ilfey/hikilist-go/data/database"
+	"github.com/ilfey/hikilist-go/internal/orm"
 )
 
-// Модель элемента списка аниме
-type ListItemModel struct {
-	ID uint `json:"id"`
+type ListModel struct {
+	Results []*ListItemModel `json:"results"`
 
-	Title            string  `json:"title"`
-	Poster           *string `json:"poster"`
-	Episodes         *uint   `json:"episodes"`
-	EpisodesReleased uint    `json:"episodes_released"`
+	Count *int64 `json:"count,omitempty"`
 }
 
-// Модель списка аниме
-type ListModel = baseModels.ListModel[ListItemModel]
+func (lm *ListModel) Paginate(ctx context.Context, p *Paginate, conds any) error {
+	p.Normalize()
 
-func NewListModel(items []*ListItemModel) *ListModel {
-	return baseModels.NewListModel(items)
+	results, err := orm.Select(&ListItemModel{}).
+		Where(conds).
+		Limit(p.Limit).
+		Offset(p.GetOffset(p.Page, p.Limit)).
+		Order(p.Order.ToQuery()).
+		Query(ctx, database.Instance())
+	if err != nil {
+		return err
+	}
+
+	lm.Results = results
+
+	// TODO: count
+
+	return nil
+}
+
+func (lm *ListModel) PaginateFromCollection(ctx context.Context, p *Paginate, userId, collectionId any) error {
+	p.Normalize()
+
+	sql := fmt.Sprintf(`
+SELECT 
+	a.id,
+	a.title,
+	a.poster,
+	a.episodes,
+	a.episodes_released
+FROM animes_collections AS ac
+JOIN animes AS a ON ac.anime_id = a.id
+WHERE ac.collection_id = (
+	SELECT 
+		c.id 
+	FROM collections AS c
+	WHERE c.id = %d AND (c.is_public = TRUE OR c.user_id = %d)
+	LIMIT 1
+)
+`, collectionId, userId)
+
+	if p.Order.Field() != "" {
+		sql += fmt.Sprintf(" ORDER BY %s", p.Order.ToQuery())
+	}
+
+	offset := p.GetOffset(p.Page, p.Limit)
+	if offset > 0 {
+		sql += fmt.Sprintf(" OFFSET %d", offset)
+	}
+
+	sql += fmt.Sprintf(" LIMIT %d;", p.Limit)
+
+	results, err := orm.Select(&ListItemModel{}).
+		QuerySQL(ctx, database.Instance(), sql)
+	if err != nil {
+		return err
+	}
+
+	lm.Results = results
+
+	// TODO: count
+
+	return nil
 }

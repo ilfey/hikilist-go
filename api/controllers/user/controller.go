@@ -1,11 +1,11 @@
 package userController
 
 import (
-	"errors"
+	"database/sql"
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"gorm.io/gorm"
+	"github.com/rotisserie/eris"
 
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/handler"
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/responses"
@@ -19,35 +19,21 @@ import (
 	userActionModels "github.com/ilfey/hikilist-go/data/models/user_action"
 
 	authService "github.com/ilfey/hikilist-go/services/auth"
-	collectionService "github.com/ilfey/hikilist-go/services/collection"
-	userService "github.com/ilfey/hikilist-go/services/user"
-	userActionService "github.com/ilfey/hikilist-go/services/user_action"
 )
 
 // Контроллер пользователя
 type UserController struct {
 	*baseController.Controller
-
-	collection collectionService.Service
-	user       userService.Service
-	userAction userActionService.Service
 }
 
 // Конструктор контроллера пользователя
 func New(
 	auth authService.Service,
-	collection collectionService.Service,
-	user userService.Service,
-	userAction userActionService.Service,
 ) *UserController {
 	return &UserController{
 		Controller: &baseController.Controller{
 			AuthService: auth,
 		},
-
-		collection: collection,
-		user:       user,
-		userAction: userAction,
 	}
 }
 
@@ -57,7 +43,8 @@ func (c *UserController) Bind(router *mux.Router) *mux.Router {
 
 	c.HandleFunc("/api/users", c.List).Methods("GET")
 	c.HandleFunc("/api/users/{id:[0-9]+}", c.Detail).Methods("GET")
-	
+	c.HandleFunc("/api/users/@{username:[a-zA-Z0-9]+}", c.DetailByUsername).Methods("GET")
+
 	c.HandleFunc("/api/users/me", c.Me).Methods("GET")
 	c.HandleFunc("/api/users/me/actions", c.MyActions).Methods("GET")
 	c.HandleFunc("/api/users/me/collections", c.MyCollections).Methods("GET")
@@ -80,7 +67,9 @@ func (controller *UserController) List(ctx *handler.Context) {
 		return
 	}
 
-	model, err := controller.user.Paginate(ctx, paginate)
+	var lm userModels.ListModel
+
+	err := lm.Paginate(ctx, paginate)
 	if err != nil {
 		logger.Errorf("Failed to get users: %v", err)
 
@@ -89,7 +78,7 @@ func (controller *UserController) List(ctx *handler.Context) {
 		return
 	}
 
-	ctx.SendJSON(model)
+	ctx.SendJSON(&lm)
 }
 
 // Подробная информация о пользователе
@@ -98,9 +87,13 @@ func (controller *UserController) Detail(ctx *handler.Context) {
 
 	id := errorsx.Must(strconv.ParseUint(vars["id"], 10, 64))
 
-	model, err := controller.user.Get(ctx, id)
+	var dm userModels.DetailModel
+
+	err := dm.Get(ctx, map[string]any{
+		"ID": id,
+	})
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if eris.Is(err, sql.ErrNoRows) {
 			logger.Debug("User not found")
 
 			ctx.SendJSON(responses.ResponseNotFound())
@@ -115,7 +108,35 @@ func (controller *UserController) Detail(ctx *handler.Context) {
 		return
 	}
 
-	ctx.SendJSON(model)
+	ctx.SendJSON(&dm)
+}
+
+func (controller *UserController) DetailByUsername(ctx *handler.Context) {
+	vars := mux.Vars(ctx.Request)
+	username := vars["username"]
+
+	var dm userModels.DetailModel
+
+	err := dm.Get(ctx, map[string]any{
+		"Username": username,
+	})
+	if err != nil {
+		if eris.Is(err, sql.ErrNoRows) {
+			logger.Debug("User not found")
+
+			ctx.SendJSON(responses.ResponseNotFound())
+
+			return
+		}
+
+		logger.Errorf("Failed to get user: %v", err)
+
+		ctx.SendJSON(responses.ResponseInternalServerError())
+
+		return
+	}
+
+	ctx.SendJSON(&dm)
 }
 
 func (c *UserController) Me(ctx *handler.Context) {
@@ -154,7 +175,11 @@ func (c *UserController) MyActions(ctx *handler.Context) {
 		return
 	}
 
-	model, err := c.userAction.Paginate(ctx, paginate, "user_id = ?", user.ID)
+	var lm userActionModels.ListModel
+
+	err = lm.Paginate(ctx, paginate, map[string]any{
+		"UserID": user.ID,
+	})
 	if err != nil {
 		logger.Errorf("Failed to get user actions: %v", err)
 
@@ -163,7 +188,7 @@ func (c *UserController) MyActions(ctx *handler.Context) {
 		return
 	}
 
-	ctx.SendJSON(model)
+	ctx.SendJSON(&lm)
 }
 
 func (c *UserController) MyCollections(ctx *handler.Context) {
@@ -189,7 +214,11 @@ func (c *UserController) MyCollections(ctx *handler.Context) {
 		return
 	}
 
-	model, err := c.collection.Paginate(ctx, paginate, "user_id = ?", user.ID)
+	var lm collectionModels.ListModel
+
+	err = lm.Paginate(ctx, paginate, map[string]any{
+		"UserID": user.ID,
+	})
 	if err != nil {
 		logger.Errorf("Failed to get user collections: %v", err)
 
@@ -198,5 +227,5 @@ func (c *UserController) MyCollections(ctx *handler.Context) {
 		return
 	}
 
-	ctx.SendJSON(model)
+	ctx.SendJSON(&lm)
 }

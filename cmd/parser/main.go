@@ -9,7 +9,6 @@ import (
 	"github.com/ilfey/hikilist-go/internal/logger"
 	"github.com/ilfey/hikilist-go/parser"
 	shikiService "github.com/ilfey/hikilist-go/parser/shikimori"
-	animeService "github.com/ilfey/hikilist-go/services/anime"
 )
 
 func main() {
@@ -17,20 +16,15 @@ func main() {
 
 	config.LoadEnvironment()
 
-	config := config.NewConfig()
+	config := config.New()
 
-	db := database.NewDatabase(config.Database)
-
-	animeService := animeService.New(
-		db,
-	)
+	database.New(config.Database)
 
 	shikiService := shikiService.NewShikimoriService(
 		config.Shikimori,
 	)
 
 	parser := &parser.Parser{
-		Anime: animeService,
 		Shiki: shikiService,
 	}
 

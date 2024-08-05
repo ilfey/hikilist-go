@@ -1,12 +1,13 @@
 package animeModels
 
 import (
+	"context"
 	"time"
 
-	"github.com/ilfey/hikilist-go/data/entities"
+	"github.com/ilfey/hikilist-go/data/database"
+	"github.com/ilfey/hikilist-go/internal/orm"
 )
 
-// Модель аниме
 type DetailModel struct {
 	ID uint `json:"id"`
 
@@ -22,39 +23,22 @@ type DetailModel struct {
 	Related []*ListItemModel `json:"related"`
 
 	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// Собрать модель `DetailModel` из `entities.Anime`
-func DetailModelFromEntity(entity *entities.Anime) *DetailModel {
-	relatedList := make([]*ListItemModel, len(entity.Related))
+func (DetailModel) TableName() string {
+	return "animes"
+}
 
-	for i, entity := range entity.Related {
-		relatedList[i] = &ListItemModel{
-			ID: entity.ID,
-
-			Title:            entity.Title,
-			Poster:           entity.Poster,
-			Episodes:         entity.Episodes,
-			EpisodesReleased: entity.EpisodesReleased,
-		}
+func (dm *DetailModel) Get(ctx context.Context, conds any) error {
+	m, err := orm.Select(&DetailModel{}).
+		Ignore("Related"). // TODO: fix this
+		Where(conds).
+		QueryRow(ctx, database.Instance())
+	if err != nil {
+		return err
 	}
 
-	return &DetailModel{
-		ID: entity.ID,
+	*dm = *m
 
-		Title:            entity.Title,
-		Description:      entity.Description,
-		Poster:           entity.Poster,
-		Episodes:         entity.Episodes,
-		EpisodesReleased: entity.EpisodesReleased,
-
-		MalID:   entity.MalID,
-		ShikiID: entity.ShikiID,
-
-		Related: relatedList,
-
-		CreatedAt: entity.CreatedAt,
-		UpdatedAt: entity.UpdatedAt,
-	}
+	return nil
 }

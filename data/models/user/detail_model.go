@@ -1,11 +1,14 @@
 package userModels
 
 import (
+	"context"
 	"time"
 
-	"github.com/ilfey/hikilist-go/data/entities"
-	"gorm.io/gorm"
+	"github.com/ilfey/hikilist-go/data/database"
+	"github.com/ilfey/hikilist-go/internal/orm"
 )
+
+// var _ baseModels.DetailModel[DetailModel] = &DetailModel{}
 
 // Модель пользователя
 type DetailModel struct {
@@ -17,36 +20,31 @@ type DetailModel struct {
 	LastOnline *time.Time `json:"last_online"`
 
 	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// Собрать модель `UserDetailModel` из `entities.User`
-func DetailModelFromEntity(entity *entities.User) *DetailModel {
-	return &DetailModel{
-		ID: entity.ID,
-
-		Username: entity.Username,
-		Password: entity.Password,
-
-		LastOnline: entity.LastOnline,
-
-		CreatedAt: entity.CreatedAt,
-		UpdatedAt: entity.UpdatedAt,
-	}
+func (m *DetailModel) TableName() string {
+	return "users"
 }
 
-func (m *DetailModel) ToEntity() *entities.User {
-	return &entities.User{
-		Model: gorm.Model{
-			ID: m.ID,
-
-			CreatedAt: m.CreatedAt,
-			UpdatedAt: m.UpdatedAt,
-		},
-
-		Username: m.Username,
-		Password: m.Password,
-
-		LastOnline: m.LastOnline,
+func (dm *DetailModel) Get(ctx context.Context, conds any) error {
+	m, err := orm.Select(dm).
+		Where(conds).
+		QueryRow(ctx, database.Instance())
+	if err != nil {
+		return err
 	}
+
+	*dm = *m
+
+	return nil 
+}
+
+func (m *DetailModel) Update(ctx context.Context) error {
+	_, err := orm.Update(m).
+		Where(map[string]any{
+			"ID": m.ID,
+		}).
+		Exec(ctx, database.Instance())
+
+	return err
 }

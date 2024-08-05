@@ -6,11 +6,9 @@ import (
 	"github.com/ilfey/hikilist-go/internal/logger"
 	shikiService "github.com/ilfey/hikilist-go/parser/shikimori"
 	"github.com/ilfey/hikilist-go/parser/shikimori/api/anime"
-	animeService "github.com/ilfey/hikilist-go/services/anime"
 )
 
 type Parser struct {
-	Anime animeService.Service
 	Shiki *shikiService.Service
 }
 
@@ -34,11 +32,11 @@ func (p *Parser) Parse() (uint64, error) {
 		}
 
 		for _, anime := range animes {
-			logger.Debugf("Saving shikiID: %v", *anime.ID)
+			logger.Debugf("Resolving shikiID: %v", *anime.ID)
 
-			err := p.Anime.ResolveShiki(anime)
+			err := anime.Resolve()
 			if err != nil {
-				logger.Errorf("Failed to save shikiID: %v, error: %v", *anime.ID, err)
+				logger.Errorf("Failed to resolve shikiID: %v, error: %v", *anime.ID, err)
 			}
 		}
 

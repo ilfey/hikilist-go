@@ -18,7 +18,7 @@ type Config struct {
 }
 
 // Конструктор глобального конфига приложения
-func NewConfig() *Config {
+func New() *Config {
 	return &Config{
 		Auth: &authConfig.Config{
 			Secret: []byte(getEnv("AUTH_CONFIG_SECRET", "")),

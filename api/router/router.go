@@ -10,20 +10,12 @@ import (
 	collectionController "github.com/ilfey/hikilist-go/api/controllers/collection"
 	userController "github.com/ilfey/hikilist-go/api/controllers/user"
 
-	animeService "github.com/ilfey/hikilist-go/services/anime"
 	authService "github.com/ilfey/hikilist-go/services/auth"
-	collectionService "github.com/ilfey/hikilist-go/services/collection"
-	userService "github.com/ilfey/hikilist-go/services/user"
-	userActionService "github.com/ilfey/hikilist-go/services/user_action"
 )
 
 // Роутер
 type Router struct {
-	AnimeService      animeService.Service
-	AuthService       authService.Service
-	CollectionService collectionService.Service
-	UserService       userService.Service
-	UserActionService userActionService.Service
+	AuthService authService.Service
 }
 
 // Привязка роутера
@@ -37,25 +29,18 @@ func (r *Router) Bind() http.Handler {
 
 	router = animeController.New(
 		r.AuthService,
-		r.AnimeService,
 	).Bind(router)
 
 	router = authController.New(
 		r.AuthService,
-		r.UserService,
 	).Bind(router)
 
 	router = userController.New(
 		r.AuthService,
-		r.CollectionService,
-		r.UserService,
-		r.UserActionService,
 	).Bind(router)
 
 	router = collectionController.New(
 		r.AuthService,
-		// r.AnimeService,
-		r.CollectionService,
 	).Bind(router)
 
 	return router

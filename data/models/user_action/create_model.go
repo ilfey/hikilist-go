@@ -1,18 +1,40 @@
 package userActionModels
 
-import "github.com/ilfey/hikilist-go/data/entities"
+import (
+	"context"
+	"time"
+
+	"github.com/ilfey/hikilist-go/data/database"
+	"github.com/ilfey/hikilist-go/internal/orm"
+)
 
 type CreateModel struct {
-	UserID uint
+	ID uint `json:"-"`
 
-	Title       string
-	Description string
+	UserID uint `json:"-"`
+
+	Title       string `json:"title"`
+	Description string `json:"description"`
+
+	CreatedAt time.Time `json:"-"`
 }
 
-func (m *CreateModel) ToEntity() *entities.UserAction {
-	return &entities.UserAction{
-		UserID:      m.UserID,
-		Title:       m.Title,
-		Description: m.Description,
+func (CreateModel) TableName() string {
+	return "user_actions"
+}
+
+func (cm *CreateModel) Insert(ctx context.Context) error {
+	cm.CreatedAt = time.Now()
+
+	id, err := orm.Insert(cm).
+		Ignore("ID").
+		Exec(ctx, database.Instance())
+
+	if err != nil {
+		return err
 	}
+
+	cm.ID = id
+
+	return nil
 }

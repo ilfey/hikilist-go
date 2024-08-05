@@ -1,7 +1,7 @@
 package animeController
 
 import (
-	"errors"
+	"database/sql"
 	"strconv"
 
 	"github.com/gorilla/mux"
@@ -11,28 +11,23 @@ import (
 	animeModels "github.com/ilfey/hikilist-go/data/models/anime"
 	"github.com/ilfey/hikilist-go/internal/errorsx"
 	"github.com/ilfey/hikilist-go/internal/logger"
-	animeService "github.com/ilfey/hikilist-go/services/anime"
 	authService "github.com/ilfey/hikilist-go/services/auth"
-	"gorm.io/gorm"
+	"github.com/rotisserie/eris"
 )
 
 // Контроллер аниме
 type Controller struct {
 	*baseController.Controller
-
-	anime animeService.Service
 }
 
 // Конструктор контроллера
 func New(
 	auth authService.Service,
-	anime animeService.Service,
 ) *Controller {
 	return &Controller{
 		Controller: &baseController.Controller{
 			AuthService: auth,
 		},
-		anime: anime,
 	}
 }
 
@@ -40,7 +35,7 @@ func New(
 func (c *Controller) Bind(router *mux.Router) *mux.Router {
 	c.Controller.Bind(router)
 
-	c.HandleFunc("/api/animes", c.Create).Methods("POST")
+	// c.HandleFunc("/api/animes", c.Create).Methods("POST")
 	c.HandleFunc("/api/animes", c.List).Methods("GET")
 	c.HandleFunc("/api/animes/{id:[0-9]+}", c.Detail).Methods("GET")
 
@@ -61,7 +56,7 @@ func (controller *Controller) Create(ctx *handler.Context) {
 		return
 	}
 
-	dm, err := controller.anime.Create(ctx, req)
+	err := req.Insert(ctx)
 	if err != nil {
 		logger.Errorf("Failed to create user: %v", err)
 
@@ -70,7 +65,7 @@ func (controller *Controller) Create(ctx *handler.Context) {
 		return
 	}
 
-	ctx.SendJSON(dm)
+	ctx.SendJSON(responses.ResponseOK())
 }
 
 // Список аниме
@@ -88,7 +83,9 @@ func (controller *Controller) List(ctx *handler.Context) {
 		return
 	}
 
-	model, err := controller.anime.Paginate(ctx, paginate)
+	var lm animeModels.ListModel
+
+	err := lm.Paginate(ctx, paginate, nil)
 	if err != nil {
 		logger.Errorf("Failed to get animes: %v", err)
 
@@ -97,7 +94,7 @@ func (controller *Controller) List(ctx *handler.Context) {
 		return
 	}
 
-	ctx.SendJSON(model)
+	ctx.SendJSON(&lm)
 }
 
 // Подробная информация об аниме
@@ -106,9 +103,13 @@ func (controller *Controller) Detail(ctx *handler.Context) {
 
 	id := errorsx.Must(strconv.ParseUint(vars["id"], 10, 64))
 
-	model, err := controller.anime.Get(ctx, id)
+	var dm animeModels.DetailModel
+
+	err := dm.Get(ctx, map[string]any{
+		"ID": id,
+	})
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if eris.Is(err, sql.ErrNoRows) {
 			logger.Debug("Anime not found")
 
 			ctx.SendJSON(responses.ResponseNotFound())
@@ -123,5 +124,5 @@ func (controller *Controller) Detail(ctx *handler.Context) {
 		return
 	}
 
-	ctx.SendJSON(model)
+	ctx.SendJSON(&dm)
 }

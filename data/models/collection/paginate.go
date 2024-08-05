@@ -3,7 +3,6 @@ package collectionModels
 import (
 	baseModels "github.com/ilfey/hikilist-go/internal/base_models"
 	"github.com/ilfey/hikilist-go/internal/validator"
-	"gorm.io/gorm"
 )
 
 type Paginate struct {
@@ -34,7 +33,7 @@ func (p Paginate) Validate() validator.ValidateError {
 	})
 }
 
-func (p *Paginate) Scope(tx *gorm.DB) *gorm.DB {
+func (p *Paginate) Normalize() *Paginate {
 	if p.Page == 0 {
 		p.Page = 1
 	}
@@ -43,7 +42,6 @@ func (p *Paginate) Scope(tx *gorm.DB) *gorm.DB {
 		p.Limit = 10
 	}
 
-	return tx.
-		Offset(p.GetOffset(p.Page, p.Limit)).
-		Limit(p.Limit)
+	// Self-return
+	return p
 }

@@ -1,16 +1,17 @@
 package config
 
 import (
-	"github.com/joho/godotenv"
-	"log"
 	"os"
 	"strconv"
+
+	"github.com/ilfey/hikilist-go/internal/logger"
+	"github.com/joho/godotenv"
 )
 
 func LoadEnvironment() {
 	err := godotenv.Load("configs/local.env")
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		logger.Fatal(err)
 	}
 }
 

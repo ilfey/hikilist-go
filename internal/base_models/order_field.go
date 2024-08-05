@@ -27,11 +27,11 @@ func (o OrderField) Field() string {
 }
 
 /*
-ToGormQuery returns query string for GORM.
+ToQuery returns query string.
 
 This string looks like: "{field_name} {ASC|DESC}"
 */
-func (o OrderField) ToGormQuery() string {
+func (o OrderField) ToQuery() string {
 	field := o.Field()
 	if field == "" {
 		return ""

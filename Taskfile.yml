@@ -1,0 +1,77 @@
+version: "3"
+
+vars:
+  BIN: "{{.ROOT_DIR}}/bin"
+
+  MIGRATION_DIR: "{{.ROOT_DIR}}/migrations"
+  DRIVER: sqlite3
+  DSN: "{{.ROOT_DIR}}/hiki.db"
+
+tasks:
+  run:
+    desc: Run the api
+    cmds:
+      - go run ./cmd/api
+  
+  run-parser:
+    desc: Run the parser
+    cmds:
+      - go run ./cmd/parser
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test ./...
+
+  build:
+    desc: Build the api
+    cmds:
+      - go build -o {{.BIN}}/api ./cmd/api
+  
+  build-parser:
+    desc: Build the parser
+    cmds:
+      - go build -o {{.BIN}}/parser ./cmd/parser
+  
+  setup:
+    desc: Setup the project
+    cmds:
+      - go mod tidy
+      - go mod download
+      - go install github.com/pressly/goose/v3/cmd/goose@latest
+    
+  create-migration:
+    desc: Create a new migration
+    cmds:
+      - goose create {{.CLI_ARGS}} sql
+    env:
+      GOOSE_DRIVER: "{{.DRIVER}}"
+      GOOSE_DBSTRING: "{{.DSN}}"
+      GOOSE_MIGRATION_DIR: "{{.MIGRATION_DIR}}"
+
+  up:
+    desc: Run goose up
+    cmds:
+      - goose up
+    env:
+      GOOSE_DRIVER: "{{.DRIVER}}"
+      GOOSE_DBSTRING: "{{.DSN}}"
+      GOOSE_MIGRATION_DIR: "{{.MIGRATION_DIR}}"
+
+  down:
+    desc: Run goose down
+    cmds:
+      - goose down
+    env:
+      GOOSE_DRIVER: "{{.DRIVER}}"
+      GOOSE_DBSTRING: "{{.DSN}}"
+      GOOSE_MIGRATION_DIR: "{{.MIGRATION_DIR}}"
+
+  goose:
+    desc: Run goose
+    cmds:
+      - goose {{.CLI_ARGS}}
+    env:
+      GOOSE_DRIVER: "{{.DRIVER}}"
+      GOOSE_DBSTRING: "{{.DSN}}"
+      GOOSE_MIGRATION_DIR: "{{.MIGRATION_DIR}}"

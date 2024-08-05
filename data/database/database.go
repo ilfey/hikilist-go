@@ -1,19 +1,40 @@
 package database
 
 import (
+	"sync"
+
 	databaseConfig "github.com/ilfey/hikilist-go/config/database"
-	"github.com/ilfey/hikilist-go/internal/errorsx"
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
+	"github.com/ilfey/hikilist-go/internal/logger"
+	"github.com/ilfey/hikilist-go/internal/orm"
+	"github.com/ilfey/hikilist-go/internal/orm/drivers"
+	"github.com/jmoiron/sqlx"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
-func NewDatabase(config *databaseConfig.Config) *gorm.DB {
-	return errorsx.Must(
-		gorm.Open(
-			sqlite.Open(config.DBName),
-			&gorm.Config{
-				TranslateError: true,
-			},
-		),
-	)
+var (
+	instance orm.DB
+	once     sync.Once
+)
+
+func New(config *databaseConfig.Config) orm.DB {
+	once.Do(func() {
+		db := sqlx.MustConnect("sqlite3", config.DBName)
+
+		if err := db.Ping(); err != nil {
+			logger.Fatalf("Database connection failed: %v", err)
+		}
+
+		instance = drivers.NewSQLX(db)
+	})
+
+	return instance
+}
+
+func Instance() orm.DB {
+	if instance == nil {
+		logger.Fatal("Database is not initialized")
+	}
+
+	return instance
 }

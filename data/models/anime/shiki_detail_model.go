@@ -1,9 +1,8 @@
 package animeModels
 
 import (
+	"context"
 	"time"
-
-	"github.com/ilfey/hikilist-go/data/entities"
 )
 
 type ShikiDetailModel struct {
@@ -84,11 +83,15 @@ type ShikiDetailModel struct {
 
 // Сравнить статус
 func (m *ShikiDetailModel) CompareStatus(status string) bool {
+	if m.Status == nil {
+		return false
+	}
+
 	return *m.Status == status
 }
 
-func (m *ShikiDetailModel) ToEntity() *entities.Anime {
-	entity := entities.Anime{
+func (m *ShikiDetailModel) Resolve() error {
+	cm := CreateModel{
 		Title:            *m.Russian,
 		Description:      m.Description,
 		Poster:           m.Image.Original,
@@ -99,8 +102,31 @@ func (m *ShikiDetailModel) ToEntity() *entities.Anime {
 	}
 
 	if m.CompareStatus("released") {
-		entity.EpisodesReleased = *m.Episodes
+		cm.EpisodesReleased = *m.Episodes
 	}
 
-	return &entity
+	err := cm.Validate()
+	if err != nil {
+		return err
+	}
+
+	return cm.Insert(context.Background())
 }
+
+// func (m *ShikiDetailModel) ToEntity() *entities.Anime {
+// 	entity := entities.Anime{
+// 		Title:            *m.Russian,
+// 		Description:      m.Description,
+// 		Poster:           m.Image.Original,
+// 		Episodes:         m.Episodes,
+// 		EpisodesReleased: *m.EpisodesAired,
+// 		MalID:            m.MyanimelistID,
+// 		ShikiID:          m.ID,
+// 	}
+
+// 	if m.CompareStatus("released") {
+// 		entity.EpisodesReleased = *m.Episodes
+// 	}
+
+// 	return &entity
+// }

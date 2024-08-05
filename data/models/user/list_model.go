@@ -1,26 +1,33 @@
 package userModels
 
 import (
-	"time"
+	"context"
 
-	baseModels "github.com/ilfey/hikilist-go/internal/base_models"
+	"github.com/ilfey/hikilist-go/data/database"
+	"github.com/ilfey/hikilist-go/internal/orm"
 )
 
-type ListItemModel struct {
-	ID uint `json:"id"`
+type ListModel struct {
+	Results []*ListItemModel `json:"results"`
 
-	Username string `json:"username"`
-
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Count *int64 `json:"count,omitempty"`
 }
 
-func (ListItemModel) TableName() string {
-	return "users"
-}
+func (lm *ListModel) Paginate(ctx context.Context, p *Paginate) error {
+	p.Normalize()
 
-type ListModel = baseModels.ListModel[ListItemModel]
+	results, err := orm.Select(&ListItemModel{}).
+		Limit(p.Limit).
+		Offset(p.GetOffset(p.Page, p.Limit)).
+		Order(p.Order.ToQuery()).
+		Query(ctx, database.Instance())
+	if err != nil {
+		return err
+	}
 
-func NewListModel(items []*ListItemModel) *ListModel {
-	return baseModels.NewListModel(items)
+	lm.Results = results
+
+	// TODO: count
+
+	return nil
 }

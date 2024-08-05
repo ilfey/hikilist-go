@@ -1,11 +1,12 @@
 package userActionModels
 
 import (
+	"context"
 	"time"
 
-	"github.com/ilfey/hikilist-go/data/entities"
+	"github.com/ilfey/hikilist-go/data/database"
 	userModels "github.com/ilfey/hikilist-go/data/models/user"
-	"gorm.io/gorm"
+	"github.com/ilfey/hikilist-go/internal/orm"
 )
 
 type DetailModel struct {
@@ -21,24 +22,19 @@ type DetailModel struct {
 	UpdatedAt time.Time
 }
 
-func DetailModelFromEntity(entity *entities.UserAction) *DetailModel {
-	return &DetailModel{
-		ID:          entity.ID,
-		Title:       entity.Title,
-		Description: entity.Description,
-		CreatedAt:   entity.CreatedAt,
-		UpdatedAt:   entity.UpdatedAt,
-	}
+func (DetailModel) TableName() string {
+	return "user_actions"
 }
 
-func (m *DetailModel) ToEntity() *entities.UserAction {
-	return &entities.UserAction{
-		Model: gorm.Model{
-			ID:        m.ID,
-			CreatedAt: m.CreatedAt,
-			UpdatedAt: m.UpdatedAt,
-		},
-		Title:       m.Title,
-		Description: m.Description,
+func (dm *DetailModel) Get(ctx context.Context, conds any) error {
+	m, err := orm.Select(dm).
+		Where(conds).
+		QueryRow(ctx, database.Instance())
+	if err != nil {
+		return err
 	}
+
+	*dm = *m
+
+	return nil
 }
