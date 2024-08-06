@@ -3,8 +3,10 @@ package collectionModels
 import (
 	"context"
 
+	sq "github.com/Masterminds/squirrel"
+	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/ilfey/hikilist-go/data/database"
-	"github.com/ilfey/hikilist-go/internal/orm"
+	"github.com/rotisserie/eris"
 )
 
 type ListModel struct {
@@ -13,21 +15,51 @@ type ListModel struct {
 	Count *int64 `json:"count,omitempty"`
 }
 
-func (lm *ListModel) Paginate(ctx context.Context, p *Paginate, conds any) error {
+func (lm *ListModel) Fill(ctx context.Context, p *Paginate, conds any) error {
 	p.Normalize()
 
-	results, err := orm.Select(&ListItemModel{}).
-		Limit(p.Limit).
-		Where(conds).
-		Offset(p.GetOffset(p.Page, p.Limit)).
-		Query(ctx, database.Instance())
+	sql, args, err := lm.fillResultsSQL(p, conds)
 	if err != nil {
-		return err
+		return eris.Wrap(err, "failed to build select query")
 	}
 
-	lm.Results = results
+	err = pgxscan.Select(ctx, database.Instance(), &lm.Results, sql, args...)
+	if err != nil {
+		return eris.Wrap(err, "failed to execute select query")
+	}
 
-	// TODO: count
+	sql, args, err = lm.fillCountSQL(conds)
+	if err != nil {
+		return eris.Wrap(err, "failed to build count query")
+	}
+
+	err = database.Instance().QueryRow(ctx, sql, args...).Scan(&lm.Count)
+	if err != nil {
+		return eris.Wrap(err, "failed to execute count query")
+	}
 
 	return nil
+}
+
+func (ListModel) fillResultsSQL(p *Paginate, conds any) (string, []any, error) {
+	return sq.Select(
+		"id",
+		"user_id",
+		"title",
+		"created_at",
+		"updated_at",
+	).
+		From("collections").
+		Where(conds).
+		OrderBy("id DESC").
+		Offset(uint64(p.GetOffset(p.Page, p.Limit))).
+		Limit(uint64(p.Limit)).
+		ToSql()
+}
+
+func (ListModel) fillCountSQL(conds any) (string, []any, error) {
+	return sq.Select("COUNT(*)").
+		From("collections").
+		Where(conds).
+		ToSql()
 }

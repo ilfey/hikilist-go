@@ -85,7 +85,7 @@ func (controller *Controller) List(ctx *handler.Context) {
 
 	var lm animeModels.ListModel
 
-	err := lm.Paginate(ctx, paginate, nil)
+	err := lm.Fill(ctx, paginate, nil)
 	if err != nil {
 		logger.Errorf("Failed to get animes: %v", err)
 

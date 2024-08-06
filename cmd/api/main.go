@@ -20,7 +20,9 @@ func main() {
 
 	config := config.New()
 
-	database.New(config.Database)
+	instance := database.New(config.Database)
+
+	defer instance.Close()
 
 	// Create services.
 

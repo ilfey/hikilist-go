@@ -4,8 +4,10 @@ import (
 	"context"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
+	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/ilfey/hikilist-go/data/database"
-	"github.com/ilfey/hikilist-go/internal/orm"
+	"github.com/rotisserie/eris"
 )
 
 // var _ baseModels.DetailModel[DetailModel] = &DetailModel{}
@@ -26,25 +28,53 @@ func (m *DetailModel) TableName() string {
 	return "users"
 }
 
-func (dm *DetailModel) Get(ctx context.Context, conds any) error {
-	m, err := orm.Select(dm).
-		Where(conds).
-		QueryRow(ctx, database.Instance())
+func (dm *DetailModel) Get(ctx context.Context, conds map[string]any) error {
+	sql, args, err := dm.getSQL(conds)
 	if err != nil {
-		return err
+		return eris.Wrap(err, "failed to build select query")
 	}
 
-	*dm = *m
+	err = pgxscan.Get(ctx, database.Instance(), dm, sql, args...)
+	if err != nil {
+		return eris.Wrap(err, "failed to get user")
+	}
+	return nil
+}
 
-	return nil 
+func (DetailModel) getSQL(conds map[string]any) (string, []any, error) {
+	return sq.Select(
+		"id",
+		"username",
+		"password",
+		"last_online",
+		"created_at",
+	).
+		From("users").
+		Where(conds).
+		ToSql()
 }
 
 func (m *DetailModel) Update(ctx context.Context) error {
-	_, err := orm.Update(m).
-		Where(map[string]any{
-			"ID": m.ID,
-		}).
-		Exec(ctx, database.Instance())
+	sql, args, err := m.updateSQL()
+	if err != nil {
+		return eris.Wrap(err, "failed to build update query")
+	}
 
-	return err
+	_, err = database.Instance().Exec(ctx, sql, args...)
+	if err != nil {
+		return eris.Wrap(err, "failed to update user")
+	}
+
+	return nil
+}
+
+func (m *DetailModel) updateSQL() (string, []any, error) {
+	return sq.Update("users").
+		SetMap(map[string]any{
+			"username":    m.Username,
+			"password":    m.Password,
+			"last_online": m.LastOnline,
+		}).
+		Where(sq.Eq{"id": m.ID}).
+		ToSql()
 }

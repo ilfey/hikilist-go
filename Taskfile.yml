@@ -4,8 +4,8 @@ vars:
   BIN: "{{.ROOT_DIR}}/bin"
 
   MIGRATION_DIR: "{{.ROOT_DIR}}/migrations"
-  DRIVER: sqlite3
-  DSN: "{{.ROOT_DIR}}/hiki.db"
+  DRIVER: postgres
+  DSN: "postgres://root:QWEasd123@127.0.0.1:5432/hikilist?sslmode=disable"
 
 tasks:
   run:

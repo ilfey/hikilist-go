@@ -3,8 +3,9 @@ package tokenModels
 import (
 	"context"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/ilfey/hikilist-go/data/database"
-	"github.com/ilfey/hikilist-go/internal/orm"
+	"github.com/rotisserie/eris"
 )
 
 type CreateModel struct {
@@ -18,15 +19,27 @@ func (CreateModel) TableName() string {
 }
 
 func (cm *CreateModel) Insert(ctx context.Context) error {
-	id, err := orm.Insert(cm).
-		Ignore("ID").
-		Exec(ctx, database.Instance())
-
+	sql, args, err := cm.insertSQL()
 	if err != nil {
-		return err
+		return eris.Wrap(err, "failed to build insert query")
 	}
 
-	cm.ID = id
+	err = database.Instance().QueryRow(ctx, sql, args...).Scan(&cm.ID)
+	if err != nil {
+		return eris.Wrap(err, "failed to insert token")
+	}
 
 	return nil
+}
+
+func (cm *CreateModel) insertSQL() (string, []any, error) {
+	return sq.Insert("tokens").
+		Columns(
+			"token",
+		).
+		Values(
+			cm.Token,
+		).
+		Suffix("RETURNING id").
+		ToSql()
 }

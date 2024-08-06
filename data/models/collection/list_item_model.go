@@ -8,8 +8,6 @@ type ListItemModel struct {
 	Title string `json:"title"`
 
 	Description *string `json:"description"`
-
-	IsPublic bool `json:"is_public"`
 }
 
 func (ListItemModel) TableName() string {

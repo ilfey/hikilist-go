@@ -4,7 +4,7 @@
 -- Animes
 
 CREATE TABLE IF NOT EXISTS animes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
     title VARCHAR NOT NULL,
     description TEXT,
@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS animes (
     mal_id BIGINT,
     shiki_id BIGINT,
 
-    created_at DATETIME NOT NULL
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE UNIQUE INDEX idx_animes_mal_id ON animes (mal_id);
@@ -34,13 +35,14 @@ CREATE TABLE IF NOT EXISTS animes_related (
 -- User
 
 CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 
     username VARCHAR(256) NOT NULL,
     password VARCHAR(256),
-    last_online DATETIME,
+    last_online TIMESTAMP,
 
-    created_at DATETIME NOT NULL
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username);
@@ -48,20 +50,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username);
 -- User actions
 
 CREATE TABLE user_actions (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   
   user_id BIGINT NOT NULL,
   title VARCHAR NOT NULL,
   description VARCHAR NOT NULL,
   
-  created_at DATETIME,
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  
   CONSTRAINT fk_user_actions_user FOREIGN KEY (user_id) REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 -- Tokens
 
 CREATE TABLE IF NOT EXISTS tokens (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     token VARCHAR(256) 
 );
 
@@ -71,15 +74,15 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_tokens_token ON tokens(token);
 -- Collections
 
 CREATE TABLE IF NOT EXISTS collections (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     
     title VARCHAR(512),
     description VARCHAR,
     is_public BOOLEAN NOT NULL,
     user_id BIGINT,
 
-    updated_at DATETIME,
-    created_at DATETIME,
+    updated_at TIMESTAMP  NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(), 
 
     CONSTRAINT fk_users_collections FOREIGN KEY (user_id) REFERENCES users (id) ON UPDATE CASCADE ON DELETE SET NULL
 );

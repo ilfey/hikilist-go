@@ -1,37 +1,39 @@
 package database
 
 import (
+	"context"
 	"sync"
 
+	sq "github.com/Masterminds/squirrel"
 	databaseConfig "github.com/ilfey/hikilist-go/config/database"
 	"github.com/ilfey/hikilist-go/internal/logger"
-	"github.com/ilfey/hikilist-go/internal/orm"
-	"github.com/ilfey/hikilist-go/internal/orm/drivers"
-	"github.com/jmoiron/sqlx"
-
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/ilfey/hikilist-go/internal/postgres"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var (
-	instance orm.DB
+	instance postgres.DB
 	once     sync.Once
 )
 
-func New(config *databaseConfig.Config) orm.DB {
+func New(config *databaseConfig.Config) postgres.DB {
 	once.Do(func() {
-		db := sqlx.MustConnect("sqlite3", config.DBName)
+		sq.StatementBuilder = sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
-		if err := db.Ping(); err != nil {
+		pool, err := pgxpool.New(context.Background(), config.DSN())
+		if err != nil {
 			logger.Fatalf("Database connection failed: %v", err)
 		}
 
-		instance = drivers.NewSQLX(db)
+		instance = &postgres.ConnectionPool{
+			Pool: pool,
+		}
 	})
 
 	return instance
 }
 
-func Instance() orm.DB {
+func Instance() postgres.DB {
 	if instance == nil {
 		logger.Fatal("Database is not initialized")
 	}

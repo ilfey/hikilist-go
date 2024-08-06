@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
+	"github.com/rotisserie/eris"
+
 	"github.com/ilfey/hikilist-go/data/database"
-	"github.com/ilfey/hikilist-go/internal/orm"
 	"github.com/ilfey/hikilist-go/internal/validator"
 )
 
@@ -60,17 +62,38 @@ func (model CreateModel) Validate() validator.ValidateError {
 }
 
 func (cm *CreateModel) Insert(ctx context.Context) error {
-	cm.CreatedAt = time.Now()
-
-	id, err := orm.Insert(cm).
-		Ignore("ID").
-		Exec(ctx, database.Instance())
-
+	sql, args, err := cm.insertSQL()
 	if err != nil {
-		return err
+		return eris.Wrap(err, "failed to create insert sql")
 	}
 
-	cm.ID = id
+	return database.Instance().
+		QueryRow(ctx, sql, args...).
+		Scan(&cm.ID)
+}
 
-	return nil
+func (cm *CreateModel) insertSQL() (string, []any, error) {
+	return sq.Insert("animes").
+		Columns(
+			"title",
+			"description",
+			"poster",
+			"episodes",
+			"episodes_released",
+			"mal_id",
+			"shiki_id",
+			"created_at",
+		).
+		Values(
+			cm.Title,
+			cm.Description,
+			cm.Poster,
+			cm.Episodes,
+			cm.EpisodesReleased,
+			cm.MalID,
+			cm.ShikiID,
+			time.Now(),
+		).
+		Suffix("RETURNING id").
+		ToSql()
 }

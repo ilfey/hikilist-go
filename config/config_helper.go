@@ -9,7 +9,7 @@ import (
 )
 
 func LoadEnvironment() {
-	err := godotenv.Load("configs/local.env")
+	err := godotenv.Load("./configs/local.env")
 	if err != nil {
 		logger.Fatal(err)
 	}

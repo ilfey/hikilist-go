@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/ilfey/hikilist-go/data/database"
-	"github.com/ilfey/hikilist-go/internal/orm"
+	"github.com/rotisserie/eris"
 )
 
 type CreateModel struct {
@@ -24,17 +25,33 @@ func (CreateModel) TableName() string {
 }
 
 func (cm *CreateModel) Insert(ctx context.Context) error {
-	cm.CreatedAt = time.Now()
-
-	id, err := orm.Insert(cm).
-		Ignore("ID").
-		Exec(ctx, database.Instance())
-
+	sql, args, err := cm.insertSQL()
 	if err != nil {
-		return err
+		return eris.Wrap(err, "failed to build insert query")
 	}
 
-	cm.ID = id
+	err = database.Instance().QueryRow(ctx, sql, args...).Scan(&cm.ID)
+	if err != nil {
+		return eris.Wrap(err, "failed to insert user action")
+	}
 
 	return nil
+}
+
+func (cm *CreateModel) insertSQL() (string, []any, error) {
+	return sq.Insert("user_actions").
+		Columns(
+			"user_id",
+			"title",
+			"description",
+			"created_at",
+		).
+		Values(
+			cm.UserID,
+			cm.Title,
+			cm.Description,
+			cm.CreatedAt,
+		).
+		Suffix("RETURNING id").
+		ToSql()
 }

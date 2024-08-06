@@ -39,12 +39,20 @@ func (p Paginate) Validate() validator.ValidateError {
 				"-id",
 				"title",
 				"-title",
+				"episodes",
+				"-episodes",
+				"episodes_released",
+				"-episodes_released",
 			}),
 		},
 	})
 }
 
 func (p *Paginate) Normalize() *Paginate {
+	if p.Order == "" {
+		p.Order = "-id"
+	}
+
 	if p.Page == 0 {
 		p.Page = 1
 	}

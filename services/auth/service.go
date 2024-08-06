@@ -3,7 +3,6 @@ package authService
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -164,7 +163,9 @@ func (s *service) GetUser(ctx context.Context, claims *Claims) (*userModels.Deta
 	var dm userModels.DetailModel
 
 	// Get user from database
-	err := dm.Get(ctx, fmt.Sprintf("%s.id = %d", dm.TableName(), claims.UserID))
+	err := dm.Get(ctx, map[string]any{
+		"id": claims.UserID,
+	})
 	if err != nil {
 		return nil, eris.Wrapf(err, "failed get user with id: %d", claims.UserID)
 	}

@@ -4,8 +4,10 @@ import (
 	"context"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
+	"github.com/georgysavva/scany/v2/pgxscan"
 	"github.com/ilfey/hikilist-go/data/database"
-	"github.com/ilfey/hikilist-go/internal/orm"
+	"github.com/rotisserie/eris"
 )
 
 type DetailModel struct {
@@ -29,16 +31,28 @@ func (DetailModel) TableName() string {
 	return "animes"
 }
 
-func (dm *DetailModel) Get(ctx context.Context, conds any) error {
-	m, err := orm.Select(&DetailModel{}).
-		Ignore("Related"). // TODO: fix this
-		Where(conds).
-		QueryRow(ctx, database.Instance())
+func (dm *DetailModel) Get(ctx context.Context, conds map[string]any) error {
+	sql, args, err := dm.getSQL(conds)
 	if err != nil {
-		return err
+		return eris.Wrap(err, "failed to build select query")
 	}
 
-	*dm = *m
+	return pgxscan.Select(ctx, database.Instance(), dm, sql, args...)
+}
 
-	return nil
+func (DetailModel) getSQL(conds map[string]any) (string, []any, error) {
+	return sq.Select(
+		"id",
+		"title",
+		"description",
+		"poster",
+		"episodes",
+		"episodes_released",
+		"mal_id",
+		"shiki_id",
+		"created_at",
+	).
+		From("animes").
+		Where(conds).
+		ToSql()
 }

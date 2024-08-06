@@ -6,9 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/ilfey/hikilist-go/data/database"
-	"github.com/ilfey/hikilist-go/internal/orm"
 	"github.com/ilfey/hikilist-go/internal/validator"
+	"github.com/rotisserie/eris"
 )
 
 type CreateModel struct {
@@ -16,7 +17,7 @@ type CreateModel struct {
 
 	UserID uint `json:"-"`
 
-	Title        string  `json:"title"`
+	Title       string  `json:"title"`
 	Description *string `json:"description"`
 	IsPublic    *bool   `json:"is_public"`
 
@@ -25,22 +26,6 @@ type CreateModel struct {
 
 func (CreateModel) TableName() string {
 	return "collections"
-}
-
-func (cm *CreateModel) Insert(ctx context.Context) error {
-	cm.CreatedAt = time.Now()
-
-	id, err := orm.Insert(cm).
-		Ignore("ID").
-		Exec(ctx, database.Instance())
-
-	if err != nil {
-		return err
-	}
-
-	cm.ID = id
-
-	return nil
 }
 
 func NewCreateModelFromRequest(request *http.Request) *CreateModel {
@@ -55,11 +40,45 @@ func (model CreateModel) Validate() validator.ValidateError {
 	return validator.Validate(
 		model,
 		map[string][]validator.Option{
-			"Name": {
+			"Title": {
 				validator.Required(),
 				validator.LenGreaterThat(3),
 				validator.LenLessThat(256),
 			},
 		},
 	)
+}
+
+func (cm *CreateModel) Insert(ctx context.Context) error {
+	sql, args, err := cm.insertSQL()
+	if err != nil {
+		return eris.Wrap(err, "failed to build insert query")
+	}
+
+	err = database.Instance().QueryRow(ctx, sql, args...).Scan(&cm.ID)
+	if err != nil {
+		return eris.Wrap(err, "failed to insert collection")
+	}
+
+	return nil
+}
+
+func (cm *CreateModel) insertSQL() (string, []any, error) {
+	return sq.Insert("collections").
+		Columns(
+			"title",
+			"user_id",
+			"description",
+			"is_public",
+			"created_at",
+		).
+		Values(
+			cm.Title,
+			cm.Description,
+			cm.IsPublic,
+			cm.UserID,
+			time.Now(),
+		).
+		Suffix("RETURNING id").
+		ToSql()
 }

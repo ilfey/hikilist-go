@@ -30,7 +30,7 @@ func New() *Config {
 			Password: getEnv("DB_CONFIG_PASSWORD", ""),
 			Host:     getEnv("DB_CONFIG_HOST", ""),
 			Port:     getEnvAsInt("DB_CONFIG_PORT", 0),
-			DBName:   getEnv("DB_CONFIG_DBNAME", "hiki.db"),
+			Database: getEnv("DB_CONFIG_DATABASE", "hiki.db"),
 		},
 		Server: &server.Config{
 			ReadTimeout:       time.Duration(getEnvAsInt("SERVER_CONFIG_READ_TIMEOUT", 10000)),

@@ -69,7 +69,7 @@ func (controller *UserController) List(ctx *handler.Context) {
 
 	var lm userModels.ListModel
 
-	err := lm.Paginate(ctx, paginate)
+	err := lm.Fill(ctx, paginate, nil)
 	if err != nil {
 		logger.Errorf("Failed to get users: %v", err)
 
@@ -177,8 +177,8 @@ func (c *UserController) MyActions(ctx *handler.Context) {
 
 	var lm userActionModels.ListModel
 
-	err = lm.Paginate(ctx, paginate, map[string]any{
-		"UserID": user.ID,
+	err = lm.Fill(ctx, paginate, map[string]any{
+		"user_id": user.ID,
 	})
 	if err != nil {
 		logger.Errorf("Failed to get user actions: %v", err)
@@ -216,8 +216,8 @@ func (c *UserController) MyCollections(ctx *handler.Context) {
 
 	var lm collectionModels.ListModel
 
-	err = lm.Paginate(ctx, paginate, map[string]any{
-		"UserID": user.ID,
+	err = lm.Fill(ctx, paginate, map[string]any{
+		"user_id": user.ID,
 	})
 	if err != nil {
 		logger.Errorf("Failed to get user collections: %v", err)

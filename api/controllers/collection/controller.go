@@ -100,8 +100,8 @@ func (controller *Controller) List(ctx *handler.Context) {
 
 	var lm collectionModels.ListModel
 
-	err := lm.Paginate(ctx, paginate, map[string]any{
-		"IsPublic": true,
+	err := lm.Fill(ctx, paginate, map[string]any{
+		"is_public": true,
 	})
 	if err != nil {
 		logger.Errorf("Failed to get collections: %v", err)
@@ -177,11 +177,11 @@ func (controller *Controller) Animes(ctx *handler.Context) {
 
 	// TODO: hide animes from private collections
 
-	err := lm.PaginateFromCollection(
+	err := lm.FillFromCollection(
 		ctx,
 		req,
 		userId,
-		id,
+		uint(id),
 	)
 	if err != nil {
 		logger.Errorf("Failed to get animes: %v", err)
