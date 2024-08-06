@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ilfey/hikilist-go/internal/validator"
+	"github.com/ilfey/hikilist-go/internal/validator/options"
 )
 
 // Модель обновления токена
@@ -22,12 +23,12 @@ func RefreshModelFromRequest(request *http.Request) *RefreshModel {
 }
 
 // Валидация модели
-func (m RefreshModel) Validate() validator.ValidateError {
+func (m RefreshModel) Validate() error {
 	return validator.Validate(
 		m,
-		map[string][]validator.Option{
+		map[string][]options.Option{
 			"Refresh": {
-				validator.Required(),
+				options.Required(),
 			},
 		},
 	)

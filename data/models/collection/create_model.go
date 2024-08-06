@@ -9,6 +9,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/ilfey/hikilist-go/data/database"
 	"github.com/ilfey/hikilist-go/internal/validator"
+	"github.com/ilfey/hikilist-go/internal/validator/options"
 	"github.com/rotisserie/eris"
 )
 
@@ -24,32 +25,30 @@ type CreateModel struct {
 	CreatedAt time.Time `json:"-"`
 }
 
-func (CreateModel) TableName() string {
-	return "collections"
-}
-
-func NewCreateModelFromRequest(request *http.Request) *CreateModel {
-	model := new(CreateModel)
-
-	json.NewDecoder(request.Body).Decode(model)
-
-	return model
-}
-
-func (model CreateModel) Validate() validator.ValidateError {
+func (cm CreateModel) Validate() error {
 	return validator.Validate(
-		model,
-		map[string][]validator.Option{
+		cm,
+		map[string][]options.Option{
 			"Title": {
-				validator.Required(),
-				validator.LenGreaterThat(3),
-				validator.LenLessThat(256),
+				options.Required(),
+				options.LenGreaterThan(3),
+				options.LenLessThan(256),
+			},
+			"Description": {
+				options.IfNotNil(
+					options.LenLessThan(4096),
+				),
 			},
 		},
 	)
 }
 
 func (cm *CreateModel) Insert(ctx context.Context) error {
+	err := cm.Validate()
+	if err != nil {
+		return eris.Wrap(err, "failed to validate model")
+	}
+
 	sql, args, err := cm.insertSQL()
 	if err != nil {
 		return eris.Wrap(err, "failed to build insert query")
@@ -81,4 +80,11 @@ func (cm *CreateModel) insertSQL() (string, []any, error) {
 		).
 		Suffix("RETURNING id").
 		ToSql()
+}
+func NewCreateModelFromRequest(request *http.Request) *CreateModel {
+	model := new(CreateModel)
+
+	json.NewDecoder(request.Body).Decode(model)
+
+	return model
 }

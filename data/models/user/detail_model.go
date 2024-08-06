@@ -24,10 +24,6 @@ type DetailModel struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-func (m *DetailModel) TableName() string {
-	return "users"
-}
-
 func (dm *DetailModel) Get(ctx context.Context, conds map[string]any) error {
 	sql, args, err := dm.getSQL(conds)
 	if err != nil {

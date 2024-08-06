@@ -8,7 +8,3 @@ type ListItemModel struct {
 
 	CreatedAt string `json:"created_at"`
 }
-
-func (ListItemModel) TableName() string {
-	return "user_actions"
-}

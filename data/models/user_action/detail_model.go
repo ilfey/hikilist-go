@@ -24,10 +24,6 @@ type DetailModel struct {
 	UpdatedAt time.Time
 }
 
-func (DetailModel) TableName() string {
-	return "user_actions"
-}
-
 func (dm *DetailModel) Get(ctx context.Context, conds map[string]any) error {
 	sql, args, err := dm.getSQL(conds)
 	if err != nil {

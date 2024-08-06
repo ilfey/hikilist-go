@@ -27,10 +27,6 @@ type DetailModel struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func (DetailModel) TableName() string {
-	return "collections"
-}
-
 func (dm *DetailModel) Get(ctx context.Context, conds any) error {
 	sql, args, err := dm.getSQL(conds)
 	if err != nil {

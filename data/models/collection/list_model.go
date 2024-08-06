@@ -16,6 +16,11 @@ type ListModel struct {
 }
 
 func (lm *ListModel) Fill(ctx context.Context, p *Paginate, conds any) error {
+	err := p.Validate()
+	if err != nil {
+		return eris.Wrap(err, "failed to validate pagination")
+	}
+	
 	p.Normalize()
 
 	sql, args, err := lm.fillResultsSQL(p, conds)

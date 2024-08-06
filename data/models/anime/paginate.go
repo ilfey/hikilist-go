@@ -3,6 +3,7 @@ package animeModels
 import (
 	baseModels "github.com/ilfey/hikilist-go/internal/base_models"
 	"github.com/ilfey/hikilist-go/internal/validator"
+	"github.com/ilfey/hikilist-go/internal/validator/options"
 )
 
 type Paginate struct {
@@ -13,27 +14,17 @@ type Paginate struct {
 	Order baseModels.OrderField `json:"order"`
 }
 
-func NewPaginateFromQuery(queries map[string][]string) *Paginate {
-	p := Paginate{}
-
-	p.Page = p.QueryInt(queries, "page")
-	p.Limit = p.QueryInt(queries, "limit")
-	p.Order = p.QueryOrder(queries, "order")
-
-	return &p
-}
-
-func (p Paginate) Validate() validator.ValidateError {
-	return validator.Validate(p, map[string][]validator.Option{
+func (p Paginate) Validate() error {
+	return validator.Validate(p, map[string][]options.Option{
 		"Page": {
-			validator.GreaterThat[int64](-1),
+			options.GreaterThan[int64](-1),
 		},
 		"Limit": {
-			validator.GreaterThat[int64](-1),
-			validator.LessThat[int64](101),
+			options.GreaterThan[int64](-1),
+			options.LessThan[int64](101),
 		},
 		"Order": {
-			validator.InList([]string{
+			options.InList([]string{
 				"",
 				"id",
 				"-id",
@@ -46,6 +37,16 @@ func (p Paginate) Validate() validator.ValidateError {
 			}),
 		},
 	})
+}
+
+func NewPaginateFromQuery(queries map[string][]string) *Paginate {
+	p := Paginate{}
+
+	p.Page = p.QueryInt(queries, "page")
+	p.Limit = p.QueryInt(queries, "limit")
+	p.Order = p.QueryOrder(queries, "order")
+
+	return &p
 }
 
 func (p *Paginate) Normalize() *Paginate {

@@ -11,6 +11,7 @@ import (
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/responses"
 	"github.com/ilfey/hikilist-go/internal/errorsx"
 	"github.com/ilfey/hikilist-go/internal/logger"
+	"github.com/ilfey/hikilist-go/internal/validator"
 
 	baseController "github.com/ilfey/hikilist-go/api/controllers/base_controller"
 
@@ -56,21 +57,23 @@ func (c *UserController) Bind(router *mux.Router) *mux.Router {
 func (controller *UserController) List(ctx *handler.Context) {
 	paginate := userModels.NewPaginateFromQuery(ctx.QueriesMap())
 
-	vErr := paginate.Validate()
-	if vErr != nil {
-		logger.Debugf("Failed to validate paginate: %v", vErr)
-
-		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
-			"error": vErr.Error(),
-		}))
-
-		return
-	}
-
 	var lm userModels.ListModel
 
 	err := lm.Fill(ctx, paginate, nil)
 	if err != nil {
+		// Validation error
+		var vErr *validator.ValidateError
+
+		if eris.As(err, &vErr) {
+			logger.Debug(err)
+
+			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
+				"error": vErr,
+			}))
+
+			return
+		}
+
 		logger.Errorf("Failed to get users: %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
@@ -164,23 +167,25 @@ func (c *UserController) MyActions(ctx *handler.Context) {
 
 	paginate := userActionModels.NewPaginateFromQuery(ctx.QueriesMap())
 
-	vErr := paginate.Validate()
-	if vErr != nil {
-		logger.Debugf("Failed to validate paginate: %v", vErr)
-
-		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
-			"error": vErr,
-		}))
-
-		return
-	}
-
 	var lm userActionModels.ListModel
 
 	err = lm.Fill(ctx, paginate, map[string]any{
 		"user_id": user.ID,
 	})
 	if err != nil {
+		// Validation error
+		var vErr *validator.ValidateError
+
+		if eris.As(err, &vErr) {
+			logger.Debug(err)
+
+			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
+				"error": vErr,
+			}))
+
+			return
+		}
+
 		logger.Errorf("Failed to get user actions: %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
@@ -203,23 +208,25 @@ func (c *UserController) MyCollections(ctx *handler.Context) {
 
 	paginate := collectionModels.NewPaginateFromQuery(ctx.QueriesMap())
 
-	vErr := paginate.Validate()
-	if vErr != nil {
-		logger.Debugf("Failed to validate paginate: %v", vErr)
-
-		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
-			"error": vErr,
-		}))
-
-		return
-	}
-
 	var lm collectionModels.ListModel
 
 	err = lm.Fill(ctx, paginate, map[string]any{
 		"user_id": user.ID,
 	})
 	if err != nil {
+		// Validation error
+		var vErr *validator.ValidateError
+
+		if eris.As(err, &vErr) {
+			logger.Debug(err)
+
+			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
+				"error": vErr,
+			}))
+
+			return
+		}
+
 		logger.Errorf("Failed to get user collections: %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())

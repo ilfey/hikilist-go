@@ -9,7 +9,3 @@ type ListItemModel struct {
 
 	Description *string `json:"description"`
 }
-
-func (ListItemModel) TableName() string {
-	return "collections"
-}

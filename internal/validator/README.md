@@ -17,17 +17,17 @@ type Example struct {
 ```go
 st := Example{}
 
-vErr := validator.Validate(st, map[string][]validator.Option{
+vErr := validator.Validate(st, map[string][]options.Option{
     "Username": {
-        validator.Required(),
-        validator.LenGreaterThat(3),
+        options.Required(),
+        options.LenGreaterThan(3),
     },
     "Password": {
-        validator.Required(),
-        validator.LenGreaterThat(5),
+        options.Required(),
+        options.LenGreaterThan(5),
     },
     "Email": {
-        validator.LenLessThat(64),
+        options.LenLessThan(64),
     },
 })
 if vErr != nil {

@@ -18,10 +18,6 @@ type CreateModel struct {
 	CreatedAt time.Time `json:"-"`
 }
 
-func (CreateModel) TableName() string {
-	return "users"
-}
-
 func (cm *CreateModel) Insert(ctx context.Context) error {
 	sql, args, err := cm.insertSQL()
 	if err != nil {

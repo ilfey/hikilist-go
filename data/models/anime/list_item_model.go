@@ -9,6 +9,3 @@ type ListItemModel struct {
 	EpisodesReleased uint    `json:"episodes_released"`
 }
 
-func (ListItemModel) TableName() string {
-	return "animes"
-}

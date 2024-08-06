@@ -14,10 +14,6 @@ type CreateModel struct {
 	Token string `json:"-"`
 }
 
-func (CreateModel) TableName() string {
-	return "tokens"
-}
-
 func (cm *CreateModel) Insert(ctx context.Context) error {
 	sql, args, err := cm.insertSQL()
 	if err != nil {

@@ -11,6 +11,7 @@ import (
 
 	"github.com/ilfey/hikilist-go/data/database"
 	"github.com/ilfey/hikilist-go/internal/validator"
+	"github.com/ilfey/hikilist-go/internal/validator/options"
 )
 
 type CreateModel struct {
@@ -30,38 +31,44 @@ type CreateModel struct {
 	CreatedAt time.Time `json:"-"`
 }
 
-func (CreateModel) TableName() string {
-	return "animes"
-}
-
-func CreateModelFromRequest(request *http.Request) *CreateModel {
-	model := new(CreateModel)
-
-	json.NewDecoder(request.Body).Decode(model)
-
-	return model
-}
-
-// Валидация модели
-func (model CreateModel) Validate() validator.ValidateError {
+func (cm CreateModel) Validate() error {
 	return validator.Validate(
-		model,
-		map[string][]validator.Option{
+		cm,
+		map[string][]options.Option{
 			"Title": {
-				validator.LenGreaterThat(3),
-				validator.LenLessThat(256),
+				options.LenGreaterThan(3),
+				options.LenLessThan(256),
 			},
-			// "Description": {
-			// 	validator.LenLessThan(4096),
-			// },
-			// "Poster": {
-			// 	validator.LenLessThan(256),
-			// },
+			"Description": {
+				options.IfNotNil(
+					options.LenLessThan(4096),
+				),
+			},
+			"Poster": {
+				options.IfNotNil(
+					options.LenLessThan(256),
+				),
+			},
+			"MalID": {
+				options.IfNotNil(
+					options.GreaterThan[int64](0),
+				),
+			},
+			"ShikiID": {
+				options.IfNotNil(
+					options.GreaterThan[int64](0),
+				),
+			},
 		},
 	)
 }
 
 func (cm *CreateModel) Insert(ctx context.Context) error {
+	err := cm.Validate()
+	if err != nil {
+		return eris.Wrap(err, "failed to validate model")
+	}
+
 	sql, args, err := cm.insertSQL()
 	if err != nil {
 		return eris.Wrap(err, "failed to create insert sql")
@@ -96,4 +103,12 @@ func (cm *CreateModel) insertSQL() (string, []any, error) {
 		).
 		Suffix("RETURNING id").
 		ToSql()
+}
+
+func CreateModelFromRequest(request *http.Request) *CreateModel {
+	model := new(CreateModel)
+
+	json.NewDecoder(request.Body).Decode(model)
+
+	return model
 }

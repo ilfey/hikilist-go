@@ -3,6 +3,7 @@ package userModels
 import (
 	baseModels "github.com/ilfey/hikilist-go/internal/base_models"
 	"github.com/ilfey/hikilist-go/internal/validator"
+	"github.com/ilfey/hikilist-go/internal/validator/options"
 )
 
 type Paginate struct {
@@ -23,17 +24,17 @@ func NewPaginateFromQuery(queries map[string][]string) *Paginate {
 	return &p
 }
 
-func (p Paginate) Validate() validator.ValidateError {
-	return validator.Validate(p, map[string][]validator.Option{
+func (p Paginate) Validate() error {
+	return validator.Validate(p, map[string][]options.Option{
 		"Page": {
-			validator.GreaterThat[int64](-1),
+			options.GreaterThan[int64](-1),
 		},
 		"Limit": {
-			validator.GreaterThat[int64](-1),
-			validator.LessThat[int64](101),
+			options.GreaterThan[int64](-1),
+			options.LessThan[int64](101),
 		},
 		"Order": {
-			validator.InList([]string{
+			options.InList([]string{
 				"",
 				"id",
 				"-id",

@@ -7,21 +7,15 @@ import (
 	"github.com/ilfey/hikilist-go/internal/errorsx"
 )
 
-type errorImpl struct {
+type ValidateError struct {
 	errs map[string][]string
 }
 
-type ValidateError interface {
-	error
-
-	MarshalJSON() ([]byte, error)
-}
-
-func (e *errorImpl) Error() string {
+func (e *ValidateError) Error() string {
 	return string(errorsx.Ignore(e.MarshalJSON()))
 }
 
-func (e *errorImpl) MarshalJSON() ([]byte, error) {
+func (e *ValidateError) MarshalJSON() ([]byte, error) {
 	_map := make(map[string][]string)
 	for k, v := range e.errs {
 		for _, msg := range v {

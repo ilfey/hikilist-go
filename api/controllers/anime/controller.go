@@ -11,6 +11,7 @@ import (
 	animeModels "github.com/ilfey/hikilist-go/data/models/anime"
 	"github.com/ilfey/hikilist-go/internal/errorsx"
 	"github.com/ilfey/hikilist-go/internal/logger"
+	"github.com/ilfey/hikilist-go/internal/validator"
 	authService "github.com/ilfey/hikilist-go/services/auth"
 	"github.com/rotisserie/eris"
 )
@@ -45,19 +46,21 @@ func (c *Controller) Bind(router *mux.Router) *mux.Router {
 func (controller *Controller) Create(ctx *handler.Context) {
 	req := animeModels.CreateModelFromRequest(ctx.Request)
 
-	vErr := req.Validate()
-	if vErr != nil {
-		logger.Debugf("Failed to validate request: %v", vErr)
-
-		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
-			"error": vErr,
-		}))
-
-		return
-	}
-
 	err := req.Insert(ctx)
 	if err != nil {
+		// Validation error
+		var vErr *validator.ValidateError
+
+		if eris.As(err, &vErr) {
+			logger.Debug(err)
+
+			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
+				"error": vErr,
+			}))
+
+			return
+		}
+
 		logger.Errorf("Failed to create user: %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
@@ -68,25 +71,26 @@ func (controller *Controller) Create(ctx *handler.Context) {
 	ctx.SendJSON(responses.ResponseOK())
 }
 
-// Список аниме
 func (controller *Controller) List(ctx *handler.Context) {
 	paginate := animeModels.NewPaginateFromQuery(ctx.QueriesMap())
-
-	vErr := paginate.Validate()
-	if vErr != nil {
-		logger.Debugf("Failed to validate paginate: %v", vErr)
-
-		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
-			"error": vErr.Error(),
-		}))
-
-		return
-	}
 
 	var lm animeModels.ListModel
 
 	err := lm.Fill(ctx, paginate, nil)
 	if err != nil {
+		// Validation error
+		var vErr *validator.ValidateError
+
+		if eris.As(err, &vErr) {
+			logger.Debug(err)
+
+			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
+				"error": vErr,
+			}))
+
+			return
+		}
+
 		logger.Errorf("Failed to get animes: %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())

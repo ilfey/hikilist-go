@@ -14,10 +14,6 @@ type DetailModel struct {
 	Token string `json:"-"`
 }
 
-func (DetailModel) TableName() string {
-	return "tokens"
-}
-
 func (dm *DetailModel) Get(ctx context.Context, conds map[string]any) error {
 	sql, args, err := dm.getSQL(conds)
 	if err != nil {

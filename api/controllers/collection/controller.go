@@ -12,6 +12,7 @@ import (
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/responses"
 	"github.com/ilfey/hikilist-go/internal/errorsx"
 	"github.com/ilfey/hikilist-go/internal/logger"
+	"github.com/ilfey/hikilist-go/internal/validator"
 
 	baseController "github.com/ilfey/hikilist-go/api/controllers/base_controller"
 
@@ -59,21 +60,22 @@ func (c *Controller) Create(ctx *handler.Context) {
 
 	req := collectionModels.NewCreateModelFromRequest(ctx.Request)
 
-	vErr := req.Validate()
-	if vErr != nil {
-		logger.Debugf("Failed to validate create model: %v", vErr)
-
-		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
-			"error": vErr,
-		}))
-
-		return
-	}
-
 	req.UserID = user.ID
 
 	err = req.Insert(ctx)
 	if err != nil {
+		var vErr *validator.ValidateError
+
+		if eris.As(err, &vErr) {
+			logger.Debug(vErr)
+
+			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
+				"error": vErr,
+			}))
+
+			return
+		}
+
 		logger.Errorf("Failed to create collection: %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
@@ -87,23 +89,25 @@ func (c *Controller) Create(ctx *handler.Context) {
 func (controller *Controller) List(ctx *handler.Context) {
 	paginate := collectionModels.NewPaginateFromQuery(ctx.QueriesMap())
 
-	vErr := paginate.Validate()
-	if vErr != nil {
-		logger.Debugf("Failed to validate paginate: %v", vErr)
-
-		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
-			"error": vErr.Error(),
-		}))
-
-		return
-	}
-
 	var lm collectionModels.ListModel
 
 	err := lm.Fill(ctx, paginate, map[string]any{
 		"is_public": true,
 	})
 	if err != nil {
+		// Validation error
+		var vErr *validator.ValidateError
+
+		if eris.As(err, &vErr) {
+			logger.Debug(err)
+
+			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
+				"error": vErr,
+			}))
+
+			return
+		}
+
 		logger.Errorf("Failed to get collections: %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())

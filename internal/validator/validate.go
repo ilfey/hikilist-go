@@ -3,24 +3,42 @@ package validator
 import (
 	"reflect"
 	"strings"
+
+	"github.com/ilfey/hikilist-go/internal/validator/options"
 )
 
-func Validate(st any, fieldsOpts map[string][]Option) ValidateError {
+func Validate(st any, fieldsOpts map[string][]options.Option) error {
 	errs := map[string][]string{}
 
-	rv := reflect.ValueOf(st)
+	rValue := reflect.ValueOf(st)
 
-	for i := 0; i < rv.NumField(); i++ {
-		field := rv.Type().Field(i).Name
+	for i := 0; i < rValue.NumField(); i++ {
+		field := rValue.Type().Field(i)
 
-		fieldTagName := strings.TrimSuffix(rv.Type().Field(i).Tag.Get("json"), ",omitempty")
-		if fieldTagName == "" {
-			fieldTagName = field
+		jsonTag := field.Tag.Get("json")
+
+		key := field.Name
+
+		fieldTagName := strings.TrimSuffix(jsonTag, ",omitempty")
+
+		if fieldTagName != "" {
+			key = fieldTagName
 		}
 
-		for _, opt := range fieldsOpts[field] {
-			if msg, ok := opt(rv.Field(i)); !ok {
-				errs[fieldTagName] = append(errs[fieldTagName], msg)
+		// Get opts by field name
+		opts, ok := fieldsOpts[field.Name]
+		if !ok {
+			// Get opts by field tag name
+			opts, ok = fieldsOpts[fieldTagName]
+			if !ok {
+				// Field not found
+				continue
+			}
+		}
+
+		for _, opt := range opts {
+			if msg, ok := opt(rValue.Field(i)); !ok {
+				errs[key] = append(errs[key], msg)
 			}
 		}
 	}
@@ -29,5 +47,5 @@ func Validate(st any, fieldsOpts map[string][]Option) ValidateError {
 		return nil
 	}
 
-	return &errorImpl{errs}
+	return &ValidateError{errs}
 }
