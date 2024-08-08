@@ -9,30 +9,91 @@ import (
 )
 
 func TestGreaterThan(t *testing.T) {
-	tests := map[any]bool{
-		// ptrs
-		_nil[int](): false, // nil int ptr
-		ptr(0):      false, // int ptr
-		ptr(0.0):    false, // float64 ptr
-		ptr(1):      false, // int ptr
-		ptr(1.):     false, // float64 ptr
-		ptr(2):      true,  // int ptr
-		ptr(1.1):    true,  // float64 ptr
-
+	testCases := []struct {
+		desc  string
+		value any
+		ok    bool
+	}{
+		{
+			desc:  "Nil int ptr",
+			value: _nil[int](),
+			ok:    false,
+		},
+		{
+			desc:  "Int 0 ptr",
+			value: ptr(0),
+			ok:    false,
+		},
+		{
+			desc:  "Float64 0.0 ptr",
+			value: ptr(0.0),
+			ok:    false,
+		},
+		{
+			desc:  "Int 1 ptr",
+			value: ptr(1),
+			ok:    false,
+		},
+		{
+			desc:  "Float64 1.0 ptr",
+			value: ptr(1.0),
+			ok:    false,
+		},
+		{
+			desc:  "Int 2 ptr",
+			value: ptr(2),
+			ok:    true,
+		},
+		{
+			desc:  "Float64 1.1 ptr",
+			value: ptr(1.1),
+			ok:    true,
+		},
 		// non-ptrs
-		0:   false, // int
-		0.0: false, // float64
-		1:   false, // int
-		1.:  false, // float64
-		2:   true,  // int
-		1.1: true,  // float64
+		{
+			desc:  "Int 0",
+			value: 0,
+			ok:    false,
+		},
+		{
+			desc:  "Float64 0.0",
+			value: 0.0,
+			ok:    false,
+		},
+		{
+			desc:  "Int 1",
+			value: 1,
+			ok:    false,
+		},
+		{
+			desc:  "Float64 1.0",
+			value: 1.0,
+			ok:    false,
+		},
+		{
+			desc:  "Int 2",
+			value: 2,
+			ok:    true,
+		},
+		{
+			desc:  "Float64 1.1",
+			value: 1.1,
+			ok:    true,
+		},
 	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			rValue := reflect.ValueOf(tC.value)
 
-	for value, result := range tests {
-		rValue := reflect.ValueOf(value)
+			isValid := validate(rValue, options.GreaterThan[int64](1))
 
-		expected := validate(rValue, options.GreaterThan[int64](1))
+			if tC.ok {
+				assert.True(t, isValid)
 
-		assert.Equalf(t, expected, result, "value: %v kind: %v result: %v", value, rValue.Kind(), result)
+				return
+			}
+
+			assert.False(t, isValid)
+		})
 	}
 }

@@ -1,4 +1,4 @@
-package animeModels
+package anime
 
 type ListItemModel struct {
 	ID uint `json:"id"`

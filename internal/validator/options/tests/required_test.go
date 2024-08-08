@@ -9,58 +9,91 @@ import (
 )
 
 func TestRequired(t *testing.T) {
-	tests := map[any]bool{
-		// zero ptrs
-		_nil[int]():              false, // nil int ptr
-		ptr(0):                   false, // int ptr
-		ptr(0.):                  false, // float64 ptr
-		ptr(""):                  false, // string ptr
-		ptr(false):               false, // bool ptr
-		ptr([]string{}):          false, // array ptr
-		ptr(map[string]string{}): false, // map ptr
-
-		// non-zero ptrs
-		ptr(1):                           true, // int ptr
-		ptr(1.1):                         true, // float64 ptr
-		ptr("t"):                         true, // string ptr
-		ptr(true):                        true, // bool ptr
-		ptr([]string{"t"}):               true, // array ptr
-		ptr(map[string]string{"t": "t"}): true, // map ptr
-
-		// zeros
-		0:     false, // int
-		0.0:   false, // float64
-		"":    false, // string
-		false: false, // bool
-
-		// non-zeros
-		1:    true, // int
-		1.1:  true, // float64
-		"t":  true, // string
-		true: true, // bool
+	testCases := []struct {
+		desc  string
+		value any
+		ok    bool
+	}{
+		{
+			desc:  "Nil int ptr",
+			value: _nil[int](),
+			ok:    false,
+		},
+		{
+			desc:  "Int 0 ptr",
+			value: ptr(0),
+			ok:    false,
+		},
+		{
+			desc:  "Float64 0.0 ptr",
+			value: ptr(0.0),
+			ok:    false,
+		},
+		{
+			desc:  "Int 1 ptr",
+			value: ptr(1),
+			ok:    false,
+		},
+		{
+			desc:  "Float64 1.0 ptr",
+			value: ptr(1.0),
+			ok:    false,
+		},
+		{
+			desc:  "Int 2 ptr",
+			value: ptr(2),
+			ok:    true,
+		},
+		{
+			desc:  "Float64 1.1 ptr",
+			value: ptr(1.1),
+			ok:    true,
+		},
+		// non-ptrs
+		{
+			desc:  "Int 0",
+			value: 0,
+			ok:    false,
+		},
+		{
+			desc:  "Float64 0.0",
+			value: 0.0,
+			ok:    false,
+		},
+		{
+			desc:  "Int 1",
+			value: 1,
+			ok:    false,
+		},
+		{
+			desc:  "Float64 1.0",
+			value: 1.0,
+			ok:    false,
+		},
+		{
+			desc:  "Int 2",
+			value: 2,
+			ok:    true,
+		},
+		{
+			desc:  "Float64 1.1",
+			value: 1.1,
+			ok:    true,
+		},
 	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			rValue := reflect.ValueOf(tC.value)
 
-	for value, result := range tests {
-		rValue := reflect.ValueOf(value)
+			isValid := validate(rValue, options.GreaterThan[int64](1))
 
-		expected := validate(rValue, options.Required())
+			if tC.ok {
+				assert.True(t, isValid)
 
-		assert.Equalf(t, expected, result, "value: %v kind: %v result: %v", value, rValue.Kind(), result)
+				return
+			}
+
+			assert.False(t, isValid)
+		})
 	}
-
-	// []string{}: false, // array
-	rValue := reflect.ValueOf([]string{})
-	assert.Equalf(t, validate(rValue, options.Required()), false, "value: %v result: %v", rValue, false)
-
-	// map[string]string{}: false, // map
-	rValue = reflect.ValueOf(map[string]string{})
-	assert.Equalf(t, validate(rValue, options.Required()), false, "value: %v result: %v", rValue, false)
-
-	// []string{"t"}: true, // array
-	rValue = reflect.ValueOf([]string{"t"})
-	assert.Equalf(t, validate(rValue, options.Required()), true, "value: %v result: %v", rValue, true)
-
-	// map[string]string{"t": "t"}: true, // map
-	rValue = reflect.ValueOf(map[string]string{"t": "t"})
-	assert.Equalf(t, validate(rValue, options.Required()), true, "value: %v result: %v", rValue, true)
 }

@@ -1,4 +1,4 @@
-package animeModels
+package anime
 
 import (
 	"context"
@@ -28,16 +28,16 @@ type DetailModel struct {
 }
 
 func (dm *DetailModel) Get(ctx context.Context, conds map[string]any) error {
-	sql, args, err := dm.getSQL(conds)
+	sql, args, err := dm.GetSQL(conds)
 	if err != nil {
-		return eris.Wrap(err, "failed to build select query")
+		return err
 	}
 
 	return pgxscan.Select(ctx, database.Instance(), dm, sql, args...)
 }
 
-func (DetailModel) getSQL(conds map[string]any) (string, []any, error) {
-	return sq.Select(
+func (DetailModel) GetSQL(conds map[string]any) (string, []any, error) {
+	sql, args, err := sq.Select(
 		"id",
 		"title",
 		"description",
@@ -51,4 +51,9 @@ func (DetailModel) getSQL(conds map[string]any) (string, []any, error) {
 		From("animes").
 		Where(conds).
 		ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build anime select query")
+	}
+
+	return sql, args, nil
 }

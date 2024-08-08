@@ -1,67 +1,44 @@
-package authController
+package auth
 
 import (
-	"database/sql"
-
-	"github.com/gorilla/mux"
-	baseController "github.com/ilfey/hikilist-go/api/controllers/base_controller"
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/handler"
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/responses"
 	authModels "github.com/ilfey/hikilist-go/data/models/auth"
 	userModels "github.com/ilfey/hikilist-go/data/models/user"
 	"github.com/ilfey/hikilist-go/internal/logger"
-	authService "github.com/ilfey/hikilist-go/services/auth"
+	"github.com/ilfey/hikilist-go/internal/postgres"
+	"github.com/ilfey/hikilist-go/internal/validator"
+	"github.com/jackc/pgerrcode"
+	"github.com/jackc/pgx/v5"
 	"github.com/rotisserie/eris"
 )
 
 // Контроллер аутентификации
-type Controller struct {
-	*baseController.Controller
-
-	auth authService.Service
-}
-
-// Конструктор контроллера
-func New(
-	auth authService.Service,
-) *Controller {
-	return &Controller{
-		Controller: &baseController.Controller{
-			AuthService: auth,
-		},
-		auth: auth,
-	}
-}
-
-// Привязка контроллера
-func (c *Controller) Bind(router *mux.Router) *mux.Router {
-	c.Controller.Bind(router)
-
-	c.HandleFunc("/api/auth/login", c.Login).Methods("POST")
-	c.HandleFunc("/api/auth/register", c.Register).Methods("POST")
-	c.HandleFunc("/api/auth/refresh", c.Refresh).Methods("POST")
-	c.HandleFunc("/api/auth/logout", c.Logout).Methods("POST")
-
-	return router
-}
+type AuthController struct{}
 
 // Регистрация
-func (c *Controller) Register(ctx *handler.Context) {
+func (AuthController) Register(ctx *handler.Context) {
 	req := authModels.RegisterModelFromRequest(ctx.Request)
 
-	vErr := req.Validate()
-	if vErr != nil {
-		logger.Debugf("Failed to validate request: %v", vErr)
-
-		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
-			"error": vErr,
-		}))
-
-		return
-	}
-
-	cm, err := c.auth.CreateUser(ctx, req)
+	cm, err := ctx.AuthService.Register(ctx, req)
 	if err != nil {
+		// Validation error
+		var vErr *validator.ValidateError
+
+		if eris.As(err, &vErr) {
+			logger.Debug(vErr)
+
+			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
+				"error": vErr,
+			}))
+
+			return
+		}
+
+		if postgres.PgErrCodeEquals(err, pgerrcode.UniqueViolation) {
+			ctx.SendJSON(responses.ResponseBadRequest())
+		}
+
 		logger.Errorf("Failed to create user: %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
@@ -69,22 +46,9 @@ func (c *Controller) Register(ctx *handler.Context) {
 		return
 	}
 
-	var dm userModels.DetailModel
-
-	err = dm.Get(ctx, map[string]any{
-		"ID": cm.ID,
-	})
+	tokensModel, err := ctx.AuthService.GenerateTokens(ctx, cm.ID)
 	if err != nil {
-		logger.Errorf("Failed to get user: %v", err)
-
-		ctx.SendJSON(responses.ResponseInternalServerError())
-
-		return
-	}
-
-	tokensModel, err := c.auth.GenerateTokens(ctx, &dm)
-	if err != nil {
-		logger.Debugf("Failed to generate tokens: %v", err)
+		logger.Debug("Failed to generate tokens: %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError(responses.J{
 			"error": "Error generating tokens",
@@ -97,7 +61,7 @@ func (c *Controller) Register(ctx *handler.Context) {
 }
 
 // Аутентификация
-func (c *Controller) Login(ctx *handler.Context) {
+func (AuthController) Login(ctx *handler.Context) {
 	req := authModels.LoginModelFromRequest(ctx.Request)
 
 	vErr := req.Validate()
@@ -117,7 +81,7 @@ func (c *Controller) Login(ctx *handler.Context) {
 		"Username": req.Username,
 	})
 	if err != nil {
-		if eris.Is(err, sql.ErrNoRows) {
+		if eris.Is(err, pgx.ErrNoRows) {
 			logger.Debug("User not found")
 
 			ctx.SendJSON(responses.ResponseUnauthorized())
@@ -132,13 +96,13 @@ func (c *Controller) Login(ctx *handler.Context) {
 		return
 	}
 
-	if ok := c.auth.CompareUserPassword(&dm, req.Password); !ok {
+	if ok := ctx.AuthService.CompareUserPassword(&dm, req.Password); !ok {
 		ctx.SendJSON(responses.ResponseForbidden())
 
 		return
 	}
 
-	tokensModel, err := c.auth.GenerateTokens(ctx, &dm)
+	tokensModel, err := ctx.AuthService.GenerateTokens(ctx, dm.ID)
 	if err != nil {
 		logger.Errorf("Failed to generate tokens: %v", err)
 
@@ -153,7 +117,7 @@ func (c *Controller) Login(ctx *handler.Context) {
 }
 
 // Обновление токенов аутентификации
-func (c *Controller) Refresh(ctx *handler.Context) {
+func (AuthController) Refresh(ctx *handler.Context) {
 	req := authModels.RefreshModelFromRequest(ctx.Request)
 
 	vErr := req.Validate()
@@ -167,7 +131,7 @@ func (c *Controller) Refresh(ctx *handler.Context) {
 		return
 	}
 
-	claims, err := c.auth.ParseToken(req.Refresh)
+	claims, err := ctx.AuthService.ParseToken(req.Refresh)
 	if err != nil {
 		logger.Debugf("Failed to parse token: %v", vErr)
 
@@ -178,27 +142,8 @@ func (c *Controller) Refresh(ctx *handler.Context) {
 		return
 	}
 
-	var dm userModels.DetailModel
-
-	err = dm.Get(ctx, map[string]any{
-		"ID": claims.UserID,
-	})
-	if err != nil {
-		if eris.Is(err, sql.ErrNoRows) {
-			logger.Debug("User not found")
-
-			ctx.SendJSON(responses.ResponseUnauthorized())
-		}
-
-		logger.Errorf("Failed to get user: %v", err)
-
-		ctx.SendJSON(responses.ResponseInternalServerError())
-
-		return
-	}
-
 	// Delete old token
-	if err = c.auth.DeleteToken(ctx, req.Refresh); err != nil {
+	if err = ctx.AuthService.DeleteToken(ctx, req.Refresh); err != nil {
 		logger.Errorf("Failed to delete token: %v", err)
 
 		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
@@ -209,7 +154,7 @@ func (c *Controller) Refresh(ctx *handler.Context) {
 	}
 
 	// Generate new tokens
-	tokensModel, err := c.auth.GenerateTokens(ctx, &dm)
+	tokensModel, err := ctx.AuthService.GenerateTokens(ctx, claims.UserID)
 	if err != nil {
 		logger.Debugf("Failed to generate tokens: %v", err)
 
@@ -223,38 +168,35 @@ func (c *Controller) Refresh(ctx *handler.Context) {
 	ctx.SendJSON(tokensModel)
 }
 
-func (c *Controller) Logout(ctx *handler.Context) {
+func (AuthController) Logout(ctx *handler.Context) {
 	req := authModels.RefreshModelFromRequest(ctx.Request)
 
-	vErr := req.Validate()
-	if vErr != nil {
-		logger.Debugf("Failed to validate request: %v", vErr)
-
-		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
-			"error": vErr,
-		}))
-
-		return
-	}
-
-	_, err := c.auth.ParseToken(req.Refresh)
+	err := ctx.AuthService.Logout(ctx, req)
 	if err != nil {
-		logger.Debugf("Failed to parse token: %v", vErr)
+		// Validation error
+		var vErr *validator.ValidateError
 
-		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
-			"error": "Invalid refresh token",
-		}))
+		if eris.As(err, &vErr) {
+			logger.Debug(vErr)
 
-		return
-	}
+			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
+				"error": vErr,
+			}))
 
-	// Delete old token
-	if err = c.auth.DeleteToken(ctx, req.Refresh); err != nil {
+			return
+		}
+
+		if eris.Is(err, pgx.ErrNoRows) {
+			logger.Debug("Failed to delete token: %v", err)
+
+			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
+				"error": "Token already revoked",
+			}))
+		}
+
 		logger.Debugf("Failed to delete token: %v", err)
 
-		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
-			"error": "Token already revoked",
-		}))
+		ctx.SendJSON(responses.ResponseInternalServerError())
 
 		return
 	}

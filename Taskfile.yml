@@ -11,12 +11,12 @@ tasks:
   run:
     desc: Run the api
     cmds:
-      - go run ./cmd/api
+      - go run -v ./cmd/api
   
   run-parser:
     desc: Run the parser
     cmds:
-      - go run ./cmd/parser
+      - go run -v ./cmd/parser
 
   test:
     desc: Run tests
@@ -26,12 +26,12 @@ tasks:
   build:
     desc: Build the api
     cmds:
-      - go build -o {{.BIN}}/api ./cmd/api
+      - go build -v -o {{.BIN}}/api ./cmd/api
   
   build-parser:
     desc: Build the parser
     cmds:
-      - go build -o {{.BIN}}/parser ./cmd/parser
+      - go build -v -o {{.BIN}}/parser ./cmd/parser
   
   setup:
     desc: Setup the project

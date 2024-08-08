@@ -9,15 +9,41 @@ import (
 )
 
 func TestNotNil(t *testing.T) {
-	tests := map[any]bool{
-		// zero ptrs
-		ptr(0):      true,  // any ptr
-		_nil[int](): false, // nil int ptr
+	testCases := []struct {
+		desc  string
+		value any
+		ok    bool
+	}{
+		{
+			desc:  "Int ptr",
+			value: ptr(0),
+			ok:    true,
+		},
+		{
+			desc:  "Nil int ptr",
+			value: _nil[int](),
+			ok:    false,
+		},
+		// non-ptr
+		{
+			desc:  "Int",
+			value: 0,
+			ok:    false,
+		},
 	}
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			rValue := reflect.ValueOf(tC.value)
 
-	for value, result := range tests {
-		rValue := reflect.ValueOf(value)
+			isValid := validate(rValue, options.NotNil())
 
-		assert.Equalf(t, validate(rValue, options.NotNil()), result, "value: %v result: %v", value, result)
+			if tC.ok {
+				assert.True(t, isValid)
+
+				return
+			}
+
+			assert.False(t, isValid)
+		})
 	}
 }

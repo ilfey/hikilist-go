@@ -1,15 +1,16 @@
-package animeModels
+package tests
 
 import (
 	"testing"
 
+	"github.com/ilfey/hikilist-go/data/models/anime"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestDetailModelGetSQL(t *testing.T) {
-	var m DetailModel
+	var m anime.DetailModel
 
-	sql, args, err := m.getSQL(map[string]any{
+	sql, args, err := m.GetSQL(map[string]any{
 		"id": 1,
 	})
 	assert.NoError(t, err)

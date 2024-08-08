@@ -1,4 +1,4 @@
-package userModels
+package user
 
 import (
 	"context"
@@ -9,8 +9,6 @@ import (
 	"github.com/ilfey/hikilist-go/data/database"
 	"github.com/rotisserie/eris"
 )
-
-// var _ baseModels.DetailModel[DetailModel] = &DetailModel{}
 
 // Модель пользователя
 type DetailModel struct {
@@ -25,9 +23,9 @@ type DetailModel struct {
 }
 
 func (dm *DetailModel) Get(ctx context.Context, conds map[string]any) error {
-	sql, args, err := dm.getSQL(conds)
+	sql, args, err := dm.GetSQL(conds)
 	if err != nil {
-		return eris.Wrap(err, "failed to build select query")
+		return err
 	}
 
 	err = pgxscan.Get(ctx, database.Instance(), dm, sql, args...)
@@ -37,8 +35,8 @@ func (dm *DetailModel) Get(ctx context.Context, conds map[string]any) error {
 	return nil
 }
 
-func (DetailModel) getSQL(conds map[string]any) (string, []any, error) {
-	return sq.Select(
+func (DetailModel) GetSQL(conds map[string]any) (string, []any, error) {
+	sql, args, err := sq.Select(
 		"id",
 		"username",
 		"password",
@@ -48,12 +46,43 @@ func (DetailModel) getSQL(conds map[string]any) (string, []any, error) {
 		From("users").
 		Where(conds).
 		ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build user select query")
+	}
+
+	return sql, args, nil
 }
 
-func (m *DetailModel) Update(ctx context.Context) error {
-	sql, args, err := m.updateSQL()
+func (m *DetailModel) Delete(ctx context.Context) error {
+	sql, args, err := m.DeleteSQL()
 	if err != nil {
-		return eris.Wrap(err, "failed to build update query")
+		return err
+	}
+
+	err = database.Instance().QueryRow(ctx, sql, args...).Scan(&m.ID)
+	if err != nil {
+		return eris.Wrap(err, "failed to delete user")
+	}
+
+	return nil
+}
+
+func (m *DetailModel) DeleteSQL() (string, []any, error) {
+	sql, args, err := sq.Delete("users").
+		Where(sq.Eq{"id": m.ID}).
+		Suffix("RETURNING id").
+		ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build user delete query")
+	}
+
+	return sql, args, nil
+}
+
+func (m *DetailModel) UpdateLastOnline(ctx context.Context) error {
+	sql, args, err := m.UpdateLastOnlineSQL()
+	if err != nil {
+		return err
 	}
 
 	_, err = database.Instance().Exec(ctx, sql, args...)
@@ -64,13 +93,30 @@ func (m *DetailModel) Update(ctx context.Context) error {
 	return nil
 }
 
-func (m *DetailModel) updateSQL() (string, []any, error) {
-	return sq.Update("users").
+func (m *DetailModel) UpdateLastOnlineSQL() (string, []any, error) {
+	sql, args, err := sq.Update("users").
 		SetMap(map[string]any{
-			"username":    m.Username,
-			"password":    m.Password,
-			"last_online": m.LastOnline,
+			"last_online": time.Now(),
 		}).
 		Where(sq.Eq{"id": m.ID}).
 		ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build user last online update query")
+	}
+
+	return sql, args, nil
+}
+
+func (m *DetailModel) UpdatePasswordSQL() (string, []any, error) {
+	sql, args, err := sq.Update("users").
+		SetMap(map[string]any{
+			"password": m.Password,
+		}).
+		Where(sq.Eq{"id": m.ID}).
+		ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build user password update query")
+	}
+
+	return sql, args, nil
 }

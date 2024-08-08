@@ -1,74 +1,140 @@
 package router
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
-	animeController "github.com/ilfey/hikilist-go/api/controllers/anime"
-	authController "github.com/ilfey/hikilist-go/api/controllers/auth"
-	collectionController "github.com/ilfey/hikilist-go/api/controllers/collection"
-	userController "github.com/ilfey/hikilist-go/api/controllers/user"
+	"github.com/ilfey/hikilist-go/api/controllers/anime"
+	"github.com/ilfey/hikilist-go/api/controllers/auth"
+	"github.com/ilfey/hikilist-go/api/controllers/base_controller/handler"
+	"github.com/ilfey/hikilist-go/api/controllers/base_controller/responses"
+	"github.com/ilfey/hikilist-go/api/controllers/collection"
+	"github.com/ilfey/hikilist-go/api/controllers/user"
+	"github.com/ilfey/hikilist-go/internal/errorsx"
+	"github.com/ilfey/hikilist-go/internal/logger"
 
 	authService "github.com/ilfey/hikilist-go/services/auth"
 )
 
-// Роутер
 type Router struct {
 	AuthService authService.Service
+
+	router *mux.Router
 }
 
-// Привязка роутера
+func New(
+	authService authService.Service,
+) *Router {
+	return &Router{
+		AuthService: authService,
+
+		router: mux.NewRouter(),
+	}
+}
+
+// Bind controllers
 func (r *Router) Bind() http.Handler {
-	router := mux.NewRouter()
+	r.router.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)
+	r.router.MethodNotAllowedHandler = http.HandlerFunc(r.MethodNotAllowedHandler)
 
-	// router.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)
-	// router.MethodNotAllowedHandler = http.HandlerFunc(r.NotFoundHandler)
+	anime := anime.AnimeController{}
 
-	// router.Use(AuthorizationMiddleware(r.jwt))
+	// c.HandleFunc("/api/animes", c.Create).Methods("POST")
+	r.HandleFunc("/api/animes", anime.List).Methods("GET")
 
-	router = animeController.New(
-		r.AuthService,
-	).Bind(router)
+	r.HandleFunc("/api/animes/{id:[0-9]+}", anime.Detail).Methods("GET")
 
-	router = authController.New(
-		r.AuthService,
-	).Bind(router)
+	auth := auth.AuthController{}
 
-	router = userController.New(
-		r.AuthService,
-	).Bind(router)
+	r.HandleFunc("/api/auth/login", auth.Login).Methods("POST")
+	r.HandleFunc("/api/auth/register", auth.Register).Methods("POST")
+	r.HandleFunc("/api/auth/refresh", auth.Refresh).Methods("POST")
+	r.HandleFunc("/api/auth/logout", auth.Logout).Methods("POST")
 
-	router = collectionController.New(
-		r.AuthService,
-	).Bind(router)
+	collection := collection.CollectionController{}
 
-	return router
+	r.HandleFunc("/api/collections", collection.Create).Methods("POST")
+	r.HandleFunc("/api/collections", collection.List).Methods("GET")
+
+	r.HandleFunc("/api/collections/{id:[0-9]+}", collection.Detail).Methods("GET")
+	r.HandleFunc("/api/collections/{id:[0-9]+}/animes", collection.Animes).Methods("GET")
+
+	user := user.UserController{}
+
+	r.HandleFunc("/api/users", user.List).Methods("GET")
+
+	r.HandleFunc("/api/users/{id:[0-9]+}", user.Detail).Methods("GET")
+	r.HandleFunc("/api/users/{id:[0-9]+}/collections", user.Collections).Methods("GET")
+
+	r.HandleFunc("/api/users/@{username:[a-zA-Z0-9]+}", user.DetailByUsername).Methods("GET")
+
+	r.HandleFunc("/api/users/me", user.Me).Methods("GET")
+	r.HandleFunc("/api/users/me/delete", user.Delete).Methods("DELETE")
+	r.HandleFunc("/api/users/me/actions", user.MyActions).Methods("GET")
+	r.HandleFunc("/api/users/me/collections", user.MyCollections).Methods("GET")
+
+	return r.router
 }
 
-// func (*Router) NotFoundHandler(w http.ResponseWriter, r *http.Request) {
-// 	resx.ResponseNotFound.JSON(w)
-// }
+func (r *Router) HandleFunc(path string, fn func(*handler.Context)) *mux.Route {
+	return r.router.HandleFunc(path, r.provideContext(fn))
+}
 
-// func AuthorizationMiddleware(j *jwt.JWT) func(http.Handler) http.Handler {
-// 	return func(next http.Handler) http.Handler {
-// 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 			token := r.Header.Get("Authorization")
-// 			if token == "" {
-// 				next.ServeHTTP(w, r)
-// 				return
-// 			}
+func (r *Router) provideContext(
+	fn func(*handler.Context),
+) func(http.ResponseWriter, *http.Request) {
+	return func(rw http.ResponseWriter, req *http.Request) {
+		ctx := handler.NewContext(r.AuthService, rw, req)
 
-// 			token = strings.TrimPrefix(token, "Bearer ")
-// 			claims, ok := j.ParseToken(token)
-// 			if !ok {
-// 				next.ServeHTTP(w, r)
-// 				return
-// 			}
+		var doneCh = make(chan struct{})
 
-// 			r.Header.Set("user_id", strconv.FormatUint(uint64(claims.UserID), 10))
+		// Update user last online
+		go func() {
+			defer func() {
+				doneCh <- struct{}{}
+			}()
 
-// 			next.ServeHTTP(w, r)
-// 		})
-// 	}
-// }
+			user, err := ctx.GetUser()
+			if err != nil {
+				return
+			}
+
+			err = ctx.AuthService.UpdateUserOnline(ctx, user)
+			if err != nil {
+				logger.Errorf("Failed to update user online: %v", err)
+			}
+		}()
+
+		fn(ctx)
+
+		<-doneCh
+
+		close(doneCh)
+	}
+}
+
+func (*Router) NotFoundHandler(rw http.ResponseWriter, r *http.Request) {
+	data, code := responses.ResponseNotFound()
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(code)
+	rw.Write(
+		errorsx.Must(
+			json.Marshal(data),
+		),
+	)
+}
+
+func (*Router) MethodNotAllowedHandler(rw http.ResponseWriter, r *http.Request) {
+	data, code := responses.ResponseMethodNotAllowed()
+
+	rw.Header().Set("Content-Type", "application/json")
+	rw.WriteHeader(code)
+	rw.Write(
+		errorsx.Must(
+			json.Marshal(data),
+		),
+	)
+}

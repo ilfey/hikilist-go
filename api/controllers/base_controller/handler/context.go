@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -10,6 +9,7 @@ import (
 	userModels "github.com/ilfey/hikilist-go/data/models/user"
 	"github.com/ilfey/hikilist-go/internal/errorsx"
 	authService "github.com/ilfey/hikilist-go/services/auth"
+	"github.com/rotisserie/eris"
 )
 
 type HandleFunc func(ctx *Context)
@@ -21,6 +21,7 @@ type Context struct {
 	Writer  http.ResponseWriter
 
 	store struct {
+		token  *string
 		claims *authService.Claims
 		user   *userModels.DetailModel
 	}
@@ -34,6 +35,7 @@ func NewContext(authService authService.Service, w http.ResponseWriter, r *http.
 		Writer:  w,
 	}
 
+	// TODO: create goroutine
 	ctx.GetUser()
 
 	return ctx
@@ -96,10 +98,10 @@ func (ctx *Context) SendJSON(data interface{}, code ...int) {
 func (ctx *Context) AuthorizedOnly() (*userModels.DetailModel, error) {
 	claims, err := ctx.GetClaims()
 	if err != nil {
-		return nil, err
+		return nil, eris.Wrap(err, "failed to get claims")
 	}
 
-	userModel, err := ctx.AuthService.GetUser(ctx, claims)
+	userModel, err := ctx.AuthService.Authorize(ctx, claims)
 	if err != nil {
 		return nil, err
 	}
@@ -118,18 +120,13 @@ func (ctx *Context) GetUser() (*userModels.DetailModel, error) {
 		return nil, err
 	}
 
-	user, err := ctx.AuthService.GetUser(ctx, claims)
+	user, err := ctx.AuthService.Authorize(ctx, claims)
 	if err != nil {
 		return nil, err
 	}
 
 	// Store user
 	ctx.store.user = user
-
-	err = ctx.AuthService.UpdateUserOnline(ctx, user)
-	if err != nil {
-		return nil, err
-	}
 
 	return user, nil
 }
@@ -144,6 +141,11 @@ func (ctx *Context) Authorized() bool {
 //
 // Возвращает nil, если токен не был установлен.
 func (ctx *Context) GetToken() *string {
+	// Check if token already exists
+	if ctx.store.token != nil {
+		return ctx.store.token
+	}
+
 	authorizationPtr := ctx.Get("Authorization")
 	if authorizationPtr == nil {
 		return nil
@@ -155,6 +157,9 @@ func (ctx *Context) GetToken() *string {
 	}
 
 	token := strings.TrimPrefix(*authorizationPtr, "Bearer ")
+
+	// Save token in context
+	ctx.store.token = &token
 
 	return &token
 }
@@ -170,12 +175,12 @@ func (ctx *Context) GetClaims() (*authService.Claims, error) {
 
 	token := ctx.GetToken()
 	if token == nil {
-		return nil, fmt.Errorf("token not found")
+		return nil, eris.New("token is not set")
 	}
 
 	claims, err := ctx.AuthService.ParseToken(*token)
 	if err != nil {
-		return nil, err
+		return nil, eris.Wrap(err, "failed to parse token")
 	}
 
 	// Save claims in context

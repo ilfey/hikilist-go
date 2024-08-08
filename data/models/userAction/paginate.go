@@ -1,4 +1,4 @@
-package userActionModels
+package userAction
 
 import (
 	baseModels "github.com/ilfey/hikilist-go/internal/base_models"

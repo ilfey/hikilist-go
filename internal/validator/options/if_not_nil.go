@@ -9,15 +9,16 @@ Works with pointers only.
 */
 func IfNotNil(opts ...Option) Option {
 	return func(v reflect.Value) (string, bool) {
-		msg, ok := NotNil()(v)
-		if !ok {
-			return msg, false
+		if v.Kind() != reflect.Ptr {
+			return "Field \"%s\" has invalid type", false
 		}
 
-		for _, opt := range opts {
-			msg, ok = opt(v)
-			if !ok {
-				return msg, false
+		if !v.IsNil() {
+			for _, opt := range opts {
+				msg, ok := opt(v)
+				if !ok {
+					return msg, false
+				}
 			}
 		}
 

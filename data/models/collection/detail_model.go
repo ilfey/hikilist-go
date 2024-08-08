@@ -1,4 +1,4 @@
-package collectionModels
+package collection
 
 import (
 	"context"
@@ -28,9 +28,9 @@ type DetailModel struct {
 }
 
 func (dm *DetailModel) Get(ctx context.Context, conds any) error {
-	sql, args, err := dm.getSQL(conds)
+	sql, args, err := dm.GetSQL(conds)
 	if err != nil {
-		return eris.Wrap(err, "failed to build select query")
+		return err
 	}
 
 	err = pgxscan.Get(ctx, database.Instance(), dm, sql, args...)
@@ -41,8 +41,8 @@ func (dm *DetailModel) Get(ctx context.Context, conds any) error {
 	return nil
 }
 
-func (DetailModel) getSQL(conds any) (string, []any, error) {
-	return sq.Select(
+func (DetailModel) GetSQL(conds any) (string, []any, error) {
+	b := sq.Select(
 		"id",
 		"title",
 		"user_id",
@@ -51,7 +51,16 @@ func (DetailModel) getSQL(conds any) (string, []any, error) {
 		"created_at",
 		"updated_at",
 	).
-		From("collections").
-		Where(conds).
-		ToSql()
+		From("collections")
+
+	if conds != nil {
+		b = b.Where(conds)
+	}
+
+	sql, args, err := b.ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build collection select query")
+	}
+
+	return sql, args, nil
 }

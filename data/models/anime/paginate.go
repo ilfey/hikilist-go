@@ -1,4 +1,4 @@
-package animeModels
+package anime
 
 import (
 	baseModels "github.com/ilfey/hikilist-go/internal/base_models"

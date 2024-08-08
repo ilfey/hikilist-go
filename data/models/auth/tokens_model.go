@@ -1,4 +1,4 @@
-package authModels
+package auth
 
 // Модель токенов
 type TokensModel struct {

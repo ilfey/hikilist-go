@@ -1,7 +1,8 @@
-package tokenModels
+package token
 
 import (
 	"context"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/v2/pgxscan"
@@ -10,14 +11,17 @@ import (
 )
 
 type DetailModel struct {
-	ID    uint   `json:"-"`
+	ID uint `json:"-"`
+
 	Token string `json:"-"`
+
+	CreatedAt time.Time `json:"created_at"`
 }
 
 func (dm *DetailModel) Get(ctx context.Context, conds map[string]any) error {
-	sql, args, err := dm.getSQL(conds)
+	sql, args, err := dm.GetSQL(conds)
 	if err != nil {
-		return eris.Wrap(err, "failed to build select query")
+		return err
 	}
 
 	err = pgxscan.Get(ctx, database.Instance(), dm, sql, args...)
@@ -28,23 +32,33 @@ func (dm *DetailModel) Get(ctx context.Context, conds map[string]any) error {
 	return nil
 }
 
-func (DetailModel) getSQL(conds map[string]any) (string, []any, error) {
-	return sq.Select(
+func (DetailModel) GetSQL(conds map[string]any) (string, []any, error) {
+	b := sq.Select(
 		"id",
 		"token",
+		"created_at",
 	).
-		From("tokens").
-		Where(conds).
-		ToSql()
+		From("tokens")
+
+	if conds != nil {
+		b = b.Where(conds)
+	}
+
+	sql, args, err := b.ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build token select query")
+	}
+
+	return sql, args, nil
 }
 
 func (dm *DetailModel) Delete(ctx context.Context) error {
-	sql, args, err := dm.deleteSQL()
+	sql, args, err := dm.DeleteSQL()
 	if err != nil {
-		return eris.Wrap(err, "failed to build delete query")
+		return err
 	}
 
-	_, err = database.Instance().Exec(ctx, sql, args...)
+	err = database.Instance().QueryRow(ctx, sql, args...).Scan(&dm.ID)
 	if err != nil {
 		return eris.Wrap(err, "failed to delete token")
 	}
@@ -52,8 +66,14 @@ func (dm *DetailModel) Delete(ctx context.Context) error {
 	return nil
 }
 
-func (dm *DetailModel) deleteSQL() (string, []any, error) {
-	return sq.Delete("tokens").
+func (dm *DetailModel) DeleteSQL() (string, []any, error) {
+	sql, args, err := sq.Delete("tokens").
 		Where(sq.Eq{"id": dm.ID}).
+		Suffix("RETURNING id").
 		ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build token delete query")
+	}
+
+	return sql, args, nil
 }

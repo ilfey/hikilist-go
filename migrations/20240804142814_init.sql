@@ -65,7 +65,10 @@ CREATE TABLE user_actions (
 
 CREATE TABLE IF NOT EXISTS tokens (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    token VARCHAR(256) 
+    
+    token VARCHAR(256),
+    
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tokens_token ON tokens(token);

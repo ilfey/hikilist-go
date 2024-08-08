@@ -1,4 +1,4 @@
-package userModels
+package user
 
 import (
 	"context"
@@ -20,12 +20,12 @@ func (lm *ListModel) Fill(ctx context.Context, p *Paginate, conds map[string]any
 	if err != nil {
 		return eris.Wrap(err, "failed to validate pagination")
 	}
-	
+
 	p.Normalize()
 
-	sql, args, err := lm.fillResultsSQL(p, conds)
+	sql, args, err := lm.FillResultsSQL(p, conds)
 	if err != nil {
-		return eris.Wrap(err, "failed to build select query")
+		return err
 	}
 
 	err = pgxscan.Select(ctx, database.Instance(), &lm.Results, sql, args...)
@@ -33,9 +33,9 @@ func (lm *ListModel) Fill(ctx context.Context, p *Paginate, conds map[string]any
 		return eris.Wrap(err, "failed to execute select query")
 	}
 
-	sql, args, err = lm.fillCountSQL(conds)
+	sql, args, err = lm.FillCountSQL(conds)
 	if err != nil {
-		return eris.Wrap(err, "failed to build count query")
+		return err
 	}
 
 	err = database.Instance().QueryRow(ctx, sql, args...).Scan(&lm.Count)
@@ -46,22 +46,41 @@ func (lm *ListModel) Fill(ctx context.Context, p *Paginate, conds map[string]any
 	return nil
 }
 
-func (ListModel) fillResultsSQL(p *Paginate, conds map[string]any) (string, []any, error) {
-	return sq.Select(
+func (ListModel) FillResultsSQL(p *Paginate, conds map[string]any) (string, []any, error) {
+	b := sq.Select(
 		"id",
 		"username",
 		"created_at",
 	).
-		From("users").
-		Where(conds).
+		From("users")
+
+	if conds != nil {
+		b = b.Where(conds)
+
+	}
+
+	sql, args, err := b.
+		OrderBy(p.Order.ToQuery()).
 		Offset(uint64(p.GetOffset(p.Page, p.Limit))).
-		Limit(uint64(p.Limit)).
-		ToSql()
+		Limit(uint64(p.Limit)).ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build users select query")
+	}
+
+	return sql, args, nil
 }
 
-func (ListModel) fillCountSQL(conds map[string]any) (string, []any, error) {
-	return sq.Select("COUNT(*)").
-		From("users").
-		Where(conds).
-		ToSql()
+func (ListModel) FillCountSQL(conds map[string]any) (string, []any, error) {
+	b := sq.Select("COUNT(*)").
+		From("users")
+	if conds != nil {
+		b = b.Where(conds)
+	}
+
+	sql, args, err := b.ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build users count query")
+	}
+
+	return sql, args, nil
 }

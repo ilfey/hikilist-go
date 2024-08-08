@@ -1,4 +1,4 @@
-package collectionModels
+package collection
 
 import (
 	"context"
@@ -20,12 +20,12 @@ func (lm *ListModel) Fill(ctx context.Context, p *Paginate, conds any) error {
 	if err != nil {
 		return eris.Wrap(err, "failed to validate pagination")
 	}
-	
+
 	p.Normalize()
 
-	sql, args, err := lm.fillResultsSQL(p, conds)
+	sql, args, err := lm.FillResultsSQL(p, conds)
 	if err != nil {
-		return eris.Wrap(err, "failed to build select query")
+		return err
 	}
 
 	err = pgxscan.Select(ctx, database.Instance(), &lm.Results, sql, args...)
@@ -33,9 +33,9 @@ func (lm *ListModel) Fill(ctx context.Context, p *Paginate, conds any) error {
 		return eris.Wrap(err, "failed to execute select query")
 	}
 
-	sql, args, err = lm.fillCountSQL(conds)
+	sql, args, err = lm.FillCountSQL(conds)
 	if err != nil {
-		return eris.Wrap(err, "failed to build count query")
+		return err
 	}
 
 	err = database.Instance().QueryRow(ctx, sql, args...).Scan(&lm.Count)
@@ -46,25 +46,44 @@ func (lm *ListModel) Fill(ctx context.Context, p *Paginate, conds any) error {
 	return nil
 }
 
-func (ListModel) fillResultsSQL(p *Paginate, conds any) (string, []any, error) {
-	return sq.Select(
+func (ListModel) FillResultsSQL(p *Paginate, conds any) (string, []any, error) {
+	b := sq.Select(
 		"id",
 		"user_id",
 		"title",
 		"created_at",
 		"updated_at",
 	).
-		From("collections").
-		Where(conds).
+		From("collections")
+
+	if conds != nil {
+		b = b.Where(conds)
+	}
+
+	sql, args, err := b.
 		OrderBy("id DESC").
 		Offset(uint64(p.GetOffset(p.Page, p.Limit))).
 		Limit(uint64(p.Limit)).
 		ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build collections select query")
+	}
+
+	return sql, args, nil
 }
 
-func (ListModel) fillCountSQL(conds any) (string, []any, error) {
-	return sq.Select("COUNT(*)").
-		From("collections").
-		Where(conds).
-		ToSql()
+func (ListModel) FillCountSQL(conds any) (string, []any, error) {
+	b := sq.Select("COUNT(*)").
+		From("collections")
+
+	if conds != nil {
+		b = b.Where(conds)
+	}
+
+	sql, args, err := b.ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build collections count query")
+	}
+
+	return sql, args, err
 }

@@ -1,4 +1,4 @@
-package collectionModels
+package collection
 
 import (
 	"context"
@@ -49,9 +49,9 @@ func (cm *CreateModel) Insert(ctx context.Context) error {
 		return eris.Wrap(err, "failed to validate model")
 	}
 
-	sql, args, err := cm.insertSQL()
+	sql, args, err := cm.InsertSQL()
 	if err != nil {
-		return eris.Wrap(err, "failed to build insert query")
+		return err
 	}
 
 	err = database.Instance().QueryRow(ctx, sql, args...).Scan(&cm.ID)
@@ -62,8 +62,8 @@ func (cm *CreateModel) Insert(ctx context.Context) error {
 	return nil
 }
 
-func (cm *CreateModel) insertSQL() (string, []any, error) {
-	return sq.Insert("collections").
+func (cm *CreateModel) InsertSQL() (string, []any, error) {
+	sql, args, err := sq.Insert("collections").
 		Columns(
 			"title",
 			"user_id",
@@ -80,6 +80,11 @@ func (cm *CreateModel) insertSQL() (string, []any, error) {
 		).
 		Suffix("RETURNING id").
 		ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build collection insert query")
+	}
+
+	return sql, args, nil
 }
 func NewCreateModelFromRequest(request *http.Request) *CreateModel {
 	model := new(CreateModel)

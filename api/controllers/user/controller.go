@@ -1,10 +1,10 @@
-package userController
+package user
 
 import (
-	"database/sql"
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx/v5"
 	"github.com/rotisserie/eris"
 
 	"github.com/ilfey/hikilist-go/api/controllers/base_controller/handler"
@@ -13,45 +13,14 @@ import (
 	"github.com/ilfey/hikilist-go/internal/logger"
 	"github.com/ilfey/hikilist-go/internal/validator"
 
-	baseController "github.com/ilfey/hikilist-go/api/controllers/base_controller"
-
+	authModels "github.com/ilfey/hikilist-go/data/models/auth"
 	collectionModels "github.com/ilfey/hikilist-go/data/models/collection"
 	userModels "github.com/ilfey/hikilist-go/data/models/user"
-	userActionModels "github.com/ilfey/hikilist-go/data/models/user_action"
-
-	authService "github.com/ilfey/hikilist-go/services/auth"
+	userActionModels "github.com/ilfey/hikilist-go/data/models/userAction"
 )
 
 // Контроллер пользователя
-type UserController struct {
-	*baseController.Controller
-}
-
-// Конструктор контроллера пользователя
-func New(
-	auth authService.Service,
-) *UserController {
-	return &UserController{
-		Controller: &baseController.Controller{
-			AuthService: auth,
-		},
-	}
-}
-
-// Привязка контроллера
-func (c *UserController) Bind(router *mux.Router) *mux.Router {
-	c.Controller.Bind(router)
-
-	c.HandleFunc("/api/users", c.List).Methods("GET")
-	c.HandleFunc("/api/users/{id:[0-9]+}", c.Detail).Methods("GET")
-	c.HandleFunc("/api/users/@{username:[a-zA-Z0-9]+}", c.DetailByUsername).Methods("GET")
-
-	c.HandleFunc("/api/users/me", c.Me).Methods("GET")
-	c.HandleFunc("/api/users/me/actions", c.MyActions).Methods("GET")
-	c.HandleFunc("/api/users/me/collections", c.MyCollections).Methods("GET")
-
-	return router
-}
+type UserController struct{}
 
 // Список пользователей
 func (controller *UserController) List(ctx *handler.Context) {
@@ -96,7 +65,7 @@ func (controller *UserController) Detail(ctx *handler.Context) {
 		"ID": id,
 	})
 	if err != nil {
-		if eris.Is(err, sql.ErrNoRows) {
+		if eris.Is(err, pgx.ErrNoRows) {
 			logger.Debug("User not found")
 
 			ctx.SendJSON(responses.ResponseNotFound())
@@ -124,7 +93,7 @@ func (controller *UserController) DetailByUsername(ctx *handler.Context) {
 		"Username": username,
 	})
 	if err != nil {
-		if eris.Is(err, sql.ErrNoRows) {
+		if eris.Is(err, pgx.ErrNoRows) {
 			logger.Debug("User not found")
 
 			ctx.SendJSON(responses.ResponseNotFound())
@@ -142,10 +111,47 @@ func (controller *UserController) DetailByUsername(ctx *handler.Context) {
 	ctx.SendJSON(&dm)
 }
 
-func (c *UserController) Me(ctx *handler.Context) {
+func (UserController) Collections(ctx *handler.Context) {
+	vars := mux.Vars(ctx.Request)
+
+	userId := errorsx.Must(strconv.ParseUint(vars["id"], 10, 64))
+
+	paginate := collectionModels.NewPaginateFromQuery(ctx.QueriesMap())
+
+	var lm collectionModels.ListModel
+
+	err := lm.Fill(ctx, paginate, map[string]any{
+		"user_id":   userId,
+		"is_public": true,
+	})
+	if err != nil {
+		// Validation error
+		var vErr *validator.ValidateError
+
+		if eris.As(err, &vErr) {
+			logger.Debug(err)
+
+			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
+				"error": vErr,
+			}))
+
+			return
+		}
+
+		logger.Errorf("Failed to get user collections: %v", err)
+
+		ctx.SendJSON(responses.ResponseInternalServerError())
+
+		return
+	}
+
+	ctx.SendJSON(&lm)
+}
+
+func (UserController) Me(ctx *handler.Context) {
 	user, err := ctx.AuthorizedOnly()
 	if err != nil {
-		logger.Debug("Not authorized")
+		logger.Debug(err)
 
 		ctx.SendJSON(responses.ResponseUnauthorized())
 
@@ -155,10 +161,61 @@ func (c *UserController) Me(ctx *handler.Context) {
 	ctx.SendJSON(user)
 }
 
-func (c *UserController) MyActions(ctx *handler.Context) {
+func (UserController) Delete(ctx *handler.Context) {
 	user, err := ctx.AuthorizedOnly()
 	if err != nil {
-		logger.Debug("Not authorized")
+		logger.Debug(err)
+
+		ctx.SendJSON(responses.ResponseUnauthorized())
+
+		return
+	}
+
+	req := authModels.RefreshModelFromRequest(ctx.Request)
+
+	err = req.Validate()
+	if err != nil {
+		// Validation error
+		var vErr *validator.ValidateError
+
+		if eris.As(err, &vErr) {
+			logger.Debug(vErr)
+
+			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
+				"error": vErr,
+			}))
+
+			return
+		}
+
+		logger.Errorf("Failed to validate refresh model: %v", err)
+
+		ctx.SendJSON(responses.ResponseInternalServerError())
+
+		return
+	}
+
+	err = user.Delete(ctx)
+	if err != nil {
+		logger.Error("Failed to delete user: %v", err)
+
+		ctx.SendJSON(responses.ResponseInternalServerError())
+
+		return
+	}
+
+	err = ctx.AuthService.Logout(ctx, req)
+	if err != nil {
+		logger.Errorf("Failed to logout: %v", err)
+	}
+
+	ctx.SendJSON(responses.ResponseOK())
+}
+
+func (UserController) MyActions(ctx *handler.Context) {
+	user, err := ctx.AuthorizedOnly()
+	if err != nil {
+		logger.Debug(err)
 
 		ctx.SendJSON(responses.ResponseUnauthorized())
 
@@ -196,10 +253,10 @@ func (c *UserController) MyActions(ctx *handler.Context) {
 	ctx.SendJSON(&lm)
 }
 
-func (c *UserController) MyCollections(ctx *handler.Context) {
+func (UserController) MyCollections(ctx *handler.Context) {
 	user, err := ctx.AuthorizedOnly()
 	if err != nil {
-		logger.Debug("Not authorized")
+		logger.Debug(err)
 
 		ctx.SendJSON(responses.ResponseUnauthorized())
 

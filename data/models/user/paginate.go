@@ -1,4 +1,4 @@
-package userModels
+package user
 
 import (
 	baseModels "github.com/ilfey/hikilist-go/internal/base_models"
@@ -46,6 +46,10 @@ func (p Paginate) Validate() error {
 }
 
 func (p *Paginate) Normalize() *Paginate {
+	if p.Order == "" {
+		p.Order = "-id"
+	}
+	
 	if p.Page == 0 {
 		p.Page = 1
 	}

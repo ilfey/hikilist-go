@@ -1,4 +1,4 @@
-package animeModels
+package anime
 
 import (
 	"context"

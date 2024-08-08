@@ -1,4 +1,4 @@
-package animeModels
+package anime
 
 type ShikiListItemModel struct {
 	ID      *uint64 `json:"id"`

@@ -1,4 +1,4 @@
-package userActionModels
+package userAction
 
 import (
 	"context"
@@ -25,9 +25,9 @@ type DetailModel struct {
 }
 
 func (dm *DetailModel) Get(ctx context.Context, conds map[string]any) error {
-	sql, args, err := dm.getSQL(conds)
+	sql, args, err := dm.GetSQL(conds)
 	if err != nil {
-		return eris.Wrap(err, "failed to build select query")
+		return err
 	}
 
 	err = pgxscan.Get(ctx, database.Instance(), dm, sql, args...)
@@ -38,8 +38,8 @@ func (dm *DetailModel) Get(ctx context.Context, conds map[string]any) error {
 	return nil
 }
 
-func (DetailModel) getSQL(conds map[string]any) (string, []any, error) {
-	return sq.Select(
+func (DetailModel) GetSQL(conds map[string]any) (string, []any, error) {
+	b := sq.Select(
 		"id",
 		"user_id",
 		"title",
@@ -47,7 +47,16 @@ func (DetailModel) getSQL(conds map[string]any) (string, []any, error) {
 		"created_at",
 		"updated_at",
 	).
-		From("user_actions").
-		Where(conds).
-		ToSql()
+		From("user_actions")
+
+	if conds != nil {
+		b = b.Where(conds)
+	}
+
+	sql, args, err := b.ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build user action select query")
+	}
+
+	return sql, args, nil
 }

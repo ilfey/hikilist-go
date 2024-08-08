@@ -21,10 +21,11 @@ var (
 	ResponseOK      = makeResponse(J{"detail": "OK"}, 200)
 	ResponseCreated = makeResponse(J{"detail": "Created"}, 201)
 
-	ResponseBadRequest   = makeResponse(J{"detail": "Bad request"}, 400)
-	ResponseUnauthorized = makeResponse(J{"detail": "Unauthorized"}, 401)
-	ResponseForbidden    = makeResponse(J{"detail": "Forbidden"}, 403)
-	ResponseNotFound     = makeResponse(J{"detail": "Not found"}, 404)
+	ResponseBadRequest       = makeResponse(J{"detail": "Bad request"}, 400)
+	ResponseUnauthorized     = makeResponse(J{"detail": "Unauthorized"}, 401)
+	ResponseForbidden        = makeResponse(J{"detail": "Forbidden"}, 403)
+	ResponseNotFound         = makeResponse(J{"detail": "Not found"}, 404)
+	ResponseMethodNotAllowed = makeResponse(J{"detail": "Method not allowed"}, 405)
 
 	ResponseInternalServerError = makeResponse(J{"detail": "Internal server error"}, 500)
 )

@@ -1,4 +1,4 @@
-package collectionModels
+package collection
 
 type ListItemModel struct {
 	ID uint `json:"id"`

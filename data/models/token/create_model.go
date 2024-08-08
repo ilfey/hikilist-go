@@ -1,7 +1,8 @@
-package tokenModels
+package token
 
 import (
 	"context"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/ilfey/hikilist-go/data/database"
@@ -11,13 +12,14 @@ import (
 type CreateModel struct {
 	ID uint `json:"-"`
 
-	Token string `json:"-"`
+	Token     string    `json:"-"`
+	CreatedAt time.Time `json:"-"`
 }
 
 func (cm *CreateModel) Insert(ctx context.Context) error {
-	sql, args, err := cm.insertSQL()
+	sql, args, err := cm.InsertSQL()
 	if err != nil {
-		return eris.Wrap(err, "failed to build insert query")
+		return err
 	}
 
 	err = database.Instance().QueryRow(ctx, sql, args...).Scan(&cm.ID)
@@ -28,14 +30,21 @@ func (cm *CreateModel) Insert(ctx context.Context) error {
 	return nil
 }
 
-func (cm *CreateModel) insertSQL() (string, []any, error) {
-	return sq.Insert("tokens").
+func (cm *CreateModel) InsertSQL() (string, []any, error) {
+	sql, args, err := sq.Insert("tokens").
 		Columns(
 			"token",
+			"created_at",
 		).
 		Values(
 			cm.Token,
+			time.Now(),
 		).
 		Suffix("RETURNING id").
 		ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build token insert query")
+	}
+
+	return sql, args, nil
 }

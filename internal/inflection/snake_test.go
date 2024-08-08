@@ -7,15 +7,40 @@ import (
 )
 
 func TestSnake(t *testing.T) {
-	tests := map[string]string{
-		"test":        "test",
-		"Test":        "test",
-		"Test123":     "test123",
-		"TestTest":    "test_test",
-		"TestTest123": "test_test123",
+	testCases := []struct {
+		desc     string
+		expected string
+		actual   string
+	}{
+		{
+			desc:     "LowerCase",
+			expected: "test",
+			actual:   "test",
+		},
+		{
+			desc:     "First char upper case",
+			expected: "test",
+			actual:   "Test",
+		},
+		{
+			desc:     "First char upper case with number",
+			expected: "test123",
+			actual:   "Test123",
+		},
+		{
+			desc:     "CamelCase",
+			expected: "test_test",
+			actual:   "TestTest",
+		},
+		{
+			desc:     "CamelCase with number",
+			expected: "test_test123",
+			actual:   "TestTest123",
+		},
 	}
-
-	for camel, snake := range tests {
-		assert.Equalf(t, snake, Snake(camel), "camel: %s snake: %s", camel, snake)
+	for _, tC := range testCases {
+		t.Run(tC.desc, func(t *testing.T) {
+			assert.Equal(t, tC.expected, Snake(tC.actual))
+		})
 	}
 }

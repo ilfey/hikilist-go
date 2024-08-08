@@ -32,12 +32,13 @@ func (p *Parser) Parse() (uint64, error) {
 		}
 
 		for _, anime := range animes {
-			logger.Debugf("Resolving shikiID: %v", *anime.ID)
+			logger.Debugf("Saving shikiID: %v", *anime.ID)
 
-			err := anime.Resolve()
-			if err != nil {
-				logger.Errorf("Failed to resolve shikiID: %v, error: %v", *anime.ID, err)
-			}
+			// TODO: Resolve shikiID
+			// err := p.Anime.ResolveShiki(anime)
+			// if err != nil {
+			// 	logger.Errorf("Failed to save shikiID: %v, error: %v", *anime.ID, err)
+			// }
 		}
 
 		page++

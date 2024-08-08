@@ -1,4 +1,4 @@
-package animeModels
+package anime
 
 import (
 	"context"
@@ -51,12 +51,12 @@ func (cm CreateModel) Validate() error {
 			},
 			"MalID": {
 				options.IfNotNil(
-					options.GreaterThan[int64](0),
+					options.GreaterThan[uint64](0),
 				),
 			},
 			"ShikiID": {
 				options.IfNotNil(
-					options.GreaterThan[int64](0),
+					options.GreaterThan[uint64](0),
 				),
 			},
 		},
@@ -69,9 +69,9 @@ func (cm *CreateModel) Insert(ctx context.Context) error {
 		return eris.Wrap(err, "failed to validate model")
 	}
 
-	sql, args, err := cm.insertSQL()
+	sql, args, err := cm.InsertSQL()
 	if err != nil {
-		return eris.Wrap(err, "failed to create insert sql")
+		return err
 	}
 
 	return database.Instance().
@@ -79,8 +79,8 @@ func (cm *CreateModel) Insert(ctx context.Context) error {
 		Scan(&cm.ID)
 }
 
-func (cm *CreateModel) insertSQL() (string, []any, error) {
-	return sq.Insert("animes").
+func (cm *CreateModel) InsertSQL() (string, []any, error) {
+	sql, args, err := sq.Insert("animes").
 		Columns(
 			"title",
 			"description",
@@ -103,6 +103,11 @@ func (cm *CreateModel) insertSQL() (string, []any, error) {
 		).
 		Suffix("RETURNING id").
 		ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build insert query")
+	}
+
+	return sql, args, nil
 }
 
 func CreateModelFromRequest(request *http.Request) *CreateModel {

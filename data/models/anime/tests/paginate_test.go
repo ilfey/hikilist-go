@@ -1,14 +1,15 @@
-package animeModels
+package tests
 
 import (
 	"testing"
 
+	"github.com/ilfey/hikilist-go/data/models/anime"
 	baseModels "github.com/ilfey/hikilist-go/internal/base_models"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestPaginateNormalize(t *testing.T) {
-	p := Paginate{}
+	p := anime.Paginate{}
 
 	p.Normalize()
 
@@ -18,13 +19,13 @@ func TestPaginateNormalize(t *testing.T) {
 }
 
 func TestPaginateValidate(t *testing.T) {
-	p := Paginate{}
+	p := anime.Paginate{}
 
 	assert.NoError(t, p.Validate())
 
 	// Test page
 
-	p = Paginate{
+	p = anime.Paginate{
 		Page: -1,
 	}
 
@@ -32,7 +33,7 @@ func TestPaginateValidate(t *testing.T) {
 
 	// Test limit
 
-	p = Paginate{
+	p = anime.Paginate{
 		Limit: -1,
 	}
 
@@ -53,7 +54,7 @@ func TestPaginateValidate(t *testing.T) {
 	}
 
 	for _, o := range awaibleOrders {
-		p = Paginate{
+		p = anime.Paginate{
 			Order: o,
 		}
 
@@ -66,7 +67,7 @@ func TestPaginateValidate(t *testing.T) {
 	}
 
 	for _, o := range notAwaibleOrders {
-		p = Paginate{
+		p = anime.Paginate{
 			Order: o,
 		}
 

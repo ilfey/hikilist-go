@@ -1,4 +1,6 @@
-package userActionModels
+package userAction
+
+import "time"
 
 type ListItemModel struct {
 	ID uint `json:"id"`
@@ -6,5 +8,5 @@ type ListItemModel struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
 
-	CreatedAt string `json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 }

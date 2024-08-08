@@ -26,14 +26,12 @@ func main() {
 
 	// Create services.
 
-	authService := authService.New(
+	auth := authService.New(
 		config.Auth,
 	)
 
 	// Create router.
-	router := &router.Router{
-		AuthService: authService,
-	}
+	router := router.New(auth)
 
 	// Create server.
 	srv := server.NewServer(config.Server, router)

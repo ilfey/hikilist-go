@@ -1,4 +1,4 @@
-package collectionModels
+package collection
 
 import (
 	baseModels "github.com/ilfey/hikilist-go/internal/base_models"

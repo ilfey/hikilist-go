@@ -1,7 +1,8 @@
-package animeModels
+package anime
 
 import (
 	"context"
+	"fmt"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/v2/pgxscan"
@@ -23,9 +24,9 @@ func (lm *ListModel) Fill(ctx context.Context, p *Paginate, conds map[string]any
 
 	p.Normalize()
 
-	sql, args, err := lm.fillResultsSQL(p, conds)
+	sql, args, err := lm.FillResultsSQL(p, conds)
 	if err != nil {
-		return eris.Wrap(err, "failed to build select query")
+		return err
 	}
 
 	err = pgxscan.Select(ctx, database.Instance(), &lm.Results, sql, args...)
@@ -33,9 +34,9 @@ func (lm *ListModel) Fill(ctx context.Context, p *Paginate, conds map[string]any
 		return eris.Wrap(err, "failed to execute select query")
 	}
 
-	sql, args, err = lm.fillCountSQL(conds)
+	sql, args, err = lm.FillCountSQL(conds)
 	if err != nil {
-		return eris.Wrap(err, "failed to build count query")
+		return err
 	}
 
 	err = pgxscan.Get(ctx, database.Instance(), &lm.Count, sql, args...)
@@ -46,7 +47,7 @@ func (lm *ListModel) Fill(ctx context.Context, p *Paginate, conds map[string]any
 	return nil
 }
 
-func (ListModel) fillResultsSQL(p *Paginate, conds map[string]any) (string, []any, error) {
+func (ListModel) FillResultsSQL(p *Paginate, conds map[string]any) (string, []any, error) {
 	b := sq.Select(
 		"id",
 		"title",
@@ -59,13 +60,18 @@ func (ListModel) fillResultsSQL(p *Paginate, conds map[string]any) (string, []an
 		b = b.Where(conds)
 	}
 
-	return b.
+	sql, args, err := b.
 		OrderBy(p.Order.ToQuery()).
 		Offset(uint64(p.GetOffset(p.Page, p.Limit))).
 		Limit(uint64(p.Limit)).
 		ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build animes select query")
+	}
+
+	return sql, args, nil
 }
-func (ListModel) fillCountSQL(conds map[string]any) (string, []any, error) {
+func (ListModel) FillCountSQL(conds map[string]any) (string, []any, error) {
 	b := sq.Select("COUNT(*)").
 		From("animes")
 
@@ -73,7 +79,12 @@ func (ListModel) fillCountSQL(conds map[string]any) (string, []any, error) {
 		b = b.Where(conds)
 	}
 
-	return b.ToSql()
+	sql, args, err := b.ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build animes count query")
+	}
+
+	return sql, args, nil
 }
 
 func (lm *ListModel) FillFromCollection(ctx context.Context, p *Paginate, userId, collectionId uint) error {
@@ -84,9 +95,9 @@ func (lm *ListModel) FillFromCollection(ctx context.Context, p *Paginate, userId
 
 	p.Normalize()
 
-	sql, args, err := lm.fillFromCollectionResultsSQL(userId, collectionId)
+	sql, args, err := lm.FillFromCollectionResultsSQL(p, userId, collectionId)
 	if err != nil {
-		return eris.Wrap(err, "failed to build select query")
+		return err
 	}
 
 	err = pgxscan.Select(ctx, database.Instance(), &lm.Results, sql, args...)
@@ -94,9 +105,9 @@ func (lm *ListModel) FillFromCollection(ctx context.Context, p *Paginate, userId
 		return eris.Wrap(err, "failed to execute select query")
 	}
 
-	sql, args, err = lm.fillFromCollectionCountSQL(userId, collectionId)
+	sql, args, err = lm.FillFromCollectionCountSQL(userId, collectionId)
 	if err != nil {
-		return eris.Wrap(err, "failed to build count query")
+		return err
 	}
 
 	err = pgxscan.Get(ctx, database.Instance(), &lm.Count, sql, args...)
@@ -107,7 +118,7 @@ func (lm *ListModel) FillFromCollection(ctx context.Context, p *Paginate, userId
 	return nil
 }
 
-func (ListModel) fillFromCollectionResultsSQL(userId, collectionId uint) (string, []any, error) {
+func (ListModel) FillFromCollectionResultsSQL(p *Paginate, userId, collectionId uint) (string, []any, error) {
 	sub, args, err := sq.Select(
 		"id",
 	).
@@ -120,10 +131,10 @@ func (ListModel) fillFromCollectionResultsSQL(userId, collectionId uint) (string
 		ToSql()
 
 	if err != nil {
-		return "", nil, err
+		return "", nil, eris.Wrap(err, "failed to build collections select subquery")
 	}
 
-	return sq.Select(
+	sql, args, err := sq.Select(
 		"id",
 		"title",
 		"poster",
@@ -132,62 +143,32 @@ func (ListModel) fillFromCollectionResultsSQL(userId, collectionId uint) (string
 	).
 		From("animes_collections").
 		Join("animes ON animes.id = animes_collections.anime_id").
-		Where(sq.Expr(sub, args)).
+		Where(sq.Expr(fmt.Sprintf("collection_id = (%s)", sub), args...)).
+		OrderBy(p.Order.ToQuery()).
+		Offset(uint64(p.GetOffset(p.Page, p.Limit))).
+		Limit(uint64(p.Limit)).
 		ToSql()
+
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build anime select query")
+	}
+
+	return sql, args, nil
 }
 
-func (ListModel) fillFromCollectionCountSQL(userId, collectionId uint) (string, []any, error) {
-	return sq.Select("COUNT(*)").
+func (ListModel) FillFromCollectionCountSQL(userId, collectionId uint) (string, []any, error) {
+	sql, args, err := sq.Select("COUNT(*)").
 		From("animes_collections").
+		Join("collections ON collections.id = animes_collections.collection_id").
 		Where(
-			"id = ? AND (is_public = TRUE OR user_id = ?)",
+			"collection_id = ? AND (is_public = TRUE OR user_id = ?)",
 			collectionId,
 			userId,
 		).
 		ToSql()
+	if err != nil {
+		return "", nil, eris.Wrap(err, "failed to build collections count query")
+	}
+
+	return sql, args, nil
 }
-
-// func (lm *ListModel) PaginateFromCollection(ctx context.Context, p *Paginate, userId, collectionId any) error {
-// 	p.Normalize()
-
-// 	sql := fmt.Sprintf(`
-// SELECT
-// 	a.id,
-// 	a.title,
-// 	a.poster,
-// 	a.episodes,
-// 	a.episodes_released
-// FROM animes_collections AS ac
-// JOIN animes AS a ON ac.anime_id = a.id
-// WHERE ac.collection_id = (
-// 	SELECT
-// 		c.id
-// 	FROM collections AS c
-// 	WHERE c.id = %d AND (c.is_public = TRUE OR c.user_id = %d)
-// 	LIMIT 1
-// )
-// `, collectionId, userId)
-
-// 	if p.Order.Field() != "" {
-// 		sql += fmt.Sprintf(" ORDER BY %s", p.Order.ToQuery())
-// 	}
-
-// 	offset := p.GetOffset(p.Page, p.Limit)
-// 	if offset > 0 {
-// 		sql += fmt.Sprintf(" OFFSET %d", offset)
-// 	}
-
-// 	sql += fmt.Sprintf(" LIMIT %d;", p.Limit)
-
-// 	results, err := orm.Select(&ListItemModel{}).
-// 		QuerySQL(ctx, database.Instance(), sql)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	lm.Results = results
-
-// 	// TODO: count
-
-// 	return nil
-// }

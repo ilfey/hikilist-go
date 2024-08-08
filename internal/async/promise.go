@@ -1,5 +1,7 @@
 package async
 
+import "sync"
+
 // Promise
 type Promise[T any] struct {
 	value chan T // Value
@@ -7,8 +9,10 @@ type Promise[T any] struct {
 
 	err error // Error
 
-	onthen  func(T)     // On then function
-	oncatch func(error) // On catch function
+	onthens   []func(T)     // On then functions
+	oncatches []func(error) // On catch functions
+
+	mu sync.Mutex
 }
 
 /*
@@ -21,25 +25,41 @@ Returns promise.
 func New[T any](fn func() (T, error)) *Promise[T] {
 	promise := Promise[T]{
 		value: make(chan T),
+		mu:    sync.Mutex{},
 	}
 
 	go func() {
 		value, err := fn()
 
+		// Call hooks
+
+		promise.mu.Lock()
+
+		if err == nil {
+			for _, onthen := range promise.onthens {
+				onthen(value)
+			}
+
+			promise.onthens = []func(T){}
+		}
+
+		if err != nil {
+			for _, oncatch := range promise.oncatches {
+				oncatch(err)
+			}
+
+			promise.oncatches = []func(error){}
+		}
+
+		promise.mu.Unlock()
+
 		promise.err = err
+
+		promise.cache = &value
 
 		promise.value <- value
 
 		close(promise.value)
-
-		// Call hooks
-		if promise.onthen != nil && err == nil {
-			promise.onthen(value)
-		}
-
-		if promise.oncatch != nil && err != nil {
-			promise.oncatch(err)
-		}
 	}()
 
 	return &promise
@@ -55,23 +75,39 @@ func (p *Promise[T]) Await() (T, error) {
 		return *p.cache, p.err
 	}
 
-	value := <-p.value
+	return p.Wait(), p.err
+}
 
-	p.cache = &value
+/*
+Wait is a func that waits until the promise is resolved.
 
-	return value, p.err
+Returns value.
+*/
+func (p *Promise[T]) Wait() T {
+	if p.cache != nil {
+		return *p.cache
+	}
+
+	return <-p.value
 }
 
 /*
 Then is a func that calls when the promise is resolved.
-This function is blocked until the promise is resolved.
 
 Returns promise.
 */
 func (p *Promise[T]) Then(callback func(T)) *Promise[T] {
-	p.Await()
+	if p.cache == nil && p.err == nil {
+		p.mu.Lock()
 
-	if p.err == nil {
+		p.onthens = append(p.onthens, callback)
+
+		p.mu.Unlock()
+
+		return p
+	}
+
+	if p.cache != nil && p.err == nil {
 		callback(*p.cache)
 	}
 
@@ -80,12 +116,19 @@ func (p *Promise[T]) Then(callback func(T)) *Promise[T] {
 
 /*
 Then is a func that calls when the promise is rejected.
-This function is blocked until the promise is resolved.
 
 Returns promise.
 */
 func (p *Promise[T]) Catch(callback func(error)) *Promise[T] {
-	p.Await()
+	if p.cache == nil && p.err == nil {
+		p.mu.Lock()
+
+		p.oncatches = append(p.oncatches, callback)
+
+		p.mu.Unlock()
+
+		return p
+	}
 
 	if p.err != nil {
 		callback(p.err)
