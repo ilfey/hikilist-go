@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ilfey/hikilist-go/config"
-	"github.com/ilfey/hikilist-go/data/database"
 	"github.com/ilfey/hikilist-go/internal/logger"
-	"github.com/ilfey/hikilist-go/parser"
-	shikiService "github.com/ilfey/hikilist-go/parser/shikimori"
+	"github.com/ilfey/hikilist-go/pkg/config"
+	"github.com/ilfey/hikilist-go/pkg/database"
+	"github.com/ilfey/hikilist-go/pkg/parser"
+	shikiService "github.com/ilfey/hikilist-go/pkg/parser/shikimori"
 )
 
 func main() {

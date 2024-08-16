@@ -25,17 +25,18 @@ func (p *ConnectionPool) QueryRow(ctx context.Context, sql string, args ...any) 
 	return p.Pool.QueryRow(ctx, sql, args...)
 }
 
-// Exec  sql with context
+// Exec sql with context
 func (p *ConnectionPool) Exec(ctx context.Context, sql string, arguments ...any) (commandTag pgconn.CommandTag, err error) {
 	return p.Pool.Exec(ctx, sql, arguments...)
 }
 
 // Begin return new transaction with context
-func (p *ConnectionPool) Begin(ctx context.Context) (*Transaction, error) {
+func (p *ConnectionPool) Begin(ctx context.Context) (Tx, error) {
 	tx, err := p.Pool.Begin(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "create transaction")
 	}
+
 	return &Transaction{
 		Tx: tx,
 		mu: &sync.Mutex{},
@@ -43,12 +44,13 @@ func (p *ConnectionPool) Begin(ctx context.Context) (*Transaction, error) {
 }
 
 // RunTx exec sql with transaction
-func (p *ConnectionPool) RunTx(ctx context.Context, fn func(tx *Transaction) error) error {
+func (p *ConnectionPool) RunTx(ctx context.Context, fn func(tx Tx) error) error {
 	var err error
 	tx, err := p.Begin(ctx)
 	if err != nil {
 		return err
 	}
+
 	defer func() {
 		p := recover()
 		switch {
@@ -64,7 +66,9 @@ func (p *ConnectionPool) RunTx(ctx context.Context, fn func(tx *Transaction) err
 			err = tx.Commit()
 		}
 	}()
+
 	err = fn(tx)
+
 	return err
 }
 
@@ -76,4 +80,3 @@ func (p *ConnectionPool) Statistics() *pgxpool.Stat {
 func (p *ConnectionPool) Close() {
 	p.Pool.Close()
 }
-

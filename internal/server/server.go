@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -11,8 +12,9 @@ import (
 
 // Сервер
 type Server struct {
-	config *Config
-	router Router
+	config     *Config
+	router     Router
+	httpServer *http.Server
 }
 
 // Конфиг сервера
@@ -45,8 +47,8 @@ type Router interface {
 // Конструктор сервера
 func NewServer(config *Config, router Router) *Server {
 	return &Server{
-		config,
-		router,
+		config: config,
+		router: router,
 	}
 }
 
@@ -58,7 +60,7 @@ func (server *Server) Run() error {
 
 	ngClassic.UseHandler(ngRouter)
 
-	srv := &http.Server{
+	server.httpServer = &http.Server{
 		ReadTimeout:       server.config.ReadTimeout * time.Millisecond,
 		WriteTimeout:      server.config.WriteTimeout * time.Millisecond,
 		IdleTimeout:       server.config.IdleTimeout * time.Millisecond,
@@ -68,5 +70,9 @@ func (server *Server) Run() error {
 		Handler: ngClassic,
 	}
 
-	return srv.ListenAndServe()
+	return server.httpServer.ListenAndServe()
+}
+
+func (server *Server) Shutdown() error {
+	return server.httpServer.Shutdown(context.Background())
 }

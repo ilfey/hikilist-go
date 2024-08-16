@@ -15,8 +15,8 @@ type Read interface {
 
 type Write interface {
 	Exec(ctx context.Context, sql string, args ...any) (commandTag pgconn.CommandTag, err error)
-	Begin(ctx context.Context) (*Transaction, error)
-	RunTx(ctx context.Context, fn func(tx *Transaction) error) error
+	Begin(ctx context.Context) (Tx, error)
+	RunTx(ctx context.Context, fn func(tx Tx) error) error
 	SendBatch(ctx context.Context, b *pgx.Batch) pgx.BatchResults
 }
 
@@ -24,6 +24,17 @@ type Write interface {
 type DB interface {
 	Read
 	Write
+
 	Statistics() *pgxpool.Stat
 	Close()
+}
+
+type Tx interface {
+	Read
+	Write
+
+	Commit() error
+	CommitCtx(ctx context.Context) error
+	Rollback() error
+	RollbackCtx(ctx context.Context) error
 }

@@ -5,12 +5,21 @@ import (
 	"strings"
 
 	"github.com/ilfey/hikilist-go/internal/validator/options"
+	"github.com/rotisserie/eris"
 )
 
 func Validate(st any, fieldsOpts map[string][]options.Option) error {
 	errs := map[string][]string{}
 
 	rValue := reflect.ValueOf(st)
+
+	if rValue.Kind() == reflect.Pointer {
+		rValue = rValue.Elem()
+	}
+
+	if rValue.Kind() != reflect.Struct {
+		return eris.New("argument is not a struct")
+	}
 
 	for i := 0; i < rValue.NumField(); i++ {
 		field := rValue.Type().Field(i)

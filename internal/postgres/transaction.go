@@ -36,16 +36,19 @@ func (t *Transaction) QueryRow(ctx context.Context, sql string, args ...any) pgx
 }
 
 // Begin create savepoint with context
-func (t *Transaction) Begin(ctx context.Context) (*Transaction, error) {
+func (t *Transaction) Begin(ctx context.Context) (Tx, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
 	t.savePointSequence++
+
 	sql := fmt.Sprintf("SAVEPOINT savepoint_%d", t.savePointSequence)
+
 	_, err := t.Tx.Exec(ctx, sql)
 	if err != nil {
 		return nil, eris.Wrap(err, "create savepoint")
 	}
+
 	return t, nil
 }
 
@@ -64,11 +67,13 @@ func (t *Transaction) RollbackCtx(ctx context.Context) error {
 	}
 
 	sql := fmt.Sprintf("ROLLBACK TO SAVEPOINT savepoint_%d", t.savePointSequence)
+
 	_, err := t.Tx.Exec(ctx, sql)
 	t.savePointSequence--
 	if err != nil {
 		return eris.Wrap(err, "rollback to savepoint")
 	}
+
 	return nil
 }
 
@@ -87,15 +92,17 @@ func (t *Transaction) CommitCtx(ctx context.Context) error {
 	}
 
 	t.savePointSequence--
+
 	return nil
 }
 
 // RunTx exec sql with transaction
-func (t *Transaction) RunTx(ctx context.Context, fn func(tx *Transaction) error) error {
+func (t *Transaction) RunTx(ctx context.Context, fn func(tx Tx) error) error {
 	tx, err := t.Begin(ctx)
 	if err != nil {
 		return err
 	}
+
 	defer func() {
 		p := recover()
 		switch {
@@ -111,7 +118,9 @@ func (t *Transaction) RunTx(ctx context.Context, fn func(tx *Transaction) error)
 			err = tx.Commit()
 		}
 	}()
+
 	err = fn(tx)
+
 	return err
 }
 
@@ -124,7 +133,9 @@ func (t *Transaction) Close() error {
 func (t *Transaction) CloseCtx(ctx context.Context) error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
+
 	_ = t.Tx.Rollback(ctx)
+
 	return nil
 }
 

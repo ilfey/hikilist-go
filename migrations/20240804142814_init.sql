@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS collections (
     
     title VARCHAR(512),
     description VARCHAR,
-    is_public BOOLEAN NOT NULL,
+    is_public BOOLEAN NOT NULL DEFAULT TRUE,
     user_id BIGINT,
 
     updated_at TIMESTAMP  NOT NULL DEFAULT NOW(),

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ilfey/hikilist-go/internal/errorsx"
+	"github.com/rotisserie/eris"
 )
 
 type ValidateError struct {
@@ -24,4 +25,10 @@ func (e *ValidateError) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(_map)
+}
+
+func IsValidateError(err error) bool {
+	var vErr *ValidateError
+
+	return eris.As(err, &vErr)
 }
