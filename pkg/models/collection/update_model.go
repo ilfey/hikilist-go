@@ -37,10 +37,13 @@ func (um UpdateModel) Validate() error {
 	)
 }
 
-func NewUpdateModelFromRequest(request *http.Request) *UpdateModel {
+func NewUpdateModelFromRequest(request *http.Request, userId, collectionId uint) *UpdateModel {
 	model := new(UpdateModel)
 
 	json.NewDecoder(request.Body).Decode(model)
+
+	model.ID = collectionId
+	model.UserID = userId
 
 	return model
 }

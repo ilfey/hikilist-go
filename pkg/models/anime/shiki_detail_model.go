@@ -2,27 +2,30 @@ package anime
 
 import (
 	"time"
+
+	"github.com/ilfey/hikilist-go/internal/validator"
+	"github.com/ilfey/hikilist-go/internal/validator/options"
 )
 
 type ShikiDetailModel struct {
 	ID *uint `json:"id"`
 	// Name              *string    `json:"name"`
-	Russian *string `json:"russian"`
+	Russian *string `json:"russian"` // Can be nil
 	// URL               *string    `json:"url"`
 	Kind *string `json:"kind"`
 	// Score             *string    `json:"score"`
 	Status        *string `json:"status"`
-	Episodes      *uint   `json:"episodes"`
-	EpisodesAired *uint   `json:"episodes_aired"`
-	AiredOn       *string `json:"aired_on"`
-	ReleasedOn    *string `json:"released_on"`
+	Episodes      *uint   `json:"episodes"`       // Can be nil or zero
+	EpisodesAired *uint   `json:"episodes_aired"` // Can be nil or zero
+	AiredOn       *string `json:"aired_on"`       // Can be nil
+	ReleasedOn    *string `json:"released_on"`    // Can be nil
 	// Rating            *string    `json:"rating"`
 	// English           *[]string  `json:"english"`
 	// Japanese          *[]string  `json:"japanese"`
 	// Synonyms          *[]string  `json:"synonyms"`
 	// LicenseNameRu     *string    `json:"license_name_ru"`
 	// Duration          *int       `json:"duration"`
-	Description *string `json:"description"`
+	Description *string `json:"description"` // Can be nil
 	// DescriptionHTML   *string    `json:"description_html"`
 	// DescriptionSource *string    `json:"description_source"`
 	// Franchise         *string    `json:"franchise"`
@@ -31,13 +34,13 @@ type ShikiDetailModel struct {
 	// Ongoing           *bool      `json:"ongoing"`
 	// ThreadID          *int       `json:"thread_id"`
 	// TopicID           *int       `json:"topic_id"`
-	MyanimelistID *uint      `json:"myanimelist_id"`
+	MyAnimeListID *uint      `json:"myanimelist_id"`
 	UpdatedAt     *time.Time `json:"updated_at"`
 	// NextEpisodeAt     *time.Time `json:"next_episode_at"`
 	// Fansubbers        *[]string  `json:"fansubbers"`
 	// Fandubbers        *[]string  `json:"fandubbers"`
 	// Licensors         *[]string  `json:"licensors"`
-	Image *struct {
+	Image *struct { // Can be nil
 		Original *string `json:"original"`
 		Preview  *string `json:"preview"`
 		X96      *string `json:"x96"`
@@ -80,7 +83,30 @@ type ShikiDetailModel struct {
 	// } `json:"screenshots"`
 }
 
-// Сравнить статус
+func (sdm *ShikiDetailModel) Validate() error {
+	return validator.Validate(
+		sdm,
+		map[string][]options.Option{
+			"ID": {
+				options.NotNil(),
+				options.GreaterThan[int64](0),
+			},
+			"Russian": {
+				options.NotNil(),
+				options.LenGreaterThan(0),
+			},
+			"Status": {
+				options.NotNil(),
+				options.LenGreaterThan(0),
+			},
+			"MyAnimeListID": {
+				options.NotNil(),
+				options.GreaterThan[int64](0),
+			},
+		},
+	)
+}
+
 func (m *ShikiDetailModel) CompareStatus(status string) bool {
 	if m.Status == nil {
 		return false
@@ -89,25 +115,20 @@ func (m *ShikiDetailModel) CompareStatus(status string) bool {
 	return *m.Status == status
 }
 
-// func (m *ShikiDetailModel) Resolve() error {
-// 	cm := CreateModel{
-// 		Title:            *m.Russian,
-// 		Description:      m.Description,
-// 		Poster:           m.Image.Original,
-// 		Episodes:         m.Episodes,
-// 		EpisodesReleased: *m.EpisodesAired,
-// 		MalID:            m.MyanimelistID,
-// 		ShikiID:          m.ID,
-// 	}
+func (sdm *ShikiDetailModel) ToCreateModel() *CreateModel {
+	createModel := CreateModel{
+		Title:            *sdm.Russian,
+		Description:      sdm.Description,
+		Poster:           sdm.Image.Original,
+		Episodes:         sdm.Episodes,
+		EpisodesReleased: *sdm.EpisodesAired,
+		MalID:            sdm.MyAnimeListID,
+		ShikiID:          sdm.ID,
+	}
 
-// 	if m.CompareStatus("released") {
-// 		cm.EpisodesReleased = *m.Episodes
-// 	}
+	if sdm.CompareStatus("released") && sdm.Episodes != nil && *sdm.Episodes != 0 {
+		createModel.EpisodesReleased = *sdm.Episodes
+	}
 
-// 	err := cm.Validate()
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return cm.Insert(context.Background())
-// }
+	return &createModel
+}

@@ -1,4 +1,4 @@
-package anime
+package repository
 
 import (
 	"strconv"
@@ -41,8 +41,8 @@ const (
 )
 
 type ListOptions struct {
-	Page     uint64
-	Limit    uint64
+	Page     uint
+	Limit    uint
 	Order    Order
 	Kind     Kind
 	Status   Status
@@ -51,8 +51,8 @@ type ListOptions struct {
 
 func (o *ListOptions) ToMap() map[string]string {
 	values := map[string]string{
-		"page":     strconv.FormatUint(o.Page, 10),
-		"limit":    strconv.FormatUint(o.Limit, 10),
+		"page":     strconv.FormatUint(uint64(o.Page), 10),
+		"limit":    strconv.FormatUint(uint64(o.Limit), 10),
 		"order":    string(o.Order),
 		"kind":     string(o.Kind),
 		"status":   string(o.Status),
@@ -71,13 +71,13 @@ func (o *ListOptions) ToMap() map[string]string {
 type ListOption = func(*ListOptions)
 
 // Страница
-func PageOption(page uint64) ListOption {
+func PageOption(page uint) ListOption {
 	return func(opt *ListOptions) {
 		opt.Page = page
 	}
 }
 
-func LimitOption(limit uint64) ListOption {
+func LimitOption(limit uint) ListOption {
 	return func(opt *ListOptions) {
 		opt.Limit = limit
 	}

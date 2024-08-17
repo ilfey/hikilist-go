@@ -35,10 +35,12 @@ func (cm CreateModel) Validate() error {
 	)
 }
 
-func NewCreateModelFromRequest(request *http.Request) *CreateModel {
+func NewCreateModelFromRequest(request *http.Request, userId uint) *CreateModel {
 	model := new(CreateModel)
 
 	json.NewDecoder(request.Body).Decode(model)
+
+	model.UserID = userId
 
 	return model
 }

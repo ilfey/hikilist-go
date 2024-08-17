@@ -28,6 +28,7 @@ func main() {
 
 	actionRepo := repositories.NewAction(db)
 	animeRepo := repositories.NewAnime(db)
+	animeCollectionRepo := repositories.NewAnimeCollection(db)
 	collectionRepo := repositories.NewCollection(db, actionRepo)
 	userRepo := repositories.NewUser(db, actionRepo)
 	tokenRepo := repositories.NewToken(db)
@@ -44,7 +45,10 @@ func main() {
 		tokenRepo,
 	)
 
-	collection := services.NewCollection(collectionRepo)
+	collection := services.NewCollection(
+		animeCollectionRepo,
+		collectionRepo,
+	)
 
 	user := services.NewUser(
 		userRepo,

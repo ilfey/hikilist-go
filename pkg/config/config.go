@@ -6,15 +6,15 @@ import (
 	"github.com/ilfey/hikilist-go/internal/server"
 	"github.com/ilfey/hikilist-go/pkg/config/auth"
 	"github.com/ilfey/hikilist-go/pkg/config/database"
-	"github.com/ilfey/hikilist-go/pkg/parser/shikimori/shiki"
+	shiki "github.com/ilfey/hikilist-go/pkg/parser/shiki/config"
 )
 
 // Глобальный конфиг приложения
 type Config struct {
-	Auth      *auth.Config
-	Database  *database.Config
-	Server    *server.Config
-	Shikimori *shiki.Config
+	Auth     *auth.Config
+	Database *database.Config
+	Server   *server.Config
+	Shiki    *shiki.Config
 }
 
 // Конструктор глобального конфига приложения
@@ -43,7 +43,7 @@ func New() *Config {
 			Host: getEnv("SERVER_CONFIG_HOST", "0.0.0.0"),
 			Port: getEnvAsInt("SERVER_CONFIG_PORT", 5000),
 		},
-		Shikimori: &shiki.Config{
+		Shiki: &shiki.Config{
 			BaseUrl: getEnv("PARSER_SHIKIMORI_BASE_URL", "https://shikimori.one"),
 		},
 	}

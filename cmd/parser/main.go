@@ -1,14 +1,19 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"context"
+	"net/http"
+	"time"
 
+	"github.com/ilfey/hikilist-go/internal/httpx"
 	"github.com/ilfey/hikilist-go/internal/logger"
+	requestbuilder "github.com/ilfey/hikilist-go/internal/request_builder"
 	"github.com/ilfey/hikilist-go/pkg/config"
 	"github.com/ilfey/hikilist-go/pkg/database"
 	"github.com/ilfey/hikilist-go/pkg/parser"
-	shikiService "github.com/ilfey/hikilist-go/pkg/parser/shikimori"
+	"github.com/ilfey/hikilist-go/pkg/parser/shiki/service"
+	"github.com/ilfey/hikilist-go/pkg/repositories"
+	"github.com/ilfey/hikilist-go/pkg/services"
 )
 
 func main() {
@@ -18,19 +23,43 @@ func main() {
 
 	config := config.New()
 
-	database.New(config.Database)
+	db := database.New(config.Database)
 
-	shikiService := shikiService.NewShikimoriService(
-		config.Shikimori,
+	animeRepo := repositories.NewAnime(db)
+	animeService := services.NewAnime(animeRepo)
+
+	shiki := service.New(
+		shikiBuilder(config),
 	)
 
 	parser := &parser.Parser{
-		Shiki: shikiService,
+		Shiki: shiki,
+		Anime: animeService,
 	}
 
-	err := parser.Run()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	result := <-parser.Run(context.Background())
+
+	if result.Error() != nil {
+		logger.Fatal(result.Error())
 	}
+}
+
+func shikiBuilder(config *config.Config) *requestbuilder.RequestBuilder {
+	builder := requestbuilder.NewRequestBuilder(
+		config.Shiki.BaseUrl+"/api/",
+		&http.Client{
+			Transport: http.DefaultTransport,
+			Timeout:   2000 * time.Millisecond,
+		},
+	)
+
+	builder.AddResponseHook(func(r *httpx.Response) {
+		logger.Trace(r)
+	})
+
+	builder.AddRequestHook(func(rb *httpx.RequestBuilder) {
+		logger.Tracef("New request: %s", rb)
+	})
+
+	return builder
 }

@@ -1,4 +1,4 @@
-package shiki
+package config
 
 type Config struct {
 	BaseUrl string

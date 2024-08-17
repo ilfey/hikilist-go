@@ -5,6 +5,7 @@ import (
 
 	"github.com/ilfey/hikilist-go/internal/logger"
 	"github.com/ilfey/hikilist-go/internal/paginate"
+	animecollection "github.com/ilfey/hikilist-go/pkg/models/anime_collection"
 	"github.com/ilfey/hikilist-go/pkg/models/collection"
 	"github.com/ilfey/hikilist-go/pkg/repositories"
 	"golang.org/x/sync/errgroup"
@@ -17,15 +18,20 @@ type Collection interface {
 	// Find(ctx context.Context, p *paginate.Paginator, conds any) ([]*collection.ListItemModel, error)
 	// Count(ctx context.Context, conds any) (uint, error)
 	Update(ctx context.Context, um *collection.UpdateModel) error
+
+	AddAnimes(ctx context.Context, aam *animecollection.AddAnimesModel) error
+	RemoveAnimes(ctx context.Context, ram *animecollection.RemoveAnimesModel) error
 }
 
 type CollectionImpl struct {
-	collection repositories.Collection
+	animeCollection repositories.AnimeCollection
+	collection      repositories.Collection
 }
 
-func NewCollection(collectionRepo repositories.Collection) Collection {
+func NewCollection(animeCollectionRepo repositories.AnimeCollection, collectionRepo repositories.Collection) Collection {
 	return &CollectionImpl{
-		collection: collectionRepo,
+		animeCollection: animeCollectionRepo,
+		collection:      collectionRepo,
 	}
 }
 
@@ -118,6 +124,30 @@ func (s *CollectionImpl) Update(ctx context.Context, um *collection.UpdateModel)
 	err := s.collection.Update(ctx, um)
 	if err != nil {
 		logger.Debugf("Error occurred while updating collection %v", err)
+
+		return err
+	}
+
+	return nil
+}
+
+// Anime collection.
+
+func (s *CollectionImpl) AddAnimes(ctx context.Context, aam *animecollection.AddAnimesModel) error {
+	err := s.animeCollection.AddAnimes(ctx, aam)
+	if err != nil {
+		logger.Debugf("Error occurred while adding animes %v", err)
+
+		return err
+	}
+
+	return nil
+}
+
+func (s *CollectionImpl) RemoveAnimes(ctx context.Context, ram *animecollection.RemoveAnimesModel) error {
+	err := s.animeCollection.RemoveAnimes(ctx, ram)
+	if err != nil {
+		logger.Debugf("Error occurred while removing animes %v", err)
 
 		return err
 	}

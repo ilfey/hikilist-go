@@ -79,6 +79,8 @@ func (r *Router) Bind() http.Handler {
 	r.HandleFunc("/api/collections/{id:[0-9]+}", collection.Detail).Methods("GET")
 	r.HandleFunc("/api/collections/{id:[0-9]+}", collection.Update).Methods("PATCH")
 	r.HandleFunc("/api/collections/{id:[0-9]+}/animes", collection.Animes).Methods("GET")
+	r.HandleFunc("/api/collections/{id:[0-9]+}/animes/add", collection.AddAnimes).Methods("PATCH")
+	r.HandleFunc("/api/collections/{id:[0-9]+}/animes/remove", collection.RemoveAnimes).Methods("PATCH")
 
 	user := controllers.User{
 		Action:     r.action,
