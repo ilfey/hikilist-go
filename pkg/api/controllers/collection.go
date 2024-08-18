@@ -8,9 +8,9 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/rotisserie/eris"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ilfey/hikilist-go/internal/errorsx"
-	"github.com/ilfey/hikilist-go/internal/logger"
 	"github.com/ilfey/hikilist-go/internal/postgres"
 	"github.com/ilfey/hikilist-go/internal/validator"
 
@@ -24,6 +24,8 @@ import (
 
 // Контроллер аниме
 type Collection struct {
+	Logger logrus.FieldLogger
+
 	Anime      services.Anime
 	Collection services.Collection
 }
@@ -32,7 +34,7 @@ func (controller *Collection) Create(ctx *handler.Context) {
 	// Authorize.
 	user, err := ctx.AuthorizedOnly()
 	if err != nil {
-		logger.Infof("User is not authorized %v", err)
+		controller.Logger.Infof("User is not authorized %v", err)
 
 		ctx.SendJSON(responses.ResponseUnauthorized())
 
@@ -46,7 +48,7 @@ func (controller *Collection) Create(ctx *handler.Context) {
 	if err != nil {
 		// Handle validation error.
 		if validator.IsValidateError(err) {
-			logger.Infof("Error occurred on create model validating %v", err)
+			controller.Logger.Infof("Error occurred on create model validating %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": err,
@@ -55,7 +57,7 @@ func (controller *Collection) Create(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to validate create model %v", err)
+		controller.Logger.Errorf("Failed to validate create model %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -65,7 +67,7 @@ func (controller *Collection) Create(ctx *handler.Context) {
 	// Create collection.
 	err = controller.Collection.Create(ctx, createModel)
 	if err != nil {
-		logger.Errorf("Failed to create collection %v", err)
+		controller.Logger.Errorf("Failed to create collection %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -84,7 +86,7 @@ func (controller *Collection) List(ctx *handler.Context) {
 	if err != nil {
 		// Handle validation error.
 		if validator.IsValidateError(err) {
-			logger.Infof("Error occurred on paginator validating %v", err)
+			controller.Logger.Infof("Error occurred on paginator validating %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": err,
@@ -93,7 +95,7 @@ func (controller *Collection) List(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to validate paginator %v", err)
+		controller.Logger.Errorf("Failed to validate paginator %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -105,7 +107,7 @@ func (controller *Collection) List(ctx *handler.Context) {
 		"is_public": true,
 	})
 	if err != nil {
-		logger.Errorf("Failed to get collections %v", err)
+		controller.Logger.Errorf("Failed to get collections %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -120,7 +122,7 @@ func (controller *Collection) Update(ctx *handler.Context) {
 	// Authorize.
 	user, err := ctx.AuthorizedOnly()
 	if err != nil {
-		logger.Infof("User is not authorized %v", err)
+		controller.Logger.Infof("User is not authorized %v", err)
 
 		ctx.SendJSON(responses.ResponseUnauthorized())
 
@@ -132,13 +134,13 @@ func (controller *Collection) Update(ctx *handler.Context) {
 	// Get id from url vars.
 	stringId, ok := vars["id"]
 	if !ok {
-		logger.Panic("mux.Vars is not contains id")
+		controller.Logger.Panic("mux.Vars is not contains id")
 	}
 
 	// Parsing id.
 	id, err := strconv.ParseUint(stringId, 10, 64)
 	if err != nil {
-		logger.Warnf("Error occurred on parsing uint from string %v", err)
+		controller.Logger.Warnf("Error occurred on parsing uint from string %v", err)
 
 		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 			"error": "id must be unsigned integer",
@@ -154,7 +156,7 @@ func (controller *Collection) Update(ctx *handler.Context) {
 	if err != nil {
 		// Handle validation error.
 		if validator.IsValidateError(err) {
-			logger.Infof("Error occurred on update model validating %v", err)
+			controller.Logger.Infof("Error occurred on update model validating %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": err,
@@ -163,7 +165,7 @@ func (controller *Collection) Update(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to validate update model %v", err)
+		controller.Logger.Errorf("Failed to validate update model %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -173,7 +175,7 @@ func (controller *Collection) Update(ctx *handler.Context) {
 	// Update collection.
 	err = controller.Collection.Update(ctx, updateModel)
 	if err != nil {
-		logger.Errorf("Failed to update collection %v", err)
+		controller.Logger.Errorf("Failed to update collection %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -188,7 +190,7 @@ func (controller *Collection) AddAnimes(ctx *handler.Context) {
 	// Authorize.
 	user, err := ctx.AuthorizedOnly()
 	if err != nil {
-		logger.Infof("User is not authorized %v", err)
+		controller.Logger.Infof("User is not authorized %v", err)
 
 		ctx.SendJSON(responses.ResponseUnauthorized())
 
@@ -200,13 +202,13 @@ func (controller *Collection) AddAnimes(ctx *handler.Context) {
 	// Get id from url vars.
 	stringId, ok := vars["id"]
 	if !ok {
-		logger.Panic("mux.Vars is not contains id")
+		controller.Logger.Panic("mux.Vars is not contains id")
 	}
 
 	// Parsing id.
 	id, err := strconv.ParseUint(stringId, 10, 64)
 	if err != nil {
-		logger.Warnf("Error occurred on parsing uint from string %v", err)
+		controller.Logger.Warnf("Error occurred on parsing uint from string %v", err)
 
 		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 			"error": "id must be unsigned integer",
@@ -222,7 +224,7 @@ func (controller *Collection) AddAnimes(ctx *handler.Context) {
 	if err != nil {
 		// Handle validation error.
 		if validator.IsValidateError(err) {
-			logger.Infof("Error occurred on add animes model validating %v", err)
+			controller.Logger.Infof("Error occurred on add animes model validating %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": err,
@@ -231,7 +233,7 @@ func (controller *Collection) AddAnimes(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to validate add animes model %v", err)
+		controller.Logger.Errorf("Failed to validate add animes model %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -243,7 +245,7 @@ func (controller *Collection) AddAnimes(ctx *handler.Context) {
 	if err != nil {
 		// Handle anime already in collection.
 		if postgres.PgErrCodeEquals(err, pgerrcode.UniqueViolation) {
-			logger.Infof("Error occurred while adding a added already anime %v", err)
+			controller.Logger.Infof("Error occurred while adding a added already anime %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": "Anime added already",
@@ -254,7 +256,7 @@ func (controller *Collection) AddAnimes(ctx *handler.Context) {
 
 		// Handle collection non-exists or user is not the creator.
 		if eris.Is(err, pgx.ErrNoRows) {
-			logger.Infof("Error occurred while getting a non-existent collection %v", err)
+			controller.Logger.Infof("Error occurred while getting a non-existent collection %v", err)
 
 			ctx.SendJSON(responses.ResponseUnauthorized(responses.J{
 				"error": "Collection does not exist or user is not the creator",
@@ -265,7 +267,7 @@ func (controller *Collection) AddAnimes(ctx *handler.Context) {
 
 		// Handle anime non-exists.
 		if postgres.PgErrCodeEquals(err, pgerrcode.ForeignKeyViolation) {
-			logger.Infof("Error occurred while adding a non-existent anime %v", err)
+			controller.Logger.Infof("Error occurred while adding a non-existent anime %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": "Anime does not exist",
@@ -274,7 +276,7 @@ func (controller *Collection) AddAnimes(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to add animes %v", err)
+		controller.Logger.Errorf("Failed to add animes %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -289,7 +291,7 @@ func (controller *Collection) RemoveAnimes(ctx *handler.Context) {
 	// Authorize.
 	user, err := ctx.AuthorizedOnly()
 	if err != nil {
-		logger.Infof("User is not authorized %v", err)
+		controller.Logger.Infof("User is not authorized %v", err)
 
 		ctx.SendJSON(responses.ResponseUnauthorized())
 
@@ -301,13 +303,13 @@ func (controller *Collection) RemoveAnimes(ctx *handler.Context) {
 	// Get id from url vars.
 	stringId, ok := vars["id"]
 	if !ok {
-		logger.Panic("mux.Vars is not contains id")
+		controller.Logger.Panic("mux.Vars is not contains id")
 	}
 
 	// Parsing id.
 	id, err := strconv.ParseUint(stringId, 10, 64)
 	if err != nil {
-		logger.Warnf("Error occurred on parsing uint from string %v", err)
+		controller.Logger.Warnf("Error occurred on parsing uint from string %v", err)
 
 		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 			"error": "id must be unsigned integer",
@@ -323,7 +325,7 @@ func (controller *Collection) RemoveAnimes(ctx *handler.Context) {
 	if err != nil {
 		// Handle validation error.
 		if validator.IsValidateError(err) {
-			logger.Infof("Error occurred on remove animes model validating %v", err)
+			controller.Logger.Infof("Error occurred on remove animes model validating %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": err,
@@ -332,7 +334,7 @@ func (controller *Collection) RemoveAnimes(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to validate remove animes model %v", err)
+		controller.Logger.Errorf("Failed to validate remove animes model %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -344,7 +346,7 @@ func (controller *Collection) RemoveAnimes(ctx *handler.Context) {
 	if err != nil {
 		// // Handle anime already in collection.
 		// if postgres.PgErrCodeEquals(err, pgerrcode.UniqueViolation) {
-		// 	logger.Infof("Error occurred while adding a added already anime %v", err)
+		// 	controller.Logger.Infof("Error occurred while adding a added already anime %v", err)
 
 		// 	ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 		// 		"error": "Anime added already",
@@ -355,7 +357,7 @@ func (controller *Collection) RemoveAnimes(ctx *handler.Context) {
 
 		// Handle collection non-exists or user is not the creator.
 		if eris.Is(err, pgx.ErrNoRows) {
-			logger.Infof("Error occurred while getting a non-existent collection %v", err)
+			controller.Logger.Infof("Error occurred while getting a non-existent collection %v", err)
 
 			ctx.SendJSON(responses.ResponseUnauthorized(responses.J{
 				"error": "Collection does not exist or user is not the creator",
@@ -366,7 +368,7 @@ func (controller *Collection) RemoveAnimes(ctx *handler.Context) {
 
 		// // Handle anime non-exists.
 		// if postgres.PgErrCodeEquals(err, pgerrcode.ForeignKeyViolation) {
-		// 	logger.Infof("Error occurred while adding a non-existent anime %v", err)
+		// 	controller.Logger.Infof("Error occurred while adding a non-existent anime %v", err)
 
 		// 	ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 		// 		"error": "Anime does not exist",
@@ -375,7 +377,7 @@ func (controller *Collection) RemoveAnimes(ctx *handler.Context) {
 		// 	return
 		// }
 
-		logger.Errorf("Failed to remove animes %v", err)
+		controller.Logger.Errorf("Failed to remove animes %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -400,13 +402,13 @@ func (controller *Collection) Detail(ctx *handler.Context) {
 	// Get id from url vars.
 	stringId, ok := vars["id"]
 	if !ok {
-		logger.Panic("mux.Vars is not contains id")
+		controller.Logger.Panic("mux.Vars is not contains id")
 	}
 
 	// Parsing id.
 	id, err := strconv.ParseUint(stringId, 10, 64)
 	if err != nil {
-		logger.Warnf("Error occurred on parsing uint from string %v", err)
+		controller.Logger.Warnf("Error occurred on parsing uint from string %v", err)
 
 		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 			"error": "id must be unsigned integer",
@@ -420,14 +422,14 @@ func (controller *Collection) Detail(ctx *handler.Context) {
 	if err != nil {
 		// Handle not found.
 		if eris.Is(err, pgx.ErrNoRows) {
-			logger.Infof("Error occurred while getting a non-existent collection %v", err)
+			controller.Logger.Infof("Error occurred while getting a non-existent collection %v", err)
 
 			ctx.SendJSON(responses.ResponseNotFound())
 
 			return
 		}
 
-		logger.Errorf("Failed to get anime %v", err)
+		controller.Logger.Errorf("Failed to get anime %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -452,13 +454,13 @@ func (controller *Collection) Animes(ctx *handler.Context) {
 	// Get id from url vars.
 	stringId, ok := vars["id"]
 	if !ok {
-		logger.Panic("mux.Vars is not contains id")
+		controller.Logger.Panic("mux.Vars is not contains id")
 	}
 
 	// Parsing id.
 	id, err := strconv.ParseUint(stringId, 10, 64)
 	if err != nil {
-		logger.Warnf("Error occurred on parsing uint from string %v", err)
+		controller.Logger.Warnf("Error occurred on parsing uint from string %v", err)
 
 		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 			"error": "id must be unsigned integer",
@@ -474,7 +476,7 @@ func (controller *Collection) Animes(ctx *handler.Context) {
 	if err != nil {
 		// Handle validation error.
 		if validator.IsValidateError(err) {
-			logger.Infof("Error occurred on paginator validating %v", err)
+			controller.Logger.Infof("Error occurred on paginator validating %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": err,
@@ -483,7 +485,7 @@ func (controller *Collection) Animes(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to validate paginator %v", err)
+		controller.Logger.Errorf("Failed to validate paginator %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -498,7 +500,7 @@ func (controller *Collection) Animes(ctx *handler.Context) {
 		uint(id),
 	)
 	if err != nil {
-		logger.Errorf("Failed to get animes %v", err)
+		controller.Logger.Errorf("Failed to get animes %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 

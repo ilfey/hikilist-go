@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ilfey/hikilist-go/internal/errorsx"
-	"github.com/ilfey/hikilist-go/internal/logger"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ilfey/hikilist-go/pkg/claims"
 	config "github.com/ilfey/hikilist-go/pkg/config/auth"
@@ -36,17 +36,23 @@ type Auth interface {
 }
 
 type AuthImpl struct {
+	logger logrus.FieldLogger
+
 	config    *config.Config
 	userRepo  repositories.User
 	tokenRepo repositories.Token
 }
 
 func NewAuth(
+	logger logrus.FieldLogger,
+
 	config *config.Config,
 	userRepo repositories.User,
 	tokenRepo repositories.Token,
 ) Auth {
 	return &AuthImpl{
+		logger: logger,
+
 		config:    config,
 		userRepo:  userRepo,
 		tokenRepo: tokenRepo,
@@ -77,7 +83,7 @@ func (s *AuthImpl) DeleteUser(ctx context.Context, userId uint, refresh string) 
 	g.Go(func() error {
 		err := s.userRepo.Delete(ctx, userId)
 		if err != nil {
-			logger.Debugf("Error occurred while deleting user %v", err)
+			s.logger.Debugf("Error occurred while deleting user %v", err)
 
 			return err
 		}
@@ -138,7 +144,7 @@ func (s *AuthImpl) RefreshTokens(ctx context.Context, refresh string) (*auth.Tok
 func (s *AuthImpl) Logout(ctx context.Context, logoutModel *auth.LogoutModel) error {
 	_, err := s.ParseToken(logoutModel.Refresh)
 	if err != nil {
-		logger.Debugf("Error occurred on token parsing %v", err)
+		s.logger.Debugf("Error occurred on token parsing %v", err)
 
 		return eris.Wrap(err, "failed to parse token")
 	}
@@ -187,7 +193,7 @@ func (s *AuthImpl) DeleteToken(ctx context.Context, token string) error {
 		"token": s.getTokenDBView(token),
 	})
 	if err != nil {
-		logger.Debugf("Error occurred while deleting token %v", err)
+		s.logger.Debugf("Error occurred while deleting token %v", err)
 
 		return err
 	}
@@ -242,7 +248,7 @@ func (s *AuthImpl) saveRefresh(ctx context.Context, refresh string) error {
 
 	err := s.tokenRepo.Create(ctx, &cm)
 	if err != nil {
-		logger.Debugf("Error occured while creating token %v", err)
+		s.logger.Debugf("Error occured while creating token %v", err)
 
 		return err
 	}

@@ -7,8 +7,8 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/rotisserie/eris"
+	"github.com/sirupsen/logrus"
 
-	"github.com/ilfey/hikilist-go/internal/logger"
 	"github.com/ilfey/hikilist-go/internal/postgres"
 	"github.com/ilfey/hikilist-go/internal/validator"
 
@@ -23,6 +23,8 @@ import (
 
 // Контроллер пользователя
 type User struct {
+	Logger logrus.FieldLogger
+
 	Action     services.Action
 	Auth       services.Auth
 	Collection services.Collection
@@ -38,7 +40,7 @@ func (controller *User) List(ctx *handler.Context) {
 	if err != nil {
 		// Handle validation error.
 		if validator.IsValidateError(err) {
-			logger.Infof("Error occurred on paginator validating %v", err)
+			controller.Logger.Infof("Error occurred on paginator validating %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": err,
@@ -47,7 +49,7 @@ func (controller *User) List(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to validate paginator %v", err)
+		controller.Logger.Errorf("Failed to validate paginator %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -57,7 +59,7 @@ func (controller *User) List(ctx *handler.Context) {
 	// Get list model.
 	listModel, err := controller.User.GetListModel(ctx, paginator, nil)
 	if err != nil {
-		logger.Errorf("Failed to get users %v", err)
+		controller.Logger.Errorf("Failed to get users %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -75,13 +77,13 @@ func (controller *User) Detail(ctx *handler.Context) {
 	// Get id from url vars.
 	stringId, ok := vars["id"]
 	if !ok {
-		logger.Panic("mux.Vars is not contains id")
+		controller.Logger.Panic("mux.Vars is not contains id")
 	}
 
 	// Parsing id.
 	id, err := strconv.ParseUint(stringId, 10, 64)
 	if err != nil {
-		logger.Warnf("Error occurred on parsing uint from string %v", err)
+		controller.Logger.Warnf("Error occurred on parsing uint from string %v", err)
 
 		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 			"error": "id must be unsigned integer",
@@ -97,14 +99,14 @@ func (controller *User) Detail(ctx *handler.Context) {
 	if err != nil {
 		// Handle not found.
 		if eris.Is(err, pgx.ErrNoRows) {
-			logger.Infof("Error occurred while retrieving non-existent user %v", err)
+			controller.Logger.Infof("Error occurred while retrieving non-existent user %v", err)
 
 			ctx.SendJSON(responses.ResponseNotFound())
 
 			return
 		}
 
-		logger.Errorf("Failed to get user %v", err)
+		controller.Logger.Errorf("Failed to get user %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -121,13 +123,13 @@ func (controller *User) Collections(ctx *handler.Context) {
 	// Get id from url vars.
 	stringId, ok := vars["id"]
 	if !ok {
-		logger.Panic("mux.Vars is not contains id")
+		controller.Logger.Panic("mux.Vars is not contains id")
 	}
 
 	// Parsing id.
 	id, err := strconv.ParseUint(stringId, 10, 64)
 	if err != nil {
-		logger.Warnf("Error occurred on parsing uint from string %v", err)
+		controller.Logger.Warnf("Error occurred on parsing uint from string %v", err)
 
 		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 			"error": "id must be unsigned integer",
@@ -143,7 +145,7 @@ func (controller *User) Collections(ctx *handler.Context) {
 	if err != nil {
 		// Handle validation error.
 		if validator.IsValidateError(err) {
-			logger.Infof("Error occurred on paginator validating %v", err)
+			controller.Logger.Infof("Error occurred on paginator validating %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": err,
@@ -152,7 +154,7 @@ func (controller *User) Collections(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to validate paginator %v", err)
+		controller.Logger.Errorf("Failed to validate paginator %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -165,7 +167,7 @@ func (controller *User) Collections(ctx *handler.Context) {
 		"is_public": true,
 	})
 	if err != nil {
-		logger.Errorf("Failed to get user collections %v", err)
+		controller.Logger.Errorf("Failed to get user collections %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -180,7 +182,7 @@ func (controller *User) Me(ctx *handler.Context) {
 	// Authorize.
 	user, err := ctx.AuthorizedOnly()
 	if err != nil {
-		logger.Infof("User is not authorized %v", err)
+		controller.Logger.Infof("User is not authorized %v", err)
 
 		ctx.SendJSON(responses.ResponseUnauthorized())
 
@@ -195,7 +197,7 @@ func (controller *User) ChangePassword(ctx *handler.Context) {
 	// Authorize
 	user, err := ctx.AuthorizedOnly()
 	if err != nil {
-		logger.Infof("User is not authorized %v", err)
+		controller.Logger.Infof("User is not authorized %v", err)
 
 		ctx.SendJSON(responses.ResponseUnauthorized())
 
@@ -209,7 +211,7 @@ func (controller *User) ChangePassword(ctx *handler.Context) {
 	if err != nil {
 		// Handle validation error.
 		if validator.IsValidateError(err) {
-			logger.Infof("Error occurred on change password model validating %v", err)
+			controller.Logger.Infof("Error occurred on change password model validating %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": err,
@@ -218,7 +220,7 @@ func (controller *User) ChangePassword(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to validate change password model %v", err)
+		controller.Logger.Errorf("Failed to validate change password model %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -227,7 +229,7 @@ func (controller *User) ChangePassword(ctx *handler.Context) {
 
 	// Compare password.
 	if ok := controller.Auth.CompareUserPassword(user, changePasswordModel.OldPassword); !ok {
-		logger.Info("Passwords do not match")
+		controller.Logger.Info("Passwords do not match")
 
 		ctx.SendJSON(responses.ResponseUnauthorized())
 
@@ -237,7 +239,7 @@ func (controller *User) ChangePassword(ctx *handler.Context) {
 	// Change password.
 	err = controller.Auth.ChangePassword(ctx, user.ID, changePasswordModel.NewPassword)
 	if err != nil {
-		logger.Error("Failed to change password %v", err)
+		controller.Logger.Error("Failed to change password %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -252,7 +254,7 @@ func (controller *User) ChangeUsername(ctx *handler.Context) {
 	// Authorize.
 	user, err := ctx.AuthorizedOnly()
 	if err != nil {
-		logger.Infof("User is not authorized %v", err)
+		controller.Logger.Infof("User is not authorized %v", err)
 
 		ctx.SendJSON(responses.ResponseUnauthorized())
 
@@ -266,7 +268,7 @@ func (controller *User) ChangeUsername(ctx *handler.Context) {
 	if err != nil {
 		// Handle validation error.
 		if validator.IsValidateError(err) {
-			logger.Infof("Error occurred on change username model validating %v", err)
+			controller.Logger.Infof("Error occurred on change username model validating %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": err,
@@ -275,7 +277,7 @@ func (controller *User) ChangeUsername(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to validate change username model %v", err)
+		controller.Logger.Errorf("Failed to validate change username model %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -287,7 +289,7 @@ func (controller *User) ChangeUsername(ctx *handler.Context) {
 	if err != nil {
 		// Handle username is already taken.
 		if postgres.PgErrCodeEquals(err, pgerrcode.UniqueViolation) {
-			logger.Infof("Error occurred while user updating username that is already taken %v", err)
+			controller.Logger.Infof("Error occurred while user updating username that is already taken %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": "Username is already taken",
@@ -296,7 +298,7 @@ func (controller *User) ChangeUsername(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to change username %v", err)
+		controller.Logger.Errorf("Failed to change username %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -311,7 +313,7 @@ func (controller *User) MyActions(ctx *handler.Context) {
 	// Authorize
 	user, err := ctx.AuthorizedOnly()
 	if err != nil {
-		logger.Infof("User is not authorized %v", err)
+		controller.Logger.Infof("User is not authorized %v", err)
 
 		ctx.SendJSON(responses.ResponseUnauthorized())
 
@@ -325,7 +327,7 @@ func (controller *User) MyActions(ctx *handler.Context) {
 	if err != nil {
 		// Handle validation error.
 		if validator.IsValidateError(err) {
-			logger.Infof("Error occurred on paginator validating %v", err)
+			controller.Logger.Infof("Error occurred on paginator validating %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": err,
@@ -334,7 +336,7 @@ func (controller *User) MyActions(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to validate paginator %v", err)
+		controller.Logger.Errorf("Failed to validate paginator %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -346,7 +348,7 @@ func (controller *User) MyActions(ctx *handler.Context) {
 		"user_id": user.ID,
 	})
 	if err != nil {
-		logger.Errorf("Failed to get user actions %v", err)
+		controller.Logger.Errorf("Failed to get user actions %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -361,7 +363,7 @@ func (controller *User) MyCollections(ctx *handler.Context) {
 	// Authorize.
 	user, err := ctx.AuthorizedOnly()
 	if err != nil {
-		logger.Infof("User is not authorized %v", err)
+		controller.Logger.Infof("User is not authorized %v", err)
 
 		ctx.SendJSON(responses.ResponseUnauthorized())
 
@@ -375,7 +377,7 @@ func (controller *User) MyCollections(ctx *handler.Context) {
 	if err != nil {
 		// Handle validation error.
 		if validator.IsValidateError(err) {
-			logger.Infof("Error occurred on paginator validating %v", err)
+			controller.Logger.Infof("Error occurred on paginator validating %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": err,
@@ -384,7 +386,7 @@ func (controller *User) MyCollections(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to validate paginator %v", err)
+		controller.Logger.Errorf("Failed to validate paginator %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -396,7 +398,7 @@ func (controller *User) MyCollections(ctx *handler.Context) {
 		"user_id": user.ID,
 	})
 	if err != nil {
-		logger.Errorf("Failed to get user collections %v", err)
+		controller.Logger.Errorf("Failed to get user collections %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 

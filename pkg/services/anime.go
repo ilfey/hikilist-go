@@ -3,10 +3,10 @@ package services
 import (
 	"context"
 
-	"github.com/ilfey/hikilist-go/internal/logger"
 	"github.com/ilfey/hikilist-go/internal/paginate"
 	"github.com/ilfey/hikilist-go/pkg/models/anime"
 	"github.com/ilfey/hikilist-go/pkg/repositories"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -22,11 +22,15 @@ type Anime interface {
 }
 
 type AnimeImpl struct {
+	logger logrus.FieldLogger
+
 	anime repositories.Anime
 }
 
-func NewAnime(animeRepo repositories.Anime) Anime {
+func NewAnime(logger logrus.FieldLogger, animeRepo repositories.Anime) Anime {
 	return &AnimeImpl{
+		logger: logger,
+
 		anime: animeRepo,
 	}
 }
@@ -34,7 +38,7 @@ func NewAnime(animeRepo repositories.Anime) Anime {
 func (s *AnimeImpl) Create(ctx context.Context, cm *anime.CreateModel) error {
 	err := s.anime.Create(ctx, cm)
 	if err != nil {
-		logger.Debugf("Error occurred while creating anime %v", err)
+		s.logger.Debugf("Error occurred while creating anime %v", err)
 
 		return err
 	}
@@ -45,7 +49,7 @@ func (s *AnimeImpl) Create(ctx context.Context, cm *anime.CreateModel) error {
 func (s *AnimeImpl) Get(ctx context.Context, conds any) (*anime.DetailModel, error) {
 	dm, err := s.anime.Get(ctx, conds)
 	if err != nil {
-		logger.Debugf("Error occurred while getting anime %v", err)
+		s.logger.Debugf("Error occurred while getting anime %v", err)
 
 		return nil, err
 	}
@@ -131,7 +135,7 @@ func (s *AnimeImpl) GetFromCollectionListModel(
 func (s *AnimeImpl) FindWithPaginator(ctx context.Context, p *paginate.Paginator, conds any) ([]*anime.ListItemModel, error) {
 	items, err := s.anime.FindWithPaginator(ctx, p, conds)
 	if err != nil {
-		logger.Debugf("Error occurred while finding animes %v", err)
+		s.logger.Debugf("Error occurred while finding animes %v", err)
 
 		return nil, err
 	}
@@ -147,7 +151,7 @@ func (s *AnimeImpl) FindFromCollectionWithPaginator(
 ) ([]*anime.ListItemModel, error) {
 	items, err := s.anime.FindFromCollectionWithPaginator(ctx, p, userId, collectionId)
 	if err != nil {
-		logger.Debugf("Error occurred while finding animes %v", err)
+		s.logger.Debugf("Error occurred while finding animes %v", err)
 
 		return nil, err
 	}
@@ -158,7 +162,7 @@ func (s *AnimeImpl) FindFromCollectionWithPaginator(
 func (s *AnimeImpl) CountInCollection(ctx context.Context, userId uint, collectionId uint) (uint, error) {
 	count, err := s.anime.CountInCollection(ctx, userId, collectionId)
 	if err != nil {
-		logger.Debugf("Error occurred while counting animes %v", err)
+		s.logger.Debugf("Error occurred while counting animes %v", err)
 
 		return 0, err
 	}
@@ -169,7 +173,7 @@ func (s *AnimeImpl) CountInCollection(ctx context.Context, userId uint, collecti
 func (s *AnimeImpl) Count(ctx context.Context, conds any) (uint, error) {
 	count, err := s.anime.Count(ctx, conds)
 	if err != nil {
-		logger.Debugf("Error occurred while counting animes %v", err)
+		s.logger.Debugf("Error occurred while counting animes %v", err)
 
 		return 0, err
 	}

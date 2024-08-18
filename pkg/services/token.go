@@ -1,54 +1,54 @@
 package services
 
-import (
-	"context"
+// import (
+// 	"context"
 
-	"github.com/ilfey/hikilist-go/internal/logger"
-	"github.com/ilfey/hikilist-go/pkg/models/token"
-	"github.com/ilfey/hikilist-go/pkg/repositories"
-)
+// 	"github.com/ilfey/hikilist-go/pkg/models/token"
+// 	"github.com/ilfey/hikilist-go/pkg/repositories"
+// 	"github.com/sirupsen/logrus"
+// )
 
-type Token interface {
-	GetDBView(token string) string
+// type Token interface {
+// 	Create(ctx context.Context, cm *token.CreateModel) error
+// 	Get(ctx context.Context, conds any) (*token.DetailModel, error)
+// 	Delete(ctx context.Context, conds any) error
+// }
 
-	Create(ctx context.Context, cm *token.CreateModel) error
-	Get(ctx context.Context, conds any) (*token.DetailModel, error)
-	Delete(ctx context.Context, conds any) error
-}
+// type TokenImpl struct {
+// 	logger logrus.FieldLogger
 
-type TokenImpl struct {
-	token repositories.Token
-}
+// 	token repositories.Token
+// }
 
-func (s *TokenImpl) Create(ctx context.Context, cm *token.CreateModel) error {
-	err := s.token.Create(ctx, cm)
-	if err != nil {
-		logger.Debugf("Error occurred while creating token %v", err)
+// func (s *TokenImpl) Create(ctx context.Context, cm *token.CreateModel) error {
+// 	err := s.token.Create(ctx, cm)
+// 	if err != nil {
+// 		s.logger.Debugf("Error occurred while creating token %v", err)
 
-		return err
-	}
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
-func (s *TokenImpl) Get(ctx context.Context, conds any) (*token.DetailModel, error) {
-	dm, err := s.token.Get(ctx, conds)
-	if err != nil {
-		logger.Debugf("Error occurred while getting token %v", err)
+// func (s *TokenImpl) Get(ctx context.Context, conds any) (*token.DetailModel, error) {
+// 	dm, err := s.token.Get(ctx, conds)
+// 	if err != nil {
+// 		s.logger.Debugf("Error occurred while getting token %v", err)
 
-		return nil, err
-	}
+// 		return nil, err
+// 	}
 
-	return dm, nil
-}
+// 	return dm, nil
+// }
 
-func (s *TokenImpl) Delete(ctx context.Context, conds any) error {
-	err := s.token.Delete(ctx, conds)
-	if err != nil {
-		logger.Debugf("Error occurred while deleting token %v", err)
+// func (s *TokenImpl) Delete(ctx context.Context, conds any) error {
+// 	err := s.token.Delete(ctx, conds)
+// 	if err != nil {
+// 		s.logger.Debugf("Error occurred while deleting token %v", err)
 
-		return err
-	}
+// 		return err
+// 	}
 
-	return nil
-}
+// 	return nil
+// }

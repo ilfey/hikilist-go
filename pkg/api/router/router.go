@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 
 	"github.com/ilfey/hikilist-go/internal/errorsx"
-	"github.com/ilfey/hikilist-go/internal/logger"
 	"github.com/ilfey/hikilist-go/pkg/api/controllers"
 	"github.com/ilfey/hikilist-go/pkg/api/handler"
 	"github.com/ilfey/hikilist-go/pkg/api/responses"
@@ -16,6 +16,8 @@ import (
 )
 
 type Router struct {
+	logger *logrus.Logger
+
 	action     services.Action
 	anime      services.Anime
 	auth       services.Auth
@@ -26,6 +28,8 @@ type Router struct {
 }
 
 func New(
+	logger *logrus.Logger,
+
 	action services.Action,
 	anime services.Anime,
 	auth services.Auth,
@@ -33,6 +37,8 @@ func New(
 	user services.User,
 ) *Router {
 	return &Router{
+		logger: logger,
+
 		action:     action,
 		anime:      anime,
 		auth:       auth,
@@ -49,6 +55,8 @@ func (r *Router) Bind() http.Handler {
 	r.router.MethodNotAllowedHandler = http.HandlerFunc(r.MethodNotAllowedHandler)
 
 	anime := controllers.Anime{
+		Logger: r.createControllerLogger("Anime"),
+
 		Anime: r.anime,
 	}
 
@@ -58,6 +66,8 @@ func (r *Router) Bind() http.Handler {
 	r.HandleFunc("/api/animes/{id:[0-9]+}", anime.Detail).Methods("GET")
 
 	auth := controllers.Auth{
+		Logger: r.createControllerLogger("Auth"),
+
 		Auth: r.auth,
 		User: r.user,
 	}
@@ -69,6 +79,8 @@ func (r *Router) Bind() http.Handler {
 	r.HandleFunc("/api/auth/delete", auth.Delete).Methods("DELETE")
 
 	collection := controllers.Collection{
+		Logger: r.createControllerLogger("Collection"),
+
 		Anime:      r.anime,
 		Collection: r.collection,
 	}
@@ -83,6 +95,8 @@ func (r *Router) Bind() http.Handler {
 	r.HandleFunc("/api/collections/{id:[0-9]+}/animes/remove", collection.RemoveAnimes).Methods("PATCH")
 
 	user := controllers.User{
+		Logger: r.createControllerLogger("User"),
+
 		Action:     r.action,
 		Auth:       r.auth,
 		Collection: r.collection,
@@ -101,6 +115,10 @@ func (r *Router) Bind() http.Handler {
 	r.HandleFunc("/api/users/me/collections", user.MyCollections).Methods("GET")
 
 	return r.router
+}
+
+func (r *Router) createControllerLogger(controllerName string) logrus.FieldLogger {
+	return r.logger.WithField("controller", controllerName)
 }
 
 func (r *Router) HandleFunc(path string, fn func(*handler.Context)) *mux.Route {
@@ -137,7 +155,7 @@ func (r *Router) provideContext(
 
 			err = r.user.UpdateLastOnline(ctx, user.ID)
 			if err != nil {
-				logger.Errorf("Failed to update user online %v", err)
+				r.logger.Errorf("Failed to update user online %v", err)
 			}
 		}()
 

@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ilfey/hikilist-go/internal/logger"
 	"github.com/ilfey/hikilist-go/internal/paginate"
 	"github.com/ilfey/hikilist-go/pkg/models/action"
 	"github.com/ilfey/hikilist-go/pkg/repositories"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -23,11 +23,15 @@ type Action interface {
 }
 
 type ActionImpl struct {
+	logger logrus.FieldLogger
+
 	action repositories.Action
 }
 
-func NewAction(actionRepo repositories.Action) Action {
+func NewAction(logger logrus.FieldLogger, actionRepo repositories.Action) Action {
 	return &ActionImpl{
+		logger: logger,
+
 		action: actionRepo,
 	}
 }
@@ -69,7 +73,7 @@ func (s *ActionImpl) CreateUpdateUsernameAction(ctx context.Context, userId uint
 func (s *ActionImpl) Create(ctx context.Context, cm *action.CreateModel) error {
 	err := s.action.Create(ctx, cm)
 	if err != nil {
-		logger.Debugf("Error occurred while creating action %v", err)
+		s.logger.Debugf("Error occurred while creating action %v", err)
 
 		return err
 	}
@@ -115,7 +119,7 @@ func (s *ActionImpl) GetListModel(ctx context.Context, p *paginate.Paginator, co
 func (s *ActionImpl) FindWithPaginator(ctx context.Context, p *paginate.Paginator, conds any) ([]*action.ListItemModel, error) {
 	items, err := s.action.FindWithPaginator(ctx, p, conds)
 	if err != nil {
-		logger.Debugf("Error occurred while finding actions %v", err)
+		s.logger.Debugf("Error occurred while finding actions %v", err)
 
 		return nil, err
 	}
@@ -126,7 +130,7 @@ func (s *ActionImpl) FindWithPaginator(ctx context.Context, p *paginate.Paginato
 func (s *ActionImpl) Count(ctx context.Context, conds any) (uint, error) {
 	count, err := s.action.Count(ctx, conds)
 	if err != nil {
-		logger.Debugf("Error occurred while counting actions %v", err)
+		s.logger.Debugf("Error occurred while counting actions %v", err)
 
 		return 0, err
 	}

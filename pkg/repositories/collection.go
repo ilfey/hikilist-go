@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/georgysavva/scany/v2/pgxscan"
-	"github.com/ilfey/hikilist-go/internal/logger"
 	"github.com/ilfey/hikilist-go/internal/paginate"
 	"github.com/ilfey/hikilist-go/internal/postgres"
 	"github.com/ilfey/hikilist-go/pkg/models/action"
@@ -112,10 +111,6 @@ func (r *CollectionImpl) Update(ctx context.Context, um *collection.UpdateModel)
 	if err != nil {
 		return err
 	}
-
-	logger.Debugf("%+v", updateModelToMap(um))
-	logger.Debug(sql)
-	logger.Debugf("%+v", args)
 
 	_, err = r.db.Exec(ctx, sql, args...)
 

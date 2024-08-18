@@ -3,11 +3,11 @@ package services
 import (
 	"context"
 
-	"github.com/ilfey/hikilist-go/internal/logger"
 	"github.com/ilfey/hikilist-go/internal/paginate"
 	animecollection "github.com/ilfey/hikilist-go/pkg/models/anime_collection"
 	"github.com/ilfey/hikilist-go/pkg/models/collection"
 	"github.com/ilfey/hikilist-go/pkg/repositories"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -24,12 +24,21 @@ type Collection interface {
 }
 
 type CollectionImpl struct {
+	logger logrus.FieldLogger
+
 	animeCollection repositories.AnimeCollection
 	collection      repositories.Collection
 }
 
-func NewCollection(animeCollectionRepo repositories.AnimeCollection, collectionRepo repositories.Collection) Collection {
+func NewCollection(
+	logger logrus.FieldLogger,
+
+	animeCollectionRepo repositories.AnimeCollection,
+	collectionRepo repositories.Collection,
+) Collection {
 	return &CollectionImpl{
+		logger: logger,
+
 		animeCollection: animeCollectionRepo,
 		collection:      collectionRepo,
 	}
@@ -44,7 +53,7 @@ func (s *CollectionImpl) Create(ctx context.Context, cm *collection.CreateModel)
 
 	err := s.collection.Create(ctx, cm)
 	if err != nil {
-		logger.Debugf("Error occurred while creating collection %v", err)
+		s.logger.Debugf("Error occurred while creating collection %v", err)
 
 		return err
 	}
@@ -55,7 +64,7 @@ func (s *CollectionImpl) Create(ctx context.Context, cm *collection.CreateModel)
 func (s *CollectionImpl) Get(ctx context.Context, conds any) (*collection.DetailModel, error) {
 	dm, err := s.collection.Get(ctx, conds)
 	if err != nil {
-		logger.Debugf("Error occurred while getting collection %v", err)
+		s.logger.Debugf("Error occurred while getting collection %v", err)
 
 		return nil, err
 	}
@@ -101,7 +110,7 @@ func (s *CollectionImpl) GetListModel(ctx context.Context, p *paginate.Paginator
 func (s *CollectionImpl) Find(ctx context.Context, p *paginate.Paginator, conds any) ([]*collection.ListItemModel, error) {
 	items, err := s.collection.Find(ctx, p, conds)
 	if err != nil {
-		logger.Debugf("Error occurred while finding collections %v", err)
+		s.logger.Debugf("Error occurred while finding collections %v", err)
 
 		return nil, err
 	}
@@ -112,7 +121,7 @@ func (s *CollectionImpl) Find(ctx context.Context, p *paginate.Paginator, conds 
 func (s *CollectionImpl) Count(ctx context.Context, conds any) (uint, error) {
 	count, err := s.collection.Count(ctx, conds)
 	if err != nil {
-		logger.Debugf("Error occurred while counting collections")
+		s.logger.Debugf("Error occurred while counting collections")
 
 		return 0, err
 	}
@@ -123,7 +132,7 @@ func (s *CollectionImpl) Count(ctx context.Context, conds any) (uint, error) {
 func (s *CollectionImpl) Update(ctx context.Context, um *collection.UpdateModel) error {
 	err := s.collection.Update(ctx, um)
 	if err != nil {
-		logger.Debugf("Error occurred while updating collection %v", err)
+		s.logger.Debugf("Error occurred while updating collection %v", err)
 
 		return err
 	}
@@ -136,7 +145,7 @@ func (s *CollectionImpl) Update(ctx context.Context, um *collection.UpdateModel)
 func (s *CollectionImpl) AddAnimes(ctx context.Context, aam *animecollection.AddAnimesModel) error {
 	err := s.animeCollection.AddAnimes(ctx, aam)
 	if err != nil {
-		logger.Debugf("Error occurred while adding animes %v", err)
+		s.logger.Debugf("Error occurred while adding animes %v", err)
 
 		return err
 	}
@@ -147,7 +156,7 @@ func (s *CollectionImpl) AddAnimes(ctx context.Context, aam *animecollection.Add
 func (s *CollectionImpl) RemoveAnimes(ctx context.Context, ram *animecollection.RemoveAnimesModel) error {
 	err := s.animeCollection.RemoveAnimes(ctx, ram)
 	if err != nil {
-		logger.Debugf("Error occurred while removing animes %v", err)
+		s.logger.Debugf("Error occurred while removing animes %v", err)
 
 		return err
 	}

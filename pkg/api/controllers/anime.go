@@ -6,8 +6,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5"
 	"github.com/rotisserie/eris"
+	"github.com/sirupsen/logrus"
 
-	"github.com/ilfey/hikilist-go/internal/logger"
 	"github.com/ilfey/hikilist-go/internal/validator"
 
 	"github.com/ilfey/hikilist-go/pkg/api/handler"
@@ -17,6 +17,8 @@ import (
 )
 
 type Anime struct {
+	Logger logrus.FieldLogger
+
 	Anime services.Anime
 }
 
@@ -29,7 +31,7 @@ func (controller *Anime) Create(ctx *handler.Context) {
 	if err != nil {
 		// Handle validation error.
 		if validator.IsValidateError(err) {
-			logger.Infof("Error occurred on create model validating %v", err)
+			controller.Logger.Infof("Error occurred on create model validating %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": err,
@@ -38,7 +40,7 @@ func (controller *Anime) Create(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to validate create model %v", err)
+		controller.Logger.Errorf("Failed to validate create model %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -48,7 +50,7 @@ func (controller *Anime) Create(ctx *handler.Context) {
 	// Create anime.
 	err = controller.Anime.Create(ctx, createModel)
 	if err != nil {
-		logger.Errorf("Failed to create anime %v", err)
+		controller.Logger.Errorf("Failed to create anime %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -67,7 +69,7 @@ func (controller *Anime) List(ctx *handler.Context) {
 	if err != nil {
 		// Handle validation error.
 		if validator.IsValidateError(err) {
-			logger.Infof("Error occurred on paginator validating %v", err)
+			controller.Logger.Infof("Error occurred on paginator validating %v", err)
 
 			ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 				"error": err,
@@ -76,7 +78,7 @@ func (controller *Anime) List(ctx *handler.Context) {
 			return
 		}
 
-		logger.Errorf("Failed to validate paginator %v", err)
+		controller.Logger.Errorf("Failed to validate paginator %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -86,7 +88,7 @@ func (controller *Anime) List(ctx *handler.Context) {
 	// Get list model.
 	listModel, err := controller.Anime.GetListModel(ctx, paginator, nil)
 	if err != nil {
-		logger.Errorf("Failed to find animes %v", err)
+		controller.Logger.Errorf("Failed to find animes %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 
@@ -103,13 +105,13 @@ func (controller *Anime) Detail(ctx *handler.Context) {
 	// Get id from url vars.
 	stringId, ok := vars["id"]
 	if !ok {
-		logger.Panic("mux.Vars is not contains id")
+		controller.Logger.Panic("mux.Vars is not contains id")
 	}
 
 	// Parsing id.
 	id, err := strconv.ParseUint(stringId, 10, 64)
 	if err != nil {
-		logger.Warnf("Error occurred on parsing uint from string %v", err)
+		controller.Logger.Warnf("Error occurred on parsing uint from string %v", err)
 
 		ctx.SendJSON(responses.ResponseBadRequest(responses.J{
 			"error": "id must be unsigned integer",
@@ -125,14 +127,14 @@ func (controller *Anime) Detail(ctx *handler.Context) {
 	if err != nil {
 		// Handle not found error.
 		if eris.Is(err, pgx.ErrNoRows) {
-			logger.Infof("Anime not found %v", err)
+			controller.Logger.Infof("Anime not found %v", err)
 
 			ctx.SendJSON(responses.ResponseNotFound())
 
 			return
 		}
 
-		logger.Errorf("Failed to get anime %v", err)
+		controller.Logger.Errorf("Failed to get anime %v", err)
 
 		ctx.SendJSON(responses.ResponseInternalServerError())
 

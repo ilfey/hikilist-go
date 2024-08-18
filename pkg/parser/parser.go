@@ -5,23 +5,25 @@ import (
 	"time"
 
 	"github.com/ilfey/hikilist-go/internal/errorsx"
-	"github.com/ilfey/hikilist-go/internal/logger"
 	"github.com/ilfey/hikilist-go/internal/validator"
 	"github.com/ilfey/hikilist-go/pkg/models/anime"
 	"github.com/ilfey/hikilist-go/pkg/parser/shiki/service"
 	"github.com/ilfey/hikilist-go/pkg/services"
 	"github.com/rotisserie/eris"
+	"github.com/sirupsen/logrus"
 )
 
 var ErrPageEmpty = eris.New("page is empty")
 
 type Parser struct {
+	Logger *logrus.Logger
+
 	Shiki service.Service
 	Anime services.Anime
 }
 
-func (p *Parser) Parse(ctx context.Context, page uint) error {
-	animes, err := p.Shiki.ParseAnimes(page)
+func (parser *Parser) Parse(ctx context.Context, page uint) error {
+	animes, err := parser.Shiki.ParseAnimes(page)
 	if err != nil {
 		return err
 	}
@@ -32,10 +34,10 @@ func (p *Parser) Parse(ctx context.Context, page uint) error {
 	}
 
 	for _, anime := range animes {
-		logger.Infof("Saving shikiID %v", *anime.ID)
+		parser.Logger.Infof("Saving shikiID %v", *anime.ID)
 
 		// Save anime.
-		err := p.saveAnime(ctx, anime)
+		err := parser.saveAnime(ctx, anime)
 		if err != nil {
 			return err
 		}
@@ -44,19 +46,19 @@ func (p *Parser) Parse(ctx context.Context, page uint) error {
 	return nil
 }
 
-func (p *Parser) saveAnime(ctx context.Context, sdm *anime.ShikiDetailModel) error {
+func (parser *Parser) saveAnime(ctx context.Context, sdm *anime.ShikiDetailModel) error {
 	// Validate shikimori model.
 	err := sdm.Validate()
 	if err != nil {
 		// Handle validate error.
 		if validator.IsValidateError(err) {
-			logger.Warnf("Error occurred on validating shiki detail model (ShikiId: %d scipped) %v", *sdm.ID, err)
+			parser.Logger.Warnf("Error occurred on validating shiki detail model (ShikiId: %d scipped) %v", *sdm.ID, err)
 
 			return nil
 		}
 
 		// Unhandled error.
-		logger.Errorf("Failed to validate create model %v", err)
+		parser.Logger.Errorf("Failed to validate create model %v", err)
 
 		return err
 	}
@@ -69,22 +71,22 @@ func (p *Parser) saveAnime(ctx context.Context, sdm *anime.ShikiDetailModel) err
 	if err != nil {
 		// Handle validate error.
 		if validator.IsValidateError(err) {
-			logger.Warnf("Error occurred on validating create model (ShikiId: %d scipped) %v", *sdm.ID, err)
+			parser.Logger.Warnf("Error occurred on validating create model (ShikiId: %d scipped) %v", *sdm.ID, err)
 
 			return nil
 		}
 
 		// Unhandled error.
-		logger.Errorf("Failed to validate create model %v", err)
+		parser.Logger.Errorf("Failed to validate create model %v", err)
 
 		return err
 	}
 
 	// Save in database
-	err = p.Anime.Create(ctx, createModel)
+	err = parser.Anime.Create(ctx, createModel)
 	if err != nil {
 		// Unhandled error.
-		logger.Errorf("Failed to save anime (ShikiId: %d) %v", *sdm.ID, err)
+		parser.Logger.Errorf("Failed to save anime (ShikiId: %d) %v", *sdm.ID, err)
 
 		return err
 	}
