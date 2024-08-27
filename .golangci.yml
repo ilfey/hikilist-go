@@ -1,0 +1,54 @@
+linters:
+  # Disable all linters.
+  # Default: false
+  disable-all: true
+  # Enable specific linter
+  # https://golangci-lint.run/usage/linters/#enabled-by-default
+  enable:
+    # Checks unhandled errors.
+    - errcheck
+    # Checks for the possibility of simplifying the code.
+    - gosimple
+    # Checks suspicious constructs.
+    - govet
+    # Checks when assignments to existing variables are not used.
+    - ineffassign
+    # IDK. lol :)
+    - staticcheck
+    # Checks for unused constants, variables, functions and types.
+    - unused
+
+    # Check whether the function uses a non-inherited context.
+    - contextcheck
+    # Check for two durations multiplied together.
+    # - durationcheck
+    # Checks places where loop variables are copied.
+    - copyloopvar
+    # Checks that go compiler directive comments are valid.
+    - gocheckcompilerdirectives
+    # Inspects source code for security problems.
+    - gosec
+    # Finds the code that returns nil even if it checks that the error is not nil.
+    - nilerr
+    # Finds slice declarations that could potentially be pre-allocated.
+    - prealloc
+    # Finds code that shadows one of Go's predeclared identifiers.
+    - predeclared
+    # Checks that package variables are not reassigned.
+    - reassign
+linters-settings:
+  staticcheck:
+    checks:
+    - all
+
+run:
+  # Disallow test files checking.
+  tests: false
+  # Allow multiple parallel golangci-lint instances running.
+  allow-parallel-runners: true
+  # Allow multiple golangci-lint instances running, but serialize them around a lock.
+  allow-serial-runners: true
+
+output:
+  # Show statistics per linter.
+  show-stats: true

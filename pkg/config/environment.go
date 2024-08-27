@@ -5,11 +5,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Environment string
+type Environment uint
 
 const (
-	EnvironmentDev  = "development"
-	EnvironmentProd = "production"
+	EnvironmentDev Environment = iota
+	EnvironmentProd
 )
 
 func (env Environment) IsDevelopment() bool {
@@ -27,7 +27,7 @@ func GetEnv() Environment {
 }
 
 func loadDev() error {
-	err := godotenv.Load("./configs/local.env")
+	err := godotenv.Load("./configs/development.env")
 	if err != nil {
 		return err
 	}
@@ -37,8 +37,26 @@ func loadDev() error {
 	return nil
 }
 
+func loadProd() error {
+	err := godotenv.Load("./configs/production.env")
+	if err != nil {
+		return err
+	}
+
+	environment = EnvironmentProd
+
+	return nil
+}
+
 func MustLoadEnvironment() Environment {
-	err := loadDev()
+	err := loadProd()
+	if err != nil {
+		logrus.Infof("Error occurred while loading production.env %v", err)
+	} else {
+		return environment
+	}
+
+	err = loadDev()
 	if err != nil {
 		logrus.Fatal(err)
 	}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/ilfey/hikilist-go/internal/validator"
 	"github.com/ilfey/hikilist-go/internal/validator/options"
+	"github.com/sirupsen/logrus"
 )
 
 // Модель логина
@@ -18,7 +19,10 @@ type LoginModel struct {
 func LoginModelFromRequest(request *http.Request) *LoginModel {
 	model := new(LoginModel)
 
-	json.NewDecoder(request.Body).Decode(model)
+	err := json.NewDecoder(request.Body).Decode(model)
+	if err != nil {
+		logrus.Infof("Error occurred while decoding LoginModel %v", err)
+	}
 
 	return model
 }

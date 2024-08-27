@@ -8,4 +8,3 @@ type ListItemModel struct {
 	Episodes         *uint   `json:"episodes"`
 	EpisodesReleased uint    `json:"episodes_released"`
 }
-

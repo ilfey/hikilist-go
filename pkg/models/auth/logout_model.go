@@ -6,6 +6,7 @@ import (
 
 	"github.com/ilfey/hikilist-go/internal/validator"
 	"github.com/ilfey/hikilist-go/internal/validator/options"
+	"github.com/sirupsen/logrus"
 )
 
 type LogoutModel struct {
@@ -15,7 +16,10 @@ type LogoutModel struct {
 func LogoutModelFromRequest(request *http.Request) *LogoutModel {
 	model := new(LogoutModel)
 
-	json.NewDecoder(request.Body).Decode(model)
+	err := json.NewDecoder(request.Body).Decode(model)
+	if err != nil {
+		logrus.Infof("Error occurred while decoding LogoutModel %v", err)
+	}
 
 	return model
 }

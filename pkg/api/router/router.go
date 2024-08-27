@@ -8,7 +8,10 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/ilfey/hikilist-go/internal/errorsx"
-	"github.com/ilfey/hikilist-go/pkg/api/controllers"
+	"github.com/ilfey/hikilist-go/pkg/api/controllers/anime"
+	"github.com/ilfey/hikilist-go/pkg/api/controllers/auth"
+	"github.com/ilfey/hikilist-go/pkg/api/controllers/collection"
+	"github.com/ilfey/hikilist-go/pkg/api/controllers/user"
 	"github.com/ilfey/hikilist-go/pkg/api/handler"
 	"github.com/ilfey/hikilist-go/pkg/api/responses"
 
@@ -54,7 +57,7 @@ func (r *Router) Bind() http.Handler {
 	r.router.NotFoundHandler = http.HandlerFunc(r.NotFoundHandler)
 	r.router.MethodNotAllowedHandler = http.HandlerFunc(r.MethodNotAllowedHandler)
 
-	anime := controllers.Anime{
+	anime := anime.Controller{
 		Logger: r.createControllerLogger("Anime"),
 
 		Anime: r.anime,
@@ -65,7 +68,7 @@ func (r *Router) Bind() http.Handler {
 
 	r.HandleFunc("/api/animes/{id:[0-9]+}", anime.Detail).Methods("GET")
 
-	auth := controllers.Auth{
+	auth := auth.Controller{
 		Logger: r.createControllerLogger("Auth"),
 
 		Auth: r.auth,
@@ -78,7 +81,7 @@ func (r *Router) Bind() http.Handler {
 	r.HandleFunc("/api/auth/logout", auth.Logout).Methods("POST")
 	r.HandleFunc("/api/auth/delete", auth.Delete).Methods("DELETE")
 
-	collection := controllers.Collection{
+	collection := collection.Controller{
 		Logger: r.createControllerLogger("Collection"),
 
 		Anime:      r.anime,
@@ -94,7 +97,7 @@ func (r *Router) Bind() http.Handler {
 	r.HandleFunc("/api/collections/{id:[0-9]+}/animes/add", collection.AddAnimes).Methods("PATCH")
 	r.HandleFunc("/api/collections/{id:[0-9]+}/animes/remove", collection.RemoveAnimes).Methods("PATCH")
 
-	user := controllers.User{
+	user := user.Controller{
 		Logger: r.createControllerLogger("User"),
 
 		Action:     r.action,
@@ -172,6 +175,8 @@ func (*Router) NotFoundHandler(rw http.ResponseWriter, r *http.Request) {
 
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(code)
+
+	// nolint: errcheck
 	rw.Write(
 		errorsx.Must(
 			json.Marshal(data),
@@ -184,6 +189,8 @@ func (*Router) MethodNotAllowedHandler(rw http.ResponseWriter, r *http.Request) 
 
 	rw.Header().Set("Content-Type", "application/json")
 	rw.WriteHeader(code)
+
+	// nolint: errcheck
 	rw.Write(
 		errorsx.Must(
 			json.Marshal(data),

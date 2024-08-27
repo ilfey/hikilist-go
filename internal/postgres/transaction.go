@@ -63,7 +63,7 @@ func (t *Transaction) RollbackCtx(ctx context.Context) error {
 	defer t.mu.Unlock()
 
 	if t.savePointSequence == 0 {
-		return t.Tx.Rollback(context.Background())
+		return t.Tx.Rollback(context.Background()) // nolint: contextcheck
 	}
 
 	sql := fmt.Sprintf("ROLLBACK TO SAVEPOINT savepoint_%d", t.savePointSequence)

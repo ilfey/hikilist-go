@@ -6,6 +6,7 @@ import (
 
 	"github.com/ilfey/hikilist-go/internal/validator"
 	"github.com/ilfey/hikilist-go/internal/validator/options"
+	"github.com/sirupsen/logrus"
 )
 
 // Модель обновления токена
@@ -17,7 +18,10 @@ type RefreshModel struct {
 func RefreshModelFromRequest(request *http.Request) *RefreshModel {
 	model := new(RefreshModel)
 
-	json.NewDecoder(request.Body).Decode(model)
+	err := json.NewDecoder(request.Body).Decode(model)
+	if err != nil {
+		logrus.Infof("Error occurred while decoding RefreshModel %v", err)
+	}
 
 	return model
 }

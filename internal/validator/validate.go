@@ -8,7 +8,28 @@ import (
 	"github.com/rotisserie/eris"
 )
 
-func Validate(st any, fieldsOpts map[string][]options.Option) error {
+// Key may be a struct field name or a json tag.
+type Opts map[string][]options.Option
+
+/*
+Validate validates struct by fields.
+Validate returns error if validation failed. The error implements json.Marshaler interface.
+
+Struct must be a struct or pointer to struct.
+
+Usage:
+
+	type MyStruct struct {
+		Name string `json:"name,omitempty"`
+		Age  int    `json:"age,omitempty"`
+	}
+
+	validaror.Validate(&MyStruct{}, validaror.Opts{
+		"Name": {options.Required()},
+		"age":  {options.Required()},
+	})
+*/
+func Validate(st any, fieldsOpts Opts) error {
 	errs := map[string][]string{}
 
 	rValue := reflect.ValueOf(st)

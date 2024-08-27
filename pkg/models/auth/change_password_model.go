@@ -6,10 +6,11 @@ import (
 
 	"github.com/ilfey/hikilist-go/internal/validator"
 	"github.com/ilfey/hikilist-go/internal/validator/options"
+	"github.com/sirupsen/logrus"
 )
 
 type ChangePasswordModel struct {
-	OldPassword    string `json:"old_password"`
+	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password"`
 }
 
@@ -32,7 +33,10 @@ func (cpm ChangePasswordModel) Validate() error {
 func ChangePasswordModelFromRequest(request *http.Request) *ChangePasswordModel {
 	model := new(ChangePasswordModel)
 
-	json.NewDecoder(request.Body).Decode(model)
+	err := json.NewDecoder(request.Body).Decode(model)
+	if err != nil {
+		logrus.Infof("Error occurred while decoding ChangePasswordModel %v", err)
+	}
 
 	return model
 }

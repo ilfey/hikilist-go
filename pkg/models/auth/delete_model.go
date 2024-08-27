@@ -6,6 +6,7 @@ import (
 
 	"github.com/ilfey/hikilist-go/internal/validator"
 	"github.com/ilfey/hikilist-go/internal/validator/options"
+	"github.com/sirupsen/logrus"
 )
 
 type DeleteModel struct {
@@ -31,7 +32,10 @@ func (m DeleteModel) Validate() error {
 func DeleteModelFromRequest(request *http.Request) *DeleteModel {
 	model := new(DeleteModel)
 
-	json.NewDecoder(request.Body).Decode(model)
+	err := json.NewDecoder(request.Body).Decode(model)
+	if err != nil {
+		logrus.Infof("Error occurred while decoding DeleteModel %v", err)
+	}
 
 	return model
 }

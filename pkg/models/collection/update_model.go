@@ -6,6 +6,7 @@ import (
 
 	"github.com/ilfey/hikilist-go/internal/validator"
 	"github.com/ilfey/hikilist-go/internal/validator/options"
+	"github.com/sirupsen/logrus"
 )
 
 type UpdateModel struct {
@@ -40,7 +41,10 @@ func (um UpdateModel) Validate() error {
 func NewUpdateModelFromRequest(request *http.Request, userId, collectionId uint) *UpdateModel {
 	model := new(UpdateModel)
 
-	json.NewDecoder(request.Body).Decode(model)
+	err := json.NewDecoder(request.Body).Decode(model)
+	if err != nil {
+		logrus.Infof("Error occurred while decoding UpdateModel %v", err)
+	}
 
 	model.ID = collectionId
 	model.UserID = userId

@@ -38,7 +38,7 @@ func NewUser(db DBRW, actionRepo Action) User {
 func (r *UserImpl) WithTx(tx DBRW) User {
 	return &UserImpl{
 		action: r.action,
-		db: tx,
+		db:     tx,
 	}
 }
 

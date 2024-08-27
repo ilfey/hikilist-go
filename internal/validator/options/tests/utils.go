@@ -1,3 +1,4 @@
+// nolint: unused
 package tests
 
 import (
@@ -6,10 +7,12 @@ import (
 	"github.com/ilfey/hikilist-go/internal/validator/options"
 )
 
+// Returns pointer of value.
 func ptr[T any](val T) *T {
 	return &val
 }
 
+// Returns nil of type T.
 func _nil[T any]() *T {
 	return nil
 }

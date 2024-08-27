@@ -35,18 +35,13 @@ func NewContext(
 	w http.ResponseWriter,
 	r *http.Request,
 ) *Context {
-	ctx := &Context{
+	return &Context{
 		auth: auth,
 		user: user,
 
 		Request: r,
 		Writer:  w,
 	}
-
-	// TODO: create goroutine
-	ctx.GetUser()
-
-	return ctx
 }
 
 // Get возвращает заголовок запроса.
@@ -96,6 +91,7 @@ func (ctx *Context) SendJSON(data interface{}, code ...int) {
 
 	ctx.SetType("application/json")
 
+	// nolint: errcheck
 	ctx.Writer.Write(errorsx.Must(json.Marshal(data)))
 }
 

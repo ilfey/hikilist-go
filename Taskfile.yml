@@ -23,6 +23,20 @@ tasks:
     cmds:
       - go test ./...
 
+  fmt:
+    desc: auto-format all go files
+    sources:
+      - "**/*.go"
+    cmds:
+      - go fmt ./...
+
+  lint:
+    desc: Run all the defined linters
+    sources:
+      - "**/*.go"
+    cmds:
+      - golangci-lint run
+
   build:
     desc: Build the api
     cmds:

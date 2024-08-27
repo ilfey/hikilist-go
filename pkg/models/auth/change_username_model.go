@@ -6,6 +6,7 @@ import (
 
 	"github.com/ilfey/hikilist-go/internal/validator"
 	"github.com/ilfey/hikilist-go/internal/validator/options"
+	"github.com/sirupsen/logrus"
 )
 
 type ChangeUsernameModel struct {
@@ -27,7 +28,10 @@ func (m ChangeUsernameModel) Validate() error {
 func ChangeUsernameModelFromRequest(request *http.Request) *ChangeUsernameModel {
 	model := new(ChangeUsernameModel)
 
-	json.NewDecoder(request.Body).Decode(model)
+	err := json.NewDecoder(request.Body).Decode(model)
+	if err != nil {
+		logrus.Infof("Error occurred while decoding ChangeUsernameModel %v", err)
+	}
 
 	return model
 }

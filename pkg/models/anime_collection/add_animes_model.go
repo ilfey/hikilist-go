@@ -6,6 +6,7 @@ import (
 
 	"github.com/ilfey/hikilist-go/internal/validator"
 	"github.com/ilfey/hikilist-go/internal/validator/options"
+	"github.com/sirupsen/logrus"
 )
 
 type AddAnimesModel struct {
@@ -34,7 +35,10 @@ func NewAddAnimesModelFromRequest(
 ) *AddAnimesModel {
 	model := new(AddAnimesModel)
 
-	json.NewDecoder(request.Body).Decode(model)
+	err := json.NewDecoder(request.Body).Decode(model)
+	if err != nil {
+		logrus.Infof("Error occurred while decoding AddAnimesModel %v", err)
+	}
 
 	model.UserID = userId
 

@@ -2,28 +2,23 @@ package main
 
 import (
 	"context"
-	"net/http"
-	"time"
 
-	"github.com/ilfey/hikilist-go/internal/httpx"
-	requestbuilder "github.com/ilfey/hikilist-go/internal/request_builder"
 	"github.com/ilfey/hikilist-go/pkg/config"
-	"github.com/ilfey/hikilist-go/pkg/database"
 	"github.com/ilfey/hikilist-go/pkg/parser"
-	"github.com/ilfey/hikilist-go/pkg/parser/shiki/service"
-	"github.com/ilfey/hikilist-go/pkg/repositories"
-	"github.com/ilfey/hikilist-go/pkg/services"
+	"github.com/ilfey/hikilist-go/pkg/parser/extractor"
+	"github.com/ilfey/hikilist-go/pkg/parser/source/shiki"
+	shikiConfig "github.com/ilfey/hikilist-go/pkg/parser/source/shiki/config"
 	"github.com/sirupsen/logrus"
 	"github.com/ttys3/rotatefilehook"
 )
 
-func loadConfig() (config.Environment, *config.Config) {
-	env := config.MustLoadEnvironment()
+// func loadConfig() (config.Environment, *config.Config) {
+// 	env := config.MustLoadEnvironment()
 
-	cfg := config.New()
+// 	cfg := config.New()
 
-	return env, cfg
-}
+// 	return env, cfg
+// }
 
 func createLogger(env config.Environment) *logrus.Logger {
 	logger := logrus.New()
@@ -76,56 +71,33 @@ func createLogger(env config.Environment) *logrus.Logger {
 }
 
 func main() {
-	env, cfg := loadConfig()
+	// env, cfg := loadConfig()
 
-	logger := createLogger(env)
+	logger := createLogger(config.EnvironmentDev)
 
-	db := database.New(cfg.Database)
-
-	// Create repositories.
-
-	animeRepo := repositories.NewAnime(db)
-
-	// Create services.
-
-	animeService := services.NewAnime(
-		logger.WithField("service", "anime"),
-
-		animeRepo,
-	)
-
-	shiki := service.New(
-		shikiBuilder(cfg),
-	)
+	shikiExtractor := shiki.New(
+		logger,
+		&shikiConfig.Config{
+			BaseUrl:        "https://shikimori.one/",
+			UserAgent:      "Hikilist",
+			TickTimeout:    1000 * 60, // 1 minute
+			RequestTimeout: 1000,      // 1 second
+			Anime: &shikiConfig.AnimeConfig{
+				Order:    "id_desc",
+				Censored: "false",
+				Limit:    50,
+			},
+		})
 
 	parser := &parser.Parser{
-		Shiki: shiki,
-		Anime: animeService,
-	}
-
-	result := <-parser.Run(context.Background())
-
-	if result.Error() != nil {
-		logger.Fatal(result.Error())
-	}
-}
-
-func shikiBuilder(cfg *config.Config) *requestbuilder.RequestBuilder {
-	builder := requestbuilder.NewRequestBuilder(
-		cfg.Shiki.BaseUrl+"/api/",
-		&http.Client{
-			Transport: http.DefaultTransport,
-			Timeout:   2000 * time.Millisecond,
+		Logger: logger,
+		Extractors: []extractor.Extractor{
+			shikiExtractor,
 		},
-	)
+	}
 
-	builder.AddResponseHook(func(r *httpx.Response) {
-		logrus.Trace(r)
-	})
-
-	builder.AddRequestHook(func(rb *httpx.RequestBuilder) {
-		logrus.Tracef("New request: %s", rb)
-	})
-
-	return builder
+	err := parser.Run(context.Background())
+	if err != nil {
+		logger.Fatal(err)
+	}
 }
