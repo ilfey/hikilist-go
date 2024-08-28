@@ -1,0 +1,19 @@
+#!/bin/sh
+
+regexp="[A-Z]+[A-Za-z\-\s\&_'\`\"]+"
+
+error_msg="
+         Aborting commit.
+
+Commit title not in correct format.
+Please use the following format:
+
+    - Title of the commit;
+    - Add \`README.md\`."
+
+if ! grep -qE "$regexp" "$1"; then
+    echo "$error_msg" >&2
+    exit 1
+fi
+
+exit 0

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+go fmt ./...
+
+if ! [[ "0 issues." == $(golangci-lint run) ]]; then
+  echo "Linting failed" >&2
+  exit 1
+fi
+
+exit 0

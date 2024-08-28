@@ -8,6 +8,17 @@ vars:
   DSN: "postgres://root:QWEasd123@127.0.0.1:5432/hikilist?sslmode=disable"
 
 tasks:
+  prepare:
+    desc: Prepare the project
+    cmds:
+      - git config core.hooksPath .git-hooks
+      - go mod tidy
+      - go mod download
+      - go install github.com/pressly/goose/v3/cmd/goose@latest
+      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      - go install github.com/pressly/goose/v3/cmd/goose@latest
+      - go install github.com/vektra/mockery/v2@latest
+
   run:
     desc: Run the api
     cmds:
@@ -47,13 +58,6 @@ tasks:
     cmds:
       - go build -v -o {{.BIN}}/parser ./cmd/parser
   
-  setup:
-    desc: Setup the project
-    cmds:
-      - go mod tidy
-      - go mod download
-      - go install github.com/pressly/goose/v3/cmd/goose@latest
-    
   create-migration:
     desc: Create a new migration
     cmds:

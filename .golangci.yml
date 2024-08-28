@@ -36,6 +36,7 @@ linters:
     - predeclared
     # Checks that package variables are not reassigned.
     - reassign
+
 linters-settings:
   staticcheck:
     checks:
