@@ -41,6 +41,10 @@ linters-settings:
   staticcheck:
     checks:
     - all
+  gosec:
+    excludes:
+      - G401
+      - G501
 
 run:
   # Disallow test files checking.

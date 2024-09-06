@@ -1,62 +1,60 @@
-# Golang API template
-
-## Setup
-
-```sh
-go run setup.go
-```
+# Hikilist
 
 ## Migrations
 
-### Make migrations
+### Create migration
 
 ```sh
-atlas migrate diff --env gorm
+task create-migration <migration_name>
 ```
 
 ### Migrate
 
 ```sh
-atlas schema apply --env gorm --url "<dsn>"
+task up
 ```
 
-## Entities
-
-### Schema
+## Project structure
 
 ```mermaid
-erDiagram
-    animes {
-        uint id pk
+---
+title: Project structure
+---
 
-        string title
-        string description
-        string poster
-        uint episodes
-        uint episodes_released
-        uint mal_id
-        uint shiki_id
+flowchart TD
+    Repository(Repository)
+    Service(Service)
+    Builder(Builder)
+    Validator(Validator)
+    Controller(Controller)
 
-        datetime created_at
-        datetime updated_at
-        datetime deleted_at
-    }
+    RepositoryNote["
+    **Repository** - реализует фукционал манипуляции данными на более низком уровне.
+Может зависеть от других репозиториев.
+"] -.- Repository
 
-    animes_related {
-        uint anime_id pk,fk
-        uint related_id pk,fk
-    }
+ServiceNote["
+**Service** - реализует управление данными, на более высоком уровне.
+Может зависеть от репозиториев или от других сервисов.
+"] -.- Service
 
-    animes }o--o{ animes_related : ""
+BuilderNote["
+**Builder** - собирает данные, необходимые для выполнения запроса, включая *DTO* и *Aggregate*.
+Может зависеть от сервисов.
+"] -.- Builder
 
-    users {
-        uint id pk
+ValidatorNote["
+**Validator** - реализует функционал валидации приходящих запросов от *Builder*
+Может зависеть от сервисов.
+"] -.- Validator
 
-        string username
-        string password
+ControllerNote["
+**Controller** - отслеживает только один роут.
+Может зависеть только от сервисов, билдеров и валидаторов.
+"] -.- Controller
 
-        datetime created_at
-        datetime updated_at
-        datetime deleted_at
-    }
+Repository --> Service
+Builder --> Controller
+Validator --> Controller
+Service --> Controller
 ```
