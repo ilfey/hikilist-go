@@ -1,6 +1,10 @@
+.idea
+
 .vscode
+
+.task
 
 *.db
 *.csv
 ./*.sql
-./logs/
+./logs

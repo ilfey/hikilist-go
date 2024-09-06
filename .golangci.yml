@@ -36,10 +36,15 @@ linters:
     - predeclared
     # Checks that package variables are not reassigned.
     - reassign
+
 linters-settings:
   staticcheck:
     checks:
     - all
+  gosec:
+    excludes:
+      - G401
+      - G501
 
 run:
   # Disallow test files checking.
