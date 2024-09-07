@@ -3,6 +3,7 @@ package validator
 import (
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/errtype"
+	diInterface "github.com/ilfey/hikilist-go/internal/domain/service/di/interface"
 	loggerInterface "github.com/ilfey/hikilist-go/pkg/logger/interface"
 	"github.com/ilfey/hikilist-go/pkg/validator"
 	"github.com/ilfey/hikilist-go/pkg/validator/options"
@@ -12,10 +13,15 @@ type Collection struct {
 	log loggerInterface.Logger
 }
 
-func NewCollection(log loggerInterface.Logger) *Collection {
+func NewCollection(container diInterface.ServiceContainer) (*Collection, error) {
+	log, err := container.GetLogger()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Collection{
 		log: log,
-	}
+	}, nil
 }
 
 func (v *Collection) ValidateAddAnimeRequestDTO(dto *dto.CollectionAddAnimeRequestDTO) error {

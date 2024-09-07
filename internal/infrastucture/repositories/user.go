@@ -6,6 +6,7 @@ import (
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/errtype"
 	repositoryInterface "github.com/ilfey/hikilist-go/internal/domain/repository/interface"
+	diInterface "github.com/ilfey/hikilist-go/internal/domain/service/di/interface"
 	loggerInterface "github.com/ilfey/hikilist-go/pkg/logger/interface"
 	"github.com/ilfey/hikilist-go/pkg/postgres"
 	"github.com/jackc/pgx/v5"
@@ -31,12 +32,27 @@ type User struct {
 	action repositoryInterface.Action
 }
 
-func NewUser(log loggerInterface.Logger, db postgres.RW, actionRepo repositoryInterface.Action) repositoryInterface.User {
+func NewUser(container diInterface.ServiceContainer) (*User, error) {
+	log, err := container.GetLogger()
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := container.GetPostgresDatabase()
+	if err != nil {
+		return nil, log.Propagate(err)
+	}
+
+	action, err := container.GetActionRepository()
+	if err != nil {
+		return nil, log.Propagate(err)
+	}
+
 	return &User{
 		log:    log,
+		action: action,
 		db:     db,
-		action: actionRepo,
-	}
+	}, nil
 }
 
 func (r *User) WithTx(tx postgres.RW) repositoryInterface.User {

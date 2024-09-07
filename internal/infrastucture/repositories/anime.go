@@ -7,6 +7,7 @@ import (
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/errtype"
 	repositoryInterface "github.com/ilfey/hikilist-go/internal/domain/repository/interface"
+	diInterface "github.com/ilfey/hikilist-go/internal/domain/service/di/interface"
 	loggerInterface "github.com/ilfey/hikilist-go/pkg/logger/interface"
 	"github.com/ilfey/hikilist-go/pkg/postgres"
 	"github.com/jackc/pgx/v5"
@@ -28,11 +29,21 @@ type Anime struct {
 	db  postgres.RW
 }
 
-func NewAnime(log loggerInterface.Logger, db postgres.RW) *Anime {
+func NewAnime(container diInterface.ServiceContainer) (*Anime, error) {
+	log, err := container.GetLogger()
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := container.GetPostgresDatabase()
+	if err != nil {
+		return nil, log.Propagate(err)
+	}
+
 	return &Anime{
 		log: log,
 		db:  db,
-	}
+	}, nil
 }
 
 func (r *Anime) WithTx(tx postgres.RW) repositoryInterface.Anime {
