@@ -43,12 +43,12 @@ func (r *Token) WithTx(tx postgres.RW) repositoryInterface.Token {
 func (r *Token) Create(ctx context.Context, cm *agg.TokenCreate) error {
 	sql, args, err := r.CreateSQL(cm)
 	if err != nil {
-		return r.log.CriticalPropagate(err)
+		return r.log.Propagate(err)
 	}
 
 	err = r.db.QueryRow(ctx, sql, args...).Scan(&cm.ID)
 	if err != nil {
-		r.log.Log(err)
+		r.log.Error(err)
 
 		return ErrTokenCreateFailed
 	}
@@ -59,14 +59,14 @@ func (r *Token) Create(ctx context.Context, cm *agg.TokenCreate) error {
 func (r *Token) Get(ctx context.Context, conds any) (*agg.TokenDetail, error) {
 	sql, args, err := r.GetSQL(conds)
 	if err != nil {
-		return nil, r.log.CriticalPropagate(err)
+		return nil, r.log.Propagate(err)
 	}
 
 	var dm agg.TokenDetail
 
 	err = pgxscan.Get(ctx, r.db, &dm, sql, args...)
 	if err != nil {
-		r.log.Log(err)
+		r.log.Error(err)
 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrTokenNotFoundById
@@ -81,14 +81,14 @@ func (r *Token) Get(ctx context.Context, conds any) (*agg.TokenDetail, error) {
 func (r *Token) Has(ctx context.Context, token string) (bool, error) {
 	sql, args, err := r.HasSQL(token)
 	if err != nil {
-		return false, r.log.CriticalPropagate(err)
+		return false, r.log.Propagate(err)
 	}
 
 	var id uint64
 
 	err = r.db.QueryRow(ctx, sql, args...).Scan(&id)
 	if err != nil {
-		r.log.Log(err)
+		r.log.Error(err)
 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return false, nil
@@ -103,14 +103,14 @@ func (r *Token) Has(ctx context.Context, token string) (bool, error) {
 func (r *Token) Delete(ctx context.Context, conds any) error {
 	sql, args, err := r.DeleteSQL(conds)
 	if err != nil {
-		return r.log.CriticalPropagate(err)
+		return r.log.Propagate(err)
 	}
 
 	var id uint64
 
 	err = r.db.QueryRow(ctx, sql, args...).Scan(&id)
 	if err != nil {
-		r.log.Log(err)
+		r.log.Error(err)
 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrTokenNotFoundById

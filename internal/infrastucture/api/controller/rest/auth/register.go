@@ -32,22 +32,22 @@ func NewRegisterController(
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	anime, err := container.GetAuthService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	animeBuilder, err := container.GetAuthBuilder()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	animeValidator, err := container.GetAuthValidator()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &RegisterController{
@@ -64,7 +64,7 @@ func (c *RegisterController) GetRegister(w http.ResponseWriter, r *http.Request)
 	// Build dto.
 	createDTO, err := c.builder.BuildRegisterRequestDTOFromRequest(r)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -72,7 +72,7 @@ func (c *RegisterController) GetRegister(w http.ResponseWriter, r *http.Request)
 	// Validate dto.
 	err = c.validator.ValidateRegisterRequestDTO(createDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -80,7 +80,7 @@ func (c *RegisterController) GetRegister(w http.ResponseWriter, r *http.Request)
 	// Register auth.
 	_, err = c.auth.Register(r.Context(), createDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}

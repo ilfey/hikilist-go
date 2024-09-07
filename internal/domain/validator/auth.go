@@ -18,7 +18,7 @@ func NewAuth(log loggerInterface.Logger) *Auth {
 	}
 }
 
-func (b *Auth) ValidateDeleteRequestDTO(dto *dto.UserDeleteRequestDTO) error {
+func (v *Auth) ValidateDeleteRequestDTO(dto *dto.UserDeleteRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -34,14 +34,14 @@ func (b *Auth) ValidateDeleteRequestDTO(dto *dto.UserDeleteRequestDTO) error {
 	)
 
 	if !ok {
-		return errtype.NewValidatorError("Delete", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
 
 }
 
-func (b *Auth) ValidateLoginRequestDTO(dto *dto.AuthLoginRequestDTO) error {
+func (v *Auth) ValidateLoginRequestDTO(dto *dto.AuthLoginRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -59,14 +59,14 @@ func (b *Auth) ValidateLoginRequestDTO(dto *dto.AuthLoginRequestDTO) error {
 	)
 
 	if !ok {
-		return errtype.NewValidatorError("Login", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
 
 }
 
-func (b *Auth) ValidateLogoutRequestDTO(dto *dto.AuthLogoutRequestDTO) error {
+func (v *Auth) ValidateLogoutRequestDTO(dto *dto.AuthLogoutRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -76,14 +76,14 @@ func (b *Auth) ValidateLogoutRequestDTO(dto *dto.AuthLogoutRequestDTO) error {
 		},
 	)
 	if !ok {
-		return errtype.NewValidatorError("Logout", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
 
 }
 
-func (b *Auth) ValidateRefreshRequestDTO(dto *dto.AuthRefreshRequestDTO) error {
+func (v *Auth) ValidateRefreshRequestDTO(dto *dto.AuthRefreshRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -94,14 +94,14 @@ func (b *Auth) ValidateRefreshRequestDTO(dto *dto.AuthRefreshRequestDTO) error {
 	)
 
 	if !ok {
-		return errtype.NewValidatorError("Refresh", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
 
 }
 
-func (b *Auth) ValidateRegisterRequestDTO(dto *dto.AuthRegisterRequestDTO) error {
+func (v *Auth) ValidateRegisterRequestDTO(dto *dto.AuthRegisterRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -118,7 +118,7 @@ func (b *Auth) ValidateRegisterRequestDTO(dto *dto.AuthRegisterRequestDTO) error
 		},
 	)
 	if !ok {
-		return errtype.NewValidatorError("Register", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil

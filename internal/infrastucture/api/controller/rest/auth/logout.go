@@ -32,22 +32,22 @@ func NewLogoutController(
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	anime, err := container.GetAuthService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	animeBuilder, err := container.GetAuthBuilder()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	animeValidator, err := container.GetAuthValidator()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &LogoutController{
@@ -64,7 +64,7 @@ func (c *LogoutController) GetLogout(w http.ResponseWriter, r *http.Request) {
 	// Build dto.
 	logoutRequestDTO, err := c.builder.BuildLogoutRequestDTOFromRequest(r)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -72,7 +72,7 @@ func (c *LogoutController) GetLogout(w http.ResponseWriter, r *http.Request) {
 	// Validate dto.
 	err = c.validator.ValidateLogoutRequestDTO(logoutRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -80,7 +80,7 @@ func (c *LogoutController) GetLogout(w http.ResponseWriter, r *http.Request) {
 	// Logout auth.
 	err = c.auth.Logout(r.Context(), logoutRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}

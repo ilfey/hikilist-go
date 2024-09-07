@@ -159,46 +159,46 @@ func (a *App) InitAuthedControllers() ([]controller.Controller, error) {
 
 	logoutController, err := authController.NewLogoutController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	deleteController, err := authController.NewDeleteController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	// Collection.
 
 	createCollectionController, err := collectionController.NewCreateController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	updateCollectionController, err := collectionController.NewUpdateController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	addAnimeCollectionController, err := collectionController.NewAddAnimeController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	removeAnimeCollectionController, err := collectionController.NewRemoveAnimeController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	// User.
 
 	meController, err := userController.NewMeController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	actionListController, err := userController.NewActionListController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return []controller.Controller{
@@ -226,65 +226,65 @@ func (a *App) InitUnauthedControllers() ([]controller.Controller, error) {
 
 	appConfig, err := a.container.GetAppConfig()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	// Anime.
 
 	animeListController, err := animeController.NewListController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	animeDetailController, err := animeController.NewDetailController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	// Auth.
 
 	loginController, err := authController.NewLoginController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	registerController, err := authController.NewRegisterController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	refreshController, err := authController.NewRefreshController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	// Users.
 
 	userListController, err := userController.NewListController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	userDetailController, err := userController.NewDetailController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	// Collection.
 
 	listCollectionController, err := collectionController.NewListController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	detailCollectionController, err := collectionController.NewDetailController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	animeListCollectionController, err := collectionController.NewAnimeListController(a.container)
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	controllers := []controller.Controller{
@@ -310,7 +310,7 @@ func (a *App) InitUnauthedControllers() ([]controller.Controller, error) {
 	if appConfig.GetEnv().IsDevelopment() {
 		animeCreateController, err := animeController.NewCreateController(a.container)
 		if err != nil {
-			return nil, log.LogPropagate(err)
+			return nil, log.Propagate(err)
 		}
 
 		controllers = append(controllers, animeCreateController)
@@ -329,18 +329,18 @@ func (a *App) InitHttpServer(wg *sync.WaitGroup) error {
 
 	ctx, err := a.container.GetAppContext()
 	if err != nil {
-		return loggerService.LogPropagate(err)
+		return loggerService.Propagate(err)
 	}
 
 	// RestAPI.
 	authedAPIControllers, err := a.InitAuthedControllers()
 	if err != nil {
-		return loggerService.LogPropagate(err)
+		return loggerService.Propagate(err)
 	}
 
 	unauthedAPIController, err := a.InitUnauthedControllers()
 	if err != nil {
-		return loggerService.LogPropagate(err)
+		return loggerService.Propagate(err)
 	}
 
 	srv, err := server.NewServer(
@@ -349,7 +349,7 @@ func (a *App) InitHttpServer(wg *sync.WaitGroup) error {
 		unauthedAPIController,
 	)
 	if err != nil {
-		return loggerService.LogPropagate(err)
+		return loggerService.Propagate(err)
 	}
 
 	wg.Add(1)
@@ -604,12 +604,12 @@ func (a *App) InitUser() error {
 
 	db, err := a.container.GetPostgresDatabase()
 	if err != nil {
-		return log.LogPropagate(err)
+		return log.Propagate(err)
 	}
 
 	actionRepo, err := a.container.GetActionRepository()
 	if err != nil {
-		return log.LogPropagate(err)
+		return log.Propagate(err)
 	}
 
 	// Repository.
@@ -617,10 +617,15 @@ func (a *App) InitUser() error {
 
 	a.container.Set(collectionRepo, reflectTypeOfNil[repositoryInterface.User]())
 
+	// Validator.
+	valid := validator.NewUser(log)
+
+	a.container.Set(valid, reflectTypeOfNil[validatorInterface.User]())
+
 	// Service.
 	service, err := user.NewCRUDService(a.container)
 	if err != nil {
-		return log.LogPropagate(err)
+		return log.Propagate(err)
 	}
 
 	a.container.Set(service, reflectTypeOfNil[userInterface.CRUD]())
@@ -628,15 +633,10 @@ func (a *App) InitUser() error {
 	// Builder.
 	build, err := builder.NewUser(a.container)
 	if err != nil {
-		return log.LogPropagate(err)
+		return log.Propagate(err)
 	}
 
 	a.container.Set(build, reflectTypeOfNil[builderInterface.User]())
-
-	// Validator.
-	valid := validator.NewUser(log)
-
-	a.container.Set(valid, reflectTypeOfNil[validatorInterface.User]())
 
 	return nil
 }

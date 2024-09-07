@@ -32,22 +32,22 @@ func NewListController(
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	anime, err := container.GetAnimeService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	animeBuilder, err := container.GetAnimeBuilder()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	animeValidator, err := container.GetAnimeValidator()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &ListController{
@@ -64,21 +64,21 @@ func (c *ListController) List(w http.ResponseWriter, r *http.Request) {
 	// Build dto.
 	getListDTO, err := c.builder.BuildListRequestDTOFromRequest(r)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 		return
 	}
 
 	// Validate dto.
 	err = c.validator.ValidateListRequestDTO(getListDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 		return
 	}
 
 	// Detail listDTO.
 	listDTO, err := c.anime.GetListModel(r.Context(), getListDTO, nil)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 		return
 	}
 

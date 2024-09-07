@@ -18,7 +18,7 @@ func NewAnime(log loggerInterface.Logger) *Anime {
 	}
 }
 
-func (b *Anime) ValidateCreateRequestDTO(dto *dto.AnimeCreateRequestDTO) error {
+func (v *Anime) ValidateCreateRequestDTO(dto *dto.AnimeCreateRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -49,13 +49,13 @@ func (b *Anime) ValidateCreateRequestDTO(dto *dto.AnimeCreateRequestDTO) error {
 		},
 	)
 	if !ok {
-		return errtype.NewValidatorError("CreateAnime", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
 }
 
-func (b *Anime) ValidateDetailRequestDTO(dto *dto.AnimeDetailRequestDTO) error {
+func (v *Anime) ValidateDetailRequestDTO(dto *dto.AnimeDetailRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -65,13 +65,13 @@ func (b *Anime) ValidateDetailRequestDTO(dto *dto.AnimeDetailRequestDTO) error {
 		},
 	)
 	if !ok {
-		return errtype.NewValidatorError("GetAnime", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
 }
 
-func (b *Anime) ValidateListRequestDTO(dto *dto.AnimeListRequestDTO) error {
+func (v *Anime) ValidateListRequestDTO(dto *dto.AnimeListRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -97,7 +97,7 @@ func (b *Anime) ValidateListRequestDTO(dto *dto.AnimeListRequestDTO) error {
 		},
 	)
 	if !ok {
-		return errtype.NewValidatorError("GetAnimeList", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil

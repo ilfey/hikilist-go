@@ -32,22 +32,22 @@ func NewLoginController(
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	anime, err := container.GetAuthService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	animeBuilder, err := container.GetAuthBuilder()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	animeValidator, err := container.GetAuthValidator()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &LoginController{
@@ -64,7 +64,7 @@ func (c *LoginController) GetLogin(w http.ResponseWriter, r *http.Request) {
 	// Build dto.
 	loginDTO, err := c.builder.BuildLoginRequestDTOFromRequest(r)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -72,7 +72,7 @@ func (c *LoginController) GetLogin(w http.ResponseWriter, r *http.Request) {
 	// Validate dto.
 	err = c.validator.ValidateLoginRequestDTO(loginDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -80,7 +80,7 @@ func (c *LoginController) GetLogin(w http.ResponseWriter, r *http.Request) {
 	// Login auth.
 	tokens, err := c.auth.Login(r.Context(), loginDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}

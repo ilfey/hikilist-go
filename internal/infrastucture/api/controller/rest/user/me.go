@@ -33,22 +33,22 @@ func NewMeController(
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	user, err := container.GetUserService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	userBuilder, err := container.GetUserBuilder()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	userValidator, err := container.GetUserValidator()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &MeController{
@@ -65,7 +65,7 @@ func (c *MeController) Me(w http.ResponseWriter, r *http.Request) {
 	// Build dto.
 	meRequestDTO, err := c.builder.BuildMeRequestDTOFromRequest(r)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -73,7 +73,7 @@ func (c *MeController) Me(w http.ResponseWriter, r *http.Request) {
 	// Validate dto.
 	err = c.validator.ValidateMeRequestDTO(meRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -83,7 +83,7 @@ func (c *MeController) Me(w http.ResponseWriter, r *http.Request) {
 		UserID: meRequestDTO.UserID,
 	})
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}

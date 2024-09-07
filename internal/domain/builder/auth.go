@@ -32,10 +32,10 @@ func (b *AuthBuilder) BuildDeleteRequestDTOFromRequest(r *http.Request) (*dto.Us
 
 	if err := json.NewDecoder(r.Body).Decode(deleteDTO); err != nil {
 		if errors.Is(err, io.EOF) {
-			return nil, b.logger.LogPropagate(errtype.NewBodyIsEmptyError())
+			return nil, b.logger.Propagate(errtype.NewBodyIsEmptyError())
 		}
 
-		return nil, b.logger.LogPropagate(err)
+		return nil, b.logger.Propagate(err)
 	}
 
 	if userID, ok := r.Context().Value(enum.UserIDContextKey).(uint64); ok {
@@ -50,10 +50,10 @@ func (b *AuthBuilder) BuildLoginRequestDTOFromRequest(r *http.Request) (*dto.Aut
 
 	if err := json.NewDecoder(r.Body).Decode(model); err != nil {
 		if errors.Is(err, io.EOF) {
-			return nil, b.logger.LogPropagate(errtype.NewBodyIsEmptyError())
+			return nil, b.logger.Propagate(errtype.NewBodyIsEmptyError())
 		}
 
-		return nil, b.logger.LogPropagate(err)
+		return nil, b.logger.Propagate(err)
 	}
 
 	return model, nil
@@ -64,10 +64,10 @@ func (b *AuthBuilder) BuildLogoutRequestDTOFromRequest(r *http.Request) (*dto.Au
 
 	if err := json.NewDecoder(r.Body).Decode(model); err != nil {
 		if errors.Is(err, io.EOF) {
-			return nil, b.logger.LogPropagate(errtype.NewBodyIsEmptyError())
+			return nil, b.logger.Propagate(errtype.NewBodyIsEmptyError())
 		}
 
-		return nil, b.logger.LogPropagate(err)
+		return nil, b.logger.Propagate(err)
 	}
 
 	return model, nil
@@ -78,10 +78,10 @@ func (b *AuthBuilder) BuildRefreshRequestDTOFromRequest(r *http.Request) (*dto.A
 
 	if err := json.NewDecoder(r.Body).Decode(model); err != nil {
 		if errors.Is(err, io.EOF) {
-			return nil, b.logger.LogPropagate(errtype.NewBodyIsEmptyError())
+			return nil, b.logger.Propagate(errtype.NewBodyIsEmptyError())
 		}
 
-		return nil, b.logger.LogPropagate(err)
+		return nil, b.logger.Propagate(err)
 	}
 
 	return model, nil
@@ -92,10 +92,10 @@ func (b *AuthBuilder) BuildRegisterRequestDTOFromRequest(r *http.Request) (*dto.
 
 	if err := json.NewDecoder(r.Body).Decode(model); err != nil {
 		if errors.Is(err, io.EOF) {
-			return nil, b.logger.LogPropagate(errtype.NewBodyIsEmptyError())
+			return nil, b.logger.Propagate(errtype.NewBodyIsEmptyError())
 		}
 
-		return nil, b.logger.LogPropagate(err)
+		return nil, b.logger.Propagate(err)
 	}
 
 	return model, nil

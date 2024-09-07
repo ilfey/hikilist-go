@@ -32,22 +32,22 @@ func NewListController(
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	user, err := container.GetUserService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	userBuilder, err := container.GetUserBuilder()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	userValidator, err := container.GetUserValidator()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &ListController{
@@ -64,21 +64,21 @@ func (c *ListController) List(w http.ResponseWriter, r *http.Request) {
 	// Build dto.
 	listRequestDTO, err := c.builder.BuildListRequestDTOFromRequest(r)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 		return
 	}
 
 	// Validate dto.
 	err = c.validator.ValidateListRequestDTO(listRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 		return
 	}
 
 	// Detail listDTO.
 	listDTO, err := c.user.List(r.Context(), listRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 		return
 	}
 

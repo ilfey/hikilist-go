@@ -55,11 +55,11 @@ type ValidatorError struct {
 	Expectations map[string][]string `json:"expectations"`
 }
 
-func NewValidatorError(dto string, expectations map[string][]string) *ValidatorError {
+func NewValidatorError(expectations map[string][]string) *ValidatorError {
 	return &ValidatorError{
 		publicError{
 			errored{
-				ErrorDetail: fmt.Sprintf("dto '%s' validation error", dto),
+				ErrorDetail: "validation error",
 				ErrorType:   validateType,
 				errorLevel:  publicValidateLevel,
 				errorStatus: publicValidateStatus,

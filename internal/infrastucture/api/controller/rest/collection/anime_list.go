@@ -32,22 +32,22 @@ func NewAnimeListController(
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	anime, err := container.GetAnimeService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	collectionBuilder, err := container.GetCollectionBuilder()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	collectionValidator, err := container.GetCollectionValidator()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &AnimeListController{
@@ -64,21 +64,21 @@ func (c *AnimeListController) AnimeList(w http.ResponseWriter, r *http.Request) 
 	// Build dto.
 	animeListFromCollectionRequestDTO, err := c.builder.BuildAnimeListFromCollectionRequestDTOFromRequest(r)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 		return
 	}
 
 	// Validate dto.
 	err = c.validator.ValidateAnimeListFromCollectionRequestDTO(animeListFromCollectionRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 		return
 	}
 
 	// Detail listDTO.
 	listDTO, err := c.anime.GetFromCollectionListDTO(r.Context(), animeListFromCollectionRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 		return
 	}
 

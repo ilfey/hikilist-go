@@ -26,24 +26,30 @@ func NewCRUDService(container diInterface.ServiceContainer) (userInterface.CRUD,
 
 	userRepository, err := container.GetUserRepository()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
+	}
+
+	validator, err := container.GetUserValidator()
+	if err != nil {
+		return nil, log.Propagate(err)
 	}
 
 	return &CRUDService{
-		logger: log,
-		user:   userRepository,
+		logger:    log,
+		user:      userRepository,
+		validator: validator,
 	}, nil
 }
 
 func (s *CRUDService) Create(ctx context.Context, req *dto.UserCreateRequestDTO) error {
 	// Validate request.
 	if err := s.validator.ValidateCreateRequestDTO(req); err != nil {
-		return s.logger.LogPropagate(err)
+		return s.logger.Propagate(err)
 	}
 
 	err := s.user.Create(ctx, req)
 	if err != nil {
-		return s.logger.LogPropagate(err)
+		return s.logger.Propagate(err)
 	}
 
 	return nil
@@ -52,14 +58,14 @@ func (s *CRUDService) Create(ctx context.Context, req *dto.UserCreateRequestDTO)
 func (s *CRUDService) Detail(ctx context.Context, req *dto.UserDetailRequestDTO) (*agg.UserDetail, error) {
 	// Validate request.
 	if err := s.validator.ValidateDetailRequestDTO(req); err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.logger.Propagate(err)
 	}
 
 	detail, err := s.user.Get(ctx, map[string]any{
 		"id": req.UserID,
 	})
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.logger.Propagate(err)
 	}
 
 	return detail, nil
@@ -68,7 +74,7 @@ func (s *CRUDService) Detail(ctx context.Context, req *dto.UserDetailRequestDTO)
 func (s *CRUDService) List(ctx context.Context, req *dto.UserListRequestDTO) (*agg.UserList, error) {
 	// Validate request.
 	if err := s.validator.ValidateListRequestDTO(req); err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.logger.Propagate(err)
 	}
 
 	var lm agg.UserList
@@ -99,7 +105,7 @@ func (s *CRUDService) List(ctx context.Context, req *dto.UserListRequestDTO) (*a
 
 	err := g.Wait()
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.logger.Propagate(err)
 	}
 
 	return &lm, nil
@@ -108,7 +114,7 @@ func (s *CRUDService) List(ctx context.Context, req *dto.UserListRequestDTO) (*a
 func (s *CRUDService) ChangeUsername(ctx context.Context, userId uint64, oldUsername string, newUsername string) error {
 	err := s.user.UpdateUsername(ctx, userId, oldUsername, newUsername)
 	if err != nil {
-		return s.logger.LogPropagate(err)
+		return s.logger.Propagate(err)
 	}
 
 	return nil
@@ -117,7 +123,7 @@ func (s *CRUDService) ChangeUsername(ctx context.Context, userId uint64, oldUser
 func (s *CRUDService) UpdateLastOnline(ctx context.Context, userId uint64) error {
 	err := s.user.UpdateLastOnline(ctx, userId)
 	if err != nil {
-		return s.logger.LogPropagate(err)
+		return s.logger.Propagate(err)
 	}
 
 	return nil
@@ -126,7 +132,7 @@ func (s *CRUDService) UpdateLastOnline(ctx context.Context, userId uint64) error
 func (s *CRUDService) UpdatePassword(ctx context.Context, userId uint64, hash string) error {
 	err := s.user.UpdatePassword(ctx, userId, hash)
 	if err != nil {
-		return s.logger.LogPropagate(err)
+		return s.logger.Propagate(err)
 	}
 
 	return nil
@@ -135,7 +141,7 @@ func (s *CRUDService) UpdatePassword(ctx context.Context, userId uint64, hash st
 func (s *CRUDService) Delete(ctx context.Context, conds any) error {
 	err := s.user.Delete(ctx, conds)
 	if err != nil {
-		return s.logger.LogPropagate(err)
+		return s.logger.Propagate(err)
 	}
 
 	return nil

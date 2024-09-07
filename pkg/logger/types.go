@@ -1,11 +1,14 @@
 package logger
 
 import (
+	"github.com/pkg/errors"
 	"time"
 )
 
+type Level uint
+
 const (
-	InfoLevel = iota
+	InfoLevel Level = iota + 1
 	DebugLevel
 	WarnLevel
 	ErrorLevel
@@ -16,11 +19,12 @@ const (
 	ErrorLogType = "error"
 )
 
-/* ===== LoggableError ===== */
+/* ===== Trace ===== */
 
-type LoggableError interface {
-	Error() string
-	Level() int
+type Trace struct {
+	File string `json:"file"`
+	Func string `json:"function"`
+	Line int    `json:"line"`
 }
 
 /* ===== RequestIdAware ===== */
@@ -30,77 +34,116 @@ type RequestIdAware interface {
 	SetRequestID(id string)
 }
 
-/* ===== introspectionError ===== */
+/* ===== LoggableError ===== */
 
-type introspectedError interface {
+type LoggableError interface {
 	Date() time.Time
+
 	Error() string
-	File() string
-	Func() string
-	Line() int
-	Level() int
+	Unwrap() error
+
+	Level() Level
 	Type() string
+
+	AddTrace(trace *Trace)
+
 	RequestId() string
 	SetRequestId(id string)
 }
 
-/* ===== introspectionError ===== */
+/* ===== loggableErrorImpl ===== */
 
-type introspectionError struct {
+type loggableErrorImpl struct {
+	Er error     `json:"-"`
 	Dt time.Time `json:"date"`
 	Rq string    `json:"requestID,omitempty"`
 	Tp string    `json:"type"`
 	Mg string    `json:"message"`
-	Fl string    `json:"file"`
-	Fn string    `json:"function"`
-	Ln int       `json:"line"`
+	Sk []*Trace  `json:"stack,omitempty"`
 }
 
-/* ===== introspectionError.<Getter> ===== */
+func newLoggableError(errOrString any, trace *Trace, lvl Level) LoggableError {
+	var (
+		err error
+		msg string
+	)
 
-func (e *introspectionError) Date() time.Time {
+	if e, ok := errOrString.(error); ok {
+		err = e
+		msg = err.Error()
+	} else {
+		if errString, ok := errOrString.(string); ok {
+			msg = errString
+			err = errors.New(errString)
+		} else {
+			panic("newError(): unknown type")
+		}
+	}
+
+	lErr := loggableErrorImpl{
+		Er: err,
+		Dt: time.Now(),
+		Mg: msg,
+		Sk: []*Trace{trace},
+	}
+
+	switch lvl {
+	case DebugLevel:
+		return &debugLevelError{loggableErrorImpl: lErr}
+	case InfoLevel:
+		return &infoLevelError{loggableErrorImpl: lErr}
+	case WarnLevel:
+		return &warnLevelError{loggableErrorImpl: lErr}
+	case ErrorLevel:
+		return &errorLevelError{loggableErrorImpl: lErr}
+	case CriticalLevel:
+		return &criticalLevelError{loggableErrorImpl: lErr}
+	}
+
+	panic("newError(): unknown level")
+}
+
+/* ===== loggableErrorImpl.<Getter> ===== */
+
+func (e *loggableErrorImpl) Date() time.Time {
 	return e.Dt
 }
 
-func (e *introspectionError) Error() string {
+func (e *loggableErrorImpl) Error() string {
 	return e.Mg
 }
 
-func (e *introspectionError) File() string {
-	return e.Fl
-}
-
-func (e *introspectionError) Func() string {
-	return e.Fn
-}
-
-func (e *introspectionError) Line() int {
-	return e.Ln
-}
-
-func (e *introspectionError) Level() int {
+func (e *loggableErrorImpl) Level() Level {
 	return ErrorLevel
 }
 
-func (e *introspectionError) Type() string {
+func (e *loggableErrorImpl) Type() string {
 	return ErrorLogType
 }
 
-func (e *introspectionError) RequestId() string {
+func (e *loggableErrorImpl) RequestId() string {
 	return e.Rq
 }
 
-func (e *introspectionError) SetRequestId(id string) {
+func (e *loggableErrorImpl) SetRequestId(id string) {
 	e.Rq = id
 }
 
-/* ===== errorLevelError ===== */
+func (e *loggableErrorImpl) Unwrap() error {
+	return e.Er
+}
 
-type infoLevelError struct{ introspectionError }
+func (e *loggableErrorImpl) AddTrace(trace *Trace) {
+	e.Sk = append(e.Sk, trace)
+}
+
+/* ===== infoLevelError ===== */
+
+type infoLevelError struct{ loggableErrorImpl }
 
 /* ===== errorLevelError.<Getter> ===== */
 
-func (e *infoLevelError) Level() int {
+func (e *infoLevelError) Level() Level {
 	return InfoLevel
 }
 
@@ -110,11 +153,11 @@ func (e *infoLevelError) Type() string {
 
 /* ===== debugLevelError ===== */
 
-type debugLevelError struct{ introspectionError }
+type debugLevelError struct{ loggableErrorImpl }
 
 /* ===== debugLevelError.<Getter> ===== */
 
-func (e *debugLevelError) Level() int {
+func (e *debugLevelError) Level() Level {
 	return DebugLevel
 }
 
@@ -124,11 +167,11 @@ func (e *debugLevelError) Type() string {
 
 /* ===== warnLevelError ===== */
 
-type warnLevelError struct{ introspectionError }
+type warnLevelError struct{ loggableErrorImpl }
 
 /* ===== warnLevelError.<Getter> ===== */
 
-func (e *warnLevelError) Level() int {
+func (e *warnLevelError) Level() Level {
 	return WarnLevel
 }
 
@@ -138,11 +181,11 @@ func (e *warnLevelError) Type() string {
 
 /* ===== errorLevelError ===== */
 
-type errorLevelError struct{ introspectionError }
+type errorLevelError struct{ loggableErrorImpl }
 
 /* ===== errorLevelError.<Getter> ===== */
 
-func (e *errorLevelError) Level() int {
+func (e *errorLevelError) Level() Level {
 	return ErrorLevel
 }
 
@@ -152,11 +195,11 @@ func (e *errorLevelError) Type() string {
 
 /* ===== criticalLevelError ===== */
 
-type criticalLevelError struct{ introspectionError }
+type criticalLevelError struct{ loggableErrorImpl }
 
 /* ===== criticalLevelError.<Getter> ===== */
 
-func (e *criticalLevelError) Level() int {
+func (e *criticalLevelError) Level() Level {
 	return CriticalLevel
 }
 

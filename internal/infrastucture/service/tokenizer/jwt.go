@@ -62,7 +62,7 @@ func (s *JwtService) generateAccess(userId uint64) (string, error) {
 
 	token, err := tkn.SignedString(s.cfg.Salt)
 	if err != nil {
-		return "", s.log.LogPropagate(err)
+		return "", s.log.Propagate(err)
 	}
 
 	return token, nil
@@ -83,7 +83,7 @@ func (s *JwtService) generateRefresh(userId uint64) (string, error) {
 
 	token, err := tkn.SignedString(s.cfg.Salt)
 	if err != nil {
-		return "", s.log.LogPropagate(err)
+		return "", s.log.Propagate(err)
 	}
 
 	return token, nil
@@ -107,20 +107,20 @@ func (s *JwtService) Verify(ctx context.Context, token string) (uint64, error) {
 	})
 	if err != nil {
 		// Parsing givenToken error occurred.
-		s.log.Log(err)
+		s.log.Error(err)
 
 		// Return a token invalid error.
-		return 0, s.log.LogPropagate(errtype.NewAccessTokenIsInvalidError())
+		return 0, s.log.Propagate(errtype.NewAccessTokenIsInvalidError())
 	}
 
 	// Checking that token is not blocked
 	found, err := s.token.Has(ctx, parsedToken.Raw)
 	if err != nil {
-		return 0, s.log.LogPropagate(err)
+		return 0, s.log.Propagate(err)
 	}
 
 	if found {
-		return 0, s.log.LogPropagate(errtype.NewRefreshTokenWasBlockedError())
+		return 0, s.log.Propagate(errtype.NewRefreshTokenWasBlockedError())
 	}
 
 	// Extract claims of the givenToken payload
@@ -129,34 +129,34 @@ func (s *JwtService) Verify(ctx context.Context, token string) (uint64, error) {
 	if success && parsedToken.Valid {
 		err = s.isValidIssuer(token, claims)
 		if err != nil {
-			return 0, s.log.LogPropagate(errtype.NewAccessTokenIsInvalidError())
+			return 0, s.log.Propagate(errtype.NewAccessTokenIsInvalidError())
 		}
 
 		userID, err := s.getUserID(claims)
 		if err != nil {
-			return 0, s.log.LogPropagate(err)
+			return 0, s.log.Propagate(err)
 		}
 
 		return userID, nil
 	}
 
 	// Error occurred while extracting claims from givenToken or givenToken is not valid
-	s.log.Log(errtype.NewTokenInvalidInternalError(token))
+	s.log.Error(errtype.NewTokenInvalidInternalError(token))
 
-	return 0, s.log.LogPropagate(errtype.NewAccessTokenIsInvalidError())
+	return 0, s.log.Propagate(errtype.NewAccessTokenIsInvalidError())
 }
 
 func (s *JwtService) getUserID(claims jwt.Claims) (uint64, error) {
 	// Extract subject (userId) from the claims
 	stringId, err := claims.GetSubject()
 	if err != nil {
-		return 0, s.log.LogPropagate(err)
+		return 0, s.log.Propagate(err)
 	}
 
 	// Cast string to uint64
 	userId, err := strconv.ParseUint(stringId, 10, 64)
 	if err != nil {
-		return 0, s.log.LogPropagate(err)
+		return 0, s.log.Propagate(err)
 	}
 
 	return userId, nil
@@ -166,12 +166,12 @@ func (s *JwtService) isValidIssuer(token string, claims jwt.Claims) error {
 	// Extract the token issuer.
 	iss, err := claims.GetIssuer()
 	if err != nil {
-		return s.log.LogPropagate(err)
+		return s.log.Propagate(err)
 	}
 
 	// Check that token issuer is valid.
 	if iss != s.cfg.Issuer {
-		return s.log.LogPropagate(errtype.NewTokenIssuerWasNotMatchedInternalError(token))
+		return s.log.Propagate(errtype.NewTokenIssuerWasNotMatchedInternalError(token))
 	}
 
 	return nil
@@ -184,7 +184,7 @@ func (s *JwtService) Block(ctx context.Context, tkn string) error {
 		// because the tkn may be is invalid but must be blocked.
 		// in this case a user will be undetermined
 
-		s.log.Log(err)
+		s.log.Error(err)
 	}
 
 	createModel := &agg.TokenCreate{
@@ -193,7 +193,7 @@ func (s *JwtService) Block(ctx context.Context, tkn string) error {
 
 	err = s.token.Create(ctx, createModel)
 	if err != nil {
-		return s.log.LogPropagate(err)
+		return s.log.Propagate(err)
 	}
 
 	return nil
@@ -217,21 +217,21 @@ func (s *JwtService) parseUserID(token string) (uint64, error) {
 	})
 	if err != nil {
 		// Parsing givenToken error occurred.
-		s.log.Log(err)
+		s.log.Error(err)
 
 		// Return a token invalid error.
-		return 0, s.log.LogPropagate(errtype.NewAccessTokenIsInvalidError())
+		return 0, s.log.Propagate(errtype.NewAccessTokenIsInvalidError())
 	}
 
 	claims, success := parsedToken.Claims.(jwt.MapClaims)
 	if success {
 		userID, err := s.getUserID(claims)
 		if err != nil {
-			return 0, s.log.LogPropagate(err)
+			return 0, s.log.Propagate(err)
 		}
 
 		return userID, nil
 	}
 
-	return 0, s.log.LogPropagate(errtype.NewAccessTokenIsInvalidError())
+	return 0, s.log.Propagate(errtype.NewAccessTokenIsInvalidError())
 }

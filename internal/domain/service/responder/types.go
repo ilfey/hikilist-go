@@ -8,7 +8,7 @@ type LoggableData struct {
 	Date  time.Time `json:"date"`
 	ReqID string    `json:"requestID,omitempty"`
 	Type  string    `json:"type"`
-	DataResponse
+	*DataResponse
 }
 
 func (r *LoggableData) RequestID() string {

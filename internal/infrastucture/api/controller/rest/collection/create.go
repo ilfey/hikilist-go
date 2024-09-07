@@ -32,22 +32,22 @@ func NewCreateController(
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	collection, err := container.GetCollectionService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	collectionBuilder, err := container.GetCollectionBuilder()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	collectionValidator, err := container.GetCollectionValidator()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &CreateController{
@@ -64,7 +64,7 @@ func (c *CreateController) GetCreate(w http.ResponseWriter, r *http.Request) {
 	// Build dto.
 	createDTO, err := c.builder.BuildCreateRequestDTOFromRequest(r)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -72,7 +72,7 @@ func (c *CreateController) GetCreate(w http.ResponseWriter, r *http.Request) {
 	// Validate dto.
 	err = c.validator.ValidateCreateRequestDTO(createDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -80,7 +80,7 @@ func (c *CreateController) GetCreate(w http.ResponseWriter, r *http.Request) {
 	// Create collection.
 	err = c.collection.Create(r.Context(), createDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}

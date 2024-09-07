@@ -53,7 +53,7 @@ func (s *Action) GetListDTO(ctx context.Context, p *dto.ActionListRequestDTO, co
 
 	err := g.Wait()
 	if err != nil {
-		return nil, s.log.LogPropagate(err)
+		return nil, s.log.Propagate(err)
 	}
 
 	return &lm, nil
@@ -62,7 +62,7 @@ func (s *Action) GetListDTO(ctx context.Context, p *dto.ActionListRequestDTO, co
 func (s *Action) FindWithPaginator(ctx context.Context, p *dto.ActionListRequestDTO, conds any) ([]*agg.ActionListItem, error) {
 	items, err := s.action.Find(ctx, p, conds)
 	if err != nil {
-		return nil, s.log.LogPropagate(err)
+		return nil, s.log.Propagate(err)
 	}
 
 	return items, nil
@@ -71,7 +71,7 @@ func (s *Action) FindWithPaginator(ctx context.Context, p *dto.ActionListRequest
 func (s *Action) Count(ctx context.Context, conds any) (uint64, error) {
 	count, err := s.action.Count(ctx, conds)
 	if err != nil {
-		return 0, s.log.LogPropagate(err)
+		return 0, s.log.Propagate(err)
 	}
 
 	return count, nil

@@ -24,7 +24,7 @@ func NewUser(container diInterface.ServiceContainer) (*UserBuilder, error) {
 
 	extractor, err := container.GetRequestParametersExtractorService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &UserBuilder{
@@ -38,10 +38,10 @@ func NewUser(container diInterface.ServiceContainer) (*UserBuilder, error) {
 //
 //	if err := json.NewDecoder(r.Body).Decode(createRequest); err != nil {
 //		if errors.Is(err, io.EOF) {
-//			return nil, b.logger.LogPropagate(errtype.NewBodyIsEmptyError())
+//			return nil, b.logger.Propagate(errtype.NewBodyIsEmptyError())
 //		}
 //
-//		return nil, b.logger.LogPropagate(err)
+//		return nil, b.logger.Propagate(err)
 //	}
 //
 //	return createRequest, nil
@@ -55,7 +55,7 @@ func (b *UserBuilder) BuildDetailRequestDTOFromRequest(r *http.Request) (*dto.Us
 
 	id, err := strconv.ParseUint(stringId, 10, 64)
 	if err != nil {
-		b.logger.Log(err)
+		b.logger.Error(err)
 
 		return nil, errtype.NewFieldMustBeIntegerError("id")
 	}
@@ -102,11 +102,11 @@ func (b *UserBuilder) BuildListRequestDTOFromRequest(r *http.Request) (*dto.User
 
 	stringPage, err := b.extractor.GetParameter(r, "page")
 	if err != nil {
-		limit = 10
+		page = 1
 	} else {
 		page, err = strconv.ParseUint(stringPage, 10, 64)
 		if err != nil {
-			b.logger.Log(err)
+			b.logger.Error(err)
 
 			return nil, errtype.NewFieldMustBeIntegerError("page")
 		}
@@ -114,11 +114,11 @@ func (b *UserBuilder) BuildListRequestDTOFromRequest(r *http.Request) (*dto.User
 
 	stringLimit, err := b.extractor.GetParameter(r, "limit")
 	if err != nil {
-		page = 1
+		limit = 10
 	} else {
 		limit, err = strconv.ParseUint(stringLimit, 10, 64)
 		if err != nil {
-			b.logger.Log(err)
+			b.logger.Error(err)
 
 			return nil, errtype.NewFieldMustBeIntegerError("limit")
 		}

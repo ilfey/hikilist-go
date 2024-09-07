@@ -32,22 +32,22 @@ func NewUpdateController(
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	collection, err := container.GetCollectionService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	collectionBuilder, err := container.GetCollectionBuilder()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	collectionValidator, err := container.GetCollectionValidator()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &UpdateController{
@@ -64,7 +64,7 @@ func (c *UpdateController) GetUpdate(w http.ResponseWriter, r *http.Request) {
 	// Build dto.
 	updateRequestDTO, err := c.builder.BuildUpdateRequestDTOFromRequest(r)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -72,7 +72,7 @@ func (c *UpdateController) GetUpdate(w http.ResponseWriter, r *http.Request) {
 	// Validate dto.
 	err = c.validator.ValidateUpdateRequestDTO(updateRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -80,7 +80,7 @@ func (c *UpdateController) GetUpdate(w http.ResponseWriter, r *http.Request) {
 	// Update collection.
 	err = c.collection.Update(r.Context(), updateRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
