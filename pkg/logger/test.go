@@ -2,8 +2,6 @@ package logger
 
 import (
 	"context"
-	"github.com/pkg/errors"
-	"io"
 	"testing"
 )
 
@@ -19,11 +17,11 @@ func NewTest(t *testing.T) *Test {
 
 func (l Test) Log(_ error) {}
 
-func (l Test) LogPropagate(err error) error {
+func (l Test) Propagate(err error) error {
 	return err
 }
 
-func (l Test) LogData(_ any) {}
+func (l Test) Object(_ any) {}
 
 func (l Test) Info(strOrErr any) {
 	if _, ok := strOrErr.(error); ok {
@@ -35,20 +33,6 @@ func (l Test) Info(strOrErr any) {
 	}
 
 	l.t.Fatal("logger.Info() error: unknown type")
-}
-
-func (l Test) InfoPropagate(strOrErr any) error {
-	if err, ok := strOrErr.(error); ok {
-		return err
-	}
-
-	if str, ok := strOrErr.(string); ok {
-		return errors.New(str)
-	}
-
-	l.t.Fatal("logger.InfoPropagate() error: unknown type")
-
-	return nil
 }
 
 func (l Test) Debug(strOrErr any) {
@@ -63,20 +47,6 @@ func (l Test) Debug(strOrErr any) {
 	l.t.Fatal("logger.Debug() error: unknown type")
 }
 
-func (l Test) DebugPropagate(strOrErr any) error {
-	if err, ok := strOrErr.(error); ok {
-		return err
-	}
-
-	if str, ok := strOrErr.(string); ok {
-		return errors.New(str)
-	}
-
-	l.t.Fatal("logger.DebugPropagate() error: unknown type")
-
-	return nil
-}
-
 func (l Test) Warn(strOrErr any) {
 	if _, ok := strOrErr.(error); ok {
 		return
@@ -87,20 +57,6 @@ func (l Test) Warn(strOrErr any) {
 	}
 
 	l.t.Fatal("logger.Warn() error: unknown type")
-}
-
-func (l Test) WarnPropagate(strOrErr any) error {
-	if err, ok := strOrErr.(error); ok {
-		return err
-	}
-
-	if str, ok := strOrErr.(string); ok {
-		return errors.New(str)
-	}
-
-	l.t.Fatal("logger.WarnPropagate() error: unknown type")
-
-	return nil
 }
 
 func (l Test) Error(strOrErr any) {
@@ -115,20 +71,6 @@ func (l Test) Error(strOrErr any) {
 	l.t.Fatal("logger.Error() error: unknown type")
 }
 
-func (l Test) ErrorPropagate(strOrErr any) error {
-	if err, ok := strOrErr.(error); ok {
-		return err
-	}
-
-	if str, ok := strOrErr.(string); ok {
-		return errors.New(str)
-	}
-
-	l.t.Fatal("logger.ErrorPropagate() error: unknown type")
-
-	return nil
-}
-
 func (l Test) Critical(strOrErr any) {
 	if _, ok := strOrErr.(error); ok {
 		return
@@ -140,26 +82,6 @@ func (l Test) Critical(strOrErr any) {
 
 	l.t.Fatal("logger.Critical() error: unknown type")
 }
-
-func (l Test) CriticalPropagate(strOrErr any) error {
-	if err, ok := strOrErr.(error); ok {
-		return err
-	}
-
-	if str, ok := strOrErr.(string); ok {
-		return errors.New(str)
-	}
-
-	l.t.Fatal("logger.CriticalPropagate() error: unknown type")
-
-	return nil
-}
-
-func (l Test) GetOutput() io.Writer {
-	return io.Discard
-}
-
-func (l Test) SetOutput(_ io.Writer) {}
 
 func (l Test) GetContext() context.Context { return context.Background() }
 

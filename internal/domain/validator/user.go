@@ -35,7 +35,7 @@ func (v *User) ValidateCreateRequestDTO(req *dto.UserCreateRequestDTO) error {
 		},
 	)
 	if !ok {
-		return errtype.NewValidatorError("List", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
@@ -63,7 +63,7 @@ func (v *User) ValidateListRequestDTO(req *dto.UserListRequestDTO) error {
 		},
 	)
 	if !ok {
-		return errtype.NewValidatorError("List", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
@@ -79,7 +79,7 @@ func (v *User) ValidateDetailRequestDTO(req *dto.UserDetailRequestDTO) error {
 		},
 	)
 	if !ok {
-		return errtype.NewValidatorError("Detail", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
@@ -95,7 +95,7 @@ func (v *User) ValidateMeRequestDTO(req *dto.UserMeRequestDTO) error {
 		},
 	)
 	if !ok {
-		return errtype.NewValidatorError("Me", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
@@ -111,7 +111,7 @@ func (v *User) ValidateCollectionRequestDTO(req *dto.UserCollectionsRequestDTO) 
 		},
 	)
 	if !ok {
-		return errtype.NewValidatorError("UserCollections", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil

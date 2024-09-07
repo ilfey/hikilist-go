@@ -39,12 +39,12 @@ func (r *Action) WithTx(tx postgres.RW) repositoryInterface.Action {
 func (r *Action) Create(ctx context.Context, cm *dto.ActionCreateRequestDTO) error {
 	sql, args, err := r.CreateSQL(cm)
 	if err != nil {
-		return r.log.CriticalPropagate(err)
+		return r.log.Propagate(err)
 	}
 
 	err = r.db.QueryRow(ctx, sql, args...).Scan(&cm.ID)
 	if err != nil {
-		r.log.Log(err)
+		r.log.Error(err)
 
 		return ErrActionCreateFailed
 	}
@@ -55,14 +55,14 @@ func (r *Action) Create(ctx context.Context, cm *dto.ActionCreateRequestDTO) err
 func (r *Action) Find(ctx context.Context, p *dto.ActionListRequestDTO, conds any) ([]*agg.ActionListItem, error) {
 	sql, args, err := r.FindWithPaginatorSQL(p, conds)
 	if err != nil {
-		return nil, r.log.CriticalPropagate(err)
+		return nil, r.log.Propagate(err)
 	}
 
 	var items []*agg.ActionListItem
 
 	err = pgxscan.Select(ctx, r.db, &items, sql, args...)
 	if err != nil {
-		r.log.Log(err)
+		r.log.Error(err)
 
 		return nil, ErrActionsFindFailed
 	}
@@ -73,14 +73,14 @@ func (r *Action) Find(ctx context.Context, p *dto.ActionListRequestDTO, conds an
 func (r *Action) Count(ctx context.Context, conds any) (uint64, error) {
 	sql, args, err := r.CountSQL(conds)
 	if err != nil {
-		return 0, r.log.CriticalPropagate(err)
+		return 0, r.log.Propagate(err)
 	}
 
 	var count uint64
 
 	err = r.db.QueryRow(ctx, sql, args...).Scan(&count)
 	if err != nil {
-		r.log.Log(err)
+		r.log.Error(err)
 
 		return 0, ErrActionsCountFailed
 	}

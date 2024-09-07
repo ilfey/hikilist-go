@@ -32,22 +32,22 @@ func NewDetailController(
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	anime, err := container.GetAnimeService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	animeBuilder, err := container.GetAnimeBuilder()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	animeValidator, err := container.GetAnimeValidator()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &DetailController{
@@ -64,7 +64,7 @@ func (c *DetailController) GetDetail(w http.ResponseWriter, r *http.Request) {
 	// Build dto.
 	getDTO, err := c.builder.BuildDetailRequestDTOFromRequest(r)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -72,7 +72,7 @@ func (c *DetailController) GetDetail(w http.ResponseWriter, r *http.Request) {
 	// Validate dto.
 	err = c.validator.ValidateDetailRequestDTO(getDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -82,7 +82,7 @@ func (c *DetailController) GetDetail(w http.ResponseWriter, r *http.Request) {
 		"id": getDTO.ID,
 	})
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}

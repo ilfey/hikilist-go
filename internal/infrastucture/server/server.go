@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ilfey/hikilist-go/internal/config/server"
 	"github.com/ilfey/hikilist-go/internal/domain/enum"
+	"github.com/ilfey/hikilist-go/internal/domain/errtype"
 	authInterface "github.com/ilfey/hikilist-go/internal/domain/service/auth/interface"
 	diInterface "github.com/ilfey/hikilist-go/internal/domain/service/di/interface"
 	"github.com/ilfey/hikilist-go/internal/domain/service/extractor"
@@ -54,32 +55,32 @@ func NewServer(
 
 	appCtx, err := container.GetAppContext()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	auth, err := container.GetAuthService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	reqParamsExtractor, err := container.GetRequestParametersExtractorService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	appConfig, err := container.GetAppConfig()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	user, err := container.GetUserService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &Server{
@@ -103,7 +104,7 @@ func (server *Server) Listen(ctx context.Context, wg *sync.WaitGroup) {
 
 	addr, err := net.ResolveTCPAddr("tcp", server.config.Address())
 	if err != nil {
-		server.logger.Error(err)
+		server.logger.Critical(err)
 		return
 	}
 
@@ -124,7 +125,7 @@ func (server *Server) Listen(ctx context.Context, wg *sync.WaitGroup) {
 			server.logger.Info("stopped")
 		}()
 		if lsErr := httpServer.ListenAndServe(); lsErr != nil && !errors.Is(lsErr, http.ErrServerClosed) {
-			server.logger.Error(lsErr)
+			server.logger.Critical(lsErr)
 			return
 		}
 	}()
@@ -194,15 +195,11 @@ func (server *Server) authorizationMiddleware(handler http.Handler) http.Handler
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			userID, err := server.auth.IsAuthed(r)
-			if err != nil {
-				server.logger.Log(err)
-			}
-
-			if userID > 0 {
-				// create a new context with userID value
+			if err == nil && userID > 0 {
+				// Create a new context with userID value.
 				ctx := context.WithValue(r.Context(), enum.UserIDContextKey, userID)
 
-				// serve the next layer
+				// Serve the next layer.
 				handler.ServeHTTP(w, r.WithContext(ctx))
 
 				return
@@ -217,17 +214,13 @@ func (server *Server) authorizationMiddleware(handler http.Handler) http.Handler
 func (server *Server) authorizationRequiredMiddleware(handler http.Handler) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			userID, err := server.auth.IsAuthed(r)
-			if err != nil {
-				server.responder.Respond(w, server.logger.LogPropagate(err))
+			if _, ok := r.Context().Value(enum.UserIDContextKey).(uint64); !ok {
+				server.responder.Respond(w, server.logger.Propagate(errtype.NewAuthFailedError("")))
 				return
 			}
 
-			// create a new context with userID value
-			ctx := context.WithValue(r.Context(), enum.UserIDContextKey, userID)
-
-			// serve the next layer
-			handler.ServeHTTP(w, r.WithContext(ctx))
+			// Serve the next layer.
+			handler.ServeHTTP(w, r)
 		},
 	)
 }
@@ -260,7 +253,7 @@ func (server *Server) onlineMiddleware(handler http.Handler) http.Handler {
 					defer wg.Done()
 					err := server.user.UpdateLastOnline(ctx, userID)
 					if err != nil {
-						server.logger.Log(err)
+						server.logger.Error(err)
 					}
 				}(r.Context())
 			}
@@ -291,7 +284,7 @@ func (server *Server) loggingMiddleware(handler http.Handler) http.Handler {
 			}
 
 			// Log the request.
-			server.logger.LogData(requestData)
+			server.logger.Object(requestData)
 
 			// Pass a requestID through entire app.
 			server.logger.SetContext(context.WithValue(server.ctx, enum.RequestIDContextKey, uniqueReqID)) //nolint:contextcheck

@@ -32,22 +32,22 @@ func NewDetailController(
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	user, err := container.GetUserService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	userBuilder, err := container.GetUserBuilder()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	userValidator, err := container.GetUserValidator()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &DetailController{
@@ -64,7 +64,7 @@ func (c *DetailController) Detail(w http.ResponseWriter, r *http.Request) {
 	// Build dto.
 	detailRequestDTO, err := c.builder.BuildDetailRequestDTOFromRequest(r)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -72,7 +72,7 @@ func (c *DetailController) Detail(w http.ResponseWriter, r *http.Request) {
 	// Validate dto.
 	err = c.validator.ValidateDetailRequestDTO(detailRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -80,7 +80,7 @@ func (c *DetailController) Detail(w http.ResponseWriter, r *http.Request) {
 	// Detail detailDTO.
 	detailDTO, err := c.user.Detail(r.Context(), detailRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}

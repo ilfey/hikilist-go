@@ -18,7 +18,7 @@ func NewCollection(log loggerInterface.Logger) *Collection {
 	}
 }
 
-func (b *Collection) ValidateAddAnimeRequestDTO(dto *dto.CollectionAddAnimeRequestDTO) error {
+func (v *Collection) ValidateAddAnimeRequestDTO(dto *dto.CollectionAddAnimeRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -29,13 +29,13 @@ func (b *Collection) ValidateAddAnimeRequestDTO(dto *dto.CollectionAddAnimeReque
 		},
 	)
 	if !ok {
-		return b.log.LogPropagate(errtype.NewValidatorError("AddAnimeToCollection", expectations))
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
 }
 
-func (b *Collection) ValidateRemoveAnimeRequestDTO(dto *dto.CollectionRemoveAnimeRequestDTO) error {
+func (v *Collection) ValidateRemoveAnimeRequestDTO(dto *dto.CollectionRemoveAnimeRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -46,13 +46,13 @@ func (b *Collection) ValidateRemoveAnimeRequestDTO(dto *dto.CollectionRemoveAnim
 		},
 	)
 	if !ok {
-		return b.log.LogPropagate(errtype.NewValidatorError("AddAnimeToCollection", expectations))
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
 }
 
-func (b *Collection) ValidateUpdateRequestDTO(dto *dto.CollectionUpdateRequestDTO) error {
+func (v *Collection) ValidateUpdateRequestDTO(dto *dto.CollectionUpdateRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -71,13 +71,13 @@ func (b *Collection) ValidateUpdateRequestDTO(dto *dto.CollectionUpdateRequestDT
 		},
 	)
 	if !ok {
-		return b.log.LogPropagate(errtype.NewValidatorError("UpdateCollection", expectations))
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
 }
 
-func (b *Collection) ValidateRemoveRequestDTO(dto *dto.CollectionRemoveAnimeRequestDTO) error {
+func (v *Collection) ValidateRemoveRequestDTO(dto *dto.CollectionRemoveAnimeRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -88,13 +88,13 @@ func (b *Collection) ValidateRemoveRequestDTO(dto *dto.CollectionRemoveAnimeRequ
 		},
 	)
 	if !ok {
-		return b.log.LogPropagate(errtype.NewValidatorError("UpdateCollection", expectations))
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
 }
 
-func (b *Collection) ValidateCreateRequestDTO(dto *dto.CollectionCreateRequestDTO) error {
+func (v *Collection) ValidateCreateRequestDTO(dto *dto.CollectionCreateRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -111,13 +111,13 @@ func (b *Collection) ValidateCreateRequestDTO(dto *dto.CollectionCreateRequestDT
 		},
 	)
 	if !ok {
-		return b.log.LogPropagate(errtype.NewValidatorError("UpdateCollection", expectations))
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
 }
 
-func (b *Collection) ValidateListRequestDTO(dto *dto.CollectionListRequestDTO) error {
+func (v *Collection) ValidateListRequestDTO(dto *dto.CollectionListRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -137,13 +137,13 @@ func (b *Collection) ValidateListRequestDTO(dto *dto.CollectionListRequestDTO) e
 		},
 	)
 	if !ok {
-		return errtype.NewValidatorError("GetActionList", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
 }
 
-func (b *Collection) ValidateAnimeListFromCollectionRequestDTO(dto *dto.AnimeListFromCollectionRequestDTO) error {
+func (v *Collection) ValidateAnimeListFromCollectionRequestDTO(dto *dto.AnimeListFromCollectionRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -163,13 +163,13 @@ func (b *Collection) ValidateAnimeListFromCollectionRequestDTO(dto *dto.AnimeLis
 		},
 	)
 	if !ok {
-		return errtype.NewValidatorError("GetActionList", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil
 }
 
-func (b *Collection) ValidateDetailRequestDTO(dto *dto.CollectionDetailRequestDTO) error {
+func (v *Collection) ValidateDetailRequestDTO(dto *dto.CollectionDetailRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -189,7 +189,7 @@ func (b *Collection) ValidateDetailRequestDTO(dto *dto.CollectionDetailRequestDT
 		},
 	)
 	if !ok {
-		return errtype.NewValidatorError("GetActionList", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil

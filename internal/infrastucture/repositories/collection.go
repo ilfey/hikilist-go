@@ -53,12 +53,12 @@ func (r *Collection) Create(ctx context.Context, cm *dto.CollectionCreateRequest
 		// Create collection.
 		sql, args, err := r.CreateSQL(cm)
 		if err != nil {
-			return r.log.CriticalPropagate(err)
+			return r.log.Propagate(err)
 		}
 
 		err = tx.QueryRow(ctx, sql, args...).Scan(&cm.ID)
 		if err != nil {
-			r.log.Log(err)
+			r.log.Error(err)
 
 			return ErrCollectionCreateFailed
 		}
@@ -73,14 +73,14 @@ func (r *Collection) Create(ctx context.Context, cm *dto.CollectionCreateRequest
 func (r *Collection) Get(ctx context.Context, conds any) (*agg.CollectionDetail, error) {
 	sql, args, err := r.GetSQL(conds)
 	if err != nil {
-		return nil, r.log.CriticalPropagate(err)
+		return nil, r.log.Propagate(err)
 	}
 
 	var dm agg.CollectionDetail
 
 	err = pgxscan.Get(ctx, r.db, &dm, sql, args...)
 	if err != nil {
-		r.log.Log(err)
+		r.log.Error(err)
 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrCollectionNotFoundById
@@ -95,14 +95,14 @@ func (r *Collection) Get(ctx context.Context, conds any) (*agg.CollectionDetail,
 func (r *Collection) Find(ctx context.Context, dto *dto.CollectionListRequestDTO, conds any) ([]*agg.CollectionListItem, error) {
 	sql, args, err := r.FindSQL(dto, conds)
 	if err != nil {
-		return nil, r.log.CriticalPropagate(err)
+		return nil, r.log.Propagate(err)
 	}
 
 	var items []*agg.CollectionListItem
 
 	err = pgxscan.Select(ctx, r.db, &items, sql, args...)
 	if err != nil {
-		r.log.Log(err)
+		r.log.Error(err)
 
 		return nil, ErrCollectionsFindFailed
 	}
@@ -113,14 +113,14 @@ func (r *Collection) Find(ctx context.Context, dto *dto.CollectionListRequestDTO
 func (r *Collection) Count(ctx context.Context, conds any) (uint64, error) {
 	sql, args, err := r.CountSQL(conds)
 	if err != nil {
-		return 0, r.log.CriticalPropagate(err)
+		return 0, r.log.Propagate(err)
 	}
 
 	var count uint64
 
 	err = r.db.QueryRow(ctx, sql, args...).Scan(&count)
 	if err != nil {
-		r.log.Log(err)
+		r.log.Error(err)
 
 		return 0, ErrCollectionsCountFailed
 	}
@@ -131,12 +131,12 @@ func (r *Collection) Count(ctx context.Context, conds any) (uint64, error) {
 func (r *Collection) Update(ctx context.Context, um *dto.CollectionUpdateRequestDTO) error {
 	sql, args, err := r.UpdateSQL(um)
 	if err != nil {
-		return r.log.CriticalPropagate(err)
+		return r.log.Propagate(err)
 	}
 
 	_, err = r.db.Exec(ctx, sql, args...)
 	if err != nil {
-		r.log.Log(err)
+		r.log.Error(err)
 
 		return ErrCollectionUpdateFailed
 	}

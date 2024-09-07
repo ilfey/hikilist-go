@@ -32,22 +32,22 @@ func NewRefreshController(
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	anime, err := container.GetAuthService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	animeBuilder, err := container.GetAuthBuilder()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	animeValidator, err := container.GetAuthValidator()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &RefreshController{
@@ -64,7 +64,7 @@ func (c *RefreshController) GetRefresh(w http.ResponseWriter, r *http.Request) {
 	// Build dto.
 	refreshDTO, err := c.builder.BuildRefreshRequestDTOFromRequest(r)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -72,7 +72,7 @@ func (c *RefreshController) GetRefresh(w http.ResponseWriter, r *http.Request) {
 	// Validate dto.
 	err = c.validator.ValidateRefreshRequestDTO(refreshDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -80,7 +80,7 @@ func (c *RefreshController) GetRefresh(w http.ResponseWriter, r *http.Request) {
 	// Refresh auth.
 	tokens, err := c.auth.Refresh(r.Context(), refreshDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}

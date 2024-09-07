@@ -32,22 +32,22 @@ func NewAddAnimeController(
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	collection, err := container.GetCollectionService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	collectionBuilder, err := container.GetCollectionBuilder()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	collectionValidator, err := container.GetCollectionValidator()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &AddAnimeController{
@@ -64,7 +64,7 @@ func (c *AddAnimeController) GetAddAnime(w http.ResponseWriter, r *http.Request)
 	// Build dto.
 	addAnimeRequestDTO, err := c.builder.BuildAddAnimeRequestDTOFromRequest(r)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -72,7 +72,7 @@ func (c *AddAnimeController) GetAddAnime(w http.ResponseWriter, r *http.Request)
 	// Validate dto.
 	err = c.validator.ValidateAddAnimeRequestDTO(addAnimeRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -80,7 +80,7 @@ func (c *AddAnimeController) GetAddAnime(w http.ResponseWriter, r *http.Request)
 	// AddAnime collection.
 	err = c.collection.AddAnimes(r.Context(), addAnimeRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}

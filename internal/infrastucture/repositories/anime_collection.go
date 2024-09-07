@@ -39,12 +39,12 @@ func (r *AnimeCollection) AddAnimes(ctx context.Context, addAnimeModel *dto.Coll
 		// Detail collection id.
 		sql, args, err := r.GetCollectionIdSQL(addAnimeModel.UserID, addAnimeModel.CollectionID)
 		if err != nil {
-			return r.log.CriticalPropagate(err)
+			return r.log.Propagate(err)
 		}
 
 		err = tx.QueryRow(ctx, sql, args...).Scan(&addAnimeModel.CollectionID)
 		if err != nil {
-			r.log.Log(err)
+			r.log.Error(err)
 
 			if postgres.IsNotFound(err) {
 				return ErrCollectionNotFoundById
@@ -56,12 +56,12 @@ func (r *AnimeCollection) AddAnimes(ctx context.Context, addAnimeModel *dto.Coll
 		// Add animes.
 		sql, args, err = r.AddAnimesSQL(addAnimeModel)
 		if err != nil {
-			return r.log.CriticalPropagate(err)
+			return r.log.Propagate(err)
 		}
 
 		_, err = tx.Exec(ctx, sql, args...)
 		if err != nil {
-			r.log.Log(err)
+			r.log.Error(err)
 
 			if postgres.PgErrCodeEquals(err, postgres.UniqueViolation) {
 				return ErrAnimeAlreadyInCollection
@@ -83,12 +83,12 @@ func (r *AnimeCollection) RemoveAnimes(ctx context.Context, removeAnimeModel *dt
 		// Detail collection id.
 		sql, args, err := r.GetCollectionIdSQL(removeAnimeModel.UserID, removeAnimeModel.CollectionID)
 		if err != nil {
-			return r.log.CriticalPropagate(err)
+			return r.log.Propagate(err)
 		}
 
 		err = tx.QueryRow(ctx, sql, args...).Scan(&removeAnimeModel.CollectionID)
 		if err != nil {
-			r.log.Log(err)
+			r.log.Error(err)
 
 			if postgres.IsNotFound(err) {
 				return ErrCollectionNotFoundById
@@ -100,12 +100,12 @@ func (r *AnimeCollection) RemoveAnimes(ctx context.Context, removeAnimeModel *dt
 		// Remove animes.
 		sql, args, err = r.RemoveAnimesSQL(removeAnimeModel)
 		if err != nil {
-			return r.log.CriticalPropagate(err)
+			return r.log.Propagate(err)
 		}
 
 		_, err = r.db.Exec(ctx, sql, args...)
 		if err != nil {
-			r.log.Log(err)
+			r.log.Error(err)
 
 			return ErrAnimeRemoveFromCollectionFailed
 		}

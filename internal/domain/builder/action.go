@@ -25,7 +25,7 @@ func NewAction(container diInterface.ServiceContainer) (*ActionBuilder, error) {
 
 	extractor, err := container.GetRequestParametersExtractorService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &ActionBuilder{
@@ -44,11 +44,11 @@ func (b *ActionBuilder) BuildListRequestDTOFromRequest(r *http.Request) (*dto.Ac
 
 	stringPage, err := b.extractor.GetParameter(r, "page")
 	if err != nil {
-		limit = 10
+		page = 1
 	} else {
 		page, err = strconv.ParseUint(stringPage, 10, 64)
 		if err != nil {
-			b.logger.Log(err)
+			b.logger.Error(err)
 
 			return nil, errtype.NewFieldMustBeIntegerError("page")
 		}
@@ -56,11 +56,11 @@ func (b *ActionBuilder) BuildListRequestDTOFromRequest(r *http.Request) (*dto.Ac
 
 	stringLimit, err := b.extractor.GetParameter(r, "limit")
 	if err != nil {
-		page = 1
+		limit = 10
 	} else {
 		limit, err = strconv.ParseUint(stringLimit, 10, 64)
 		if err != nil {
-			b.logger.Log(err)
+			b.logger.Error(err)
 
 			return nil, errtype.NewFieldMustBeIntegerError("limit")
 		}

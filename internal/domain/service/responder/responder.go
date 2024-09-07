@@ -5,6 +5,7 @@ import (
 	"github.com/ilfey/hikilist-go/internal/domain/errtype"
 	errtypeInterface "github.com/ilfey/hikilist-go/internal/domain/errtype/interface"
 	loggerInterface "github.com/ilfey/hikilist-go/pkg/logger/interface"
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"time"
@@ -14,16 +15,8 @@ type DataResponse struct {
 	Data any `json:"data"`
 }
 
-func NewDataResponse(data any) DataResponse {
-	return DataResponse{Data: data}
-}
-
 type ErrorResponse struct {
 	Error error `json:"error"`
-}
-
-func NewErrorResponse(err error) ErrorResponse {
-	return ErrorResponse{Error: err}
 }
 
 type Responder struct {
@@ -39,10 +32,10 @@ func NewResponder(log loggerInterface.Logger) *Responder {
 func (r *Responder) Respond(w io.Writer, dataOrErr any) {
 	err, isErr := dataOrErr.(error)
 	if isErr {
-		r.log.Log(err)
+		r.log.Error(err)
 
-		publicErr, isPublicErr := err.(errtypeInterface.PublicError)
-		if isPublicErr {
+		var publicErr errtypeInterface.PublicError
+		if errors.As(err, &publicErr) {
 			// handle the case when write is http.ResponseWriter
 			if httpWriter, ok := w.(http.ResponseWriter); ok {
 				httpWriter.WriteHeader(publicErr.Status())
@@ -50,7 +43,7 @@ func (r *Responder) Respond(w io.Writer, dataOrErr any) {
 
 			if _, err = w.Write(
 				r.toBytes(
-					NewErrorResponse(publicErr),
+					&ErrorResponse{publicErr},
 				),
 			); err != nil {
 				r.log.Critical(err)
@@ -63,9 +56,9 @@ func (r *Responder) Respond(w io.Writer, dataOrErr any) {
 
 			if _, err = w.Write(
 				r.toBytes(
-					NewErrorResponse(
+					&ErrorResponse{
 						errtype.NewInternalServerError(),
-					),
+					},
 				),
 			); err != nil {
 				r.log.Critical(err)
@@ -75,7 +68,7 @@ func (r *Responder) Respond(w io.Writer, dataOrErr any) {
 	}
 
 	// building a new response data
-	resp := NewDataResponse(dataOrErr)
+	resp := &DataResponse{dataOrErr}
 
 	// writing a response data
 	if _, err = w.Write(r.toBytes(resp)); err != nil {
@@ -86,8 +79,8 @@ func (r *Responder) Respond(w io.Writer, dataOrErr any) {
 	r.logResponse(resp)
 }
 
-func (r *Responder) logResponse(resp DataResponse) {
-	r.log.LogData(
+func (r *Responder) logResponse(resp *DataResponse) {
+	r.log.Object(
 		&LoggableData{
 			Date:         time.Now(),
 			Type:         LogType,

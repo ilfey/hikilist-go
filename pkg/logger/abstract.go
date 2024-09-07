@@ -5,19 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ilfey/hikilist-go/internal/domain/enum"
-	"github.com/pkg/errors"
 	"io"
 	"log"
 	"runtime"
 	"sync"
-	"time"
 )
 
 type abstract struct {
 	mu     *sync.Mutex
 	ctx    context.Context
 	writer io.Writer
-	errCh  chan introspectedError
+	errCh  chan LoggableError
 	reqCh  chan any
 }
 
@@ -26,7 +24,7 @@ func newAbstractLogger(ctx context.Context, w io.Writer, errBuff int, reqBuff in
 		mu:     new(sync.Mutex),
 		ctx:    ctx,
 		writer: w,
-		errCh:  make(chan introspectedError, errBuff),
+		errCh:  make(chan LoggableError, errBuff),
 		reqCh:  make(chan any, reqBuff),
 	}
 	l.handle()
@@ -40,16 +38,6 @@ func (l *abstract) Close() (closeFunc func()) {
 	}
 }
 
-func (l *abstract) SetOutput(w io.Writer) {
-	defer l.mu.Unlock()
-	l.mu.Lock()
-	l.writer = w
-}
-
-func (l *abstract) GetOutput() io.Writer {
-	return l.writer
-}
-
 func (l *abstract) SetContext(ctx context.Context) {
 	defer l.mu.Unlock()
 	l.mu.Lock()
@@ -60,199 +48,44 @@ func (l *abstract) GetContext() context.Context {
 	return l.ctx
 }
 
-func (l *abstract) LogData(data any) {
+func (l *abstract) Object(data any) {
 	l.reqCh <- data
 }
 
-func (l *abstract) Log(err error) {
-	file, function, line := l.trace()
-	l.log(err, file, function, line)
+func (l *abstract) Propagate(err error) error {
+	lErr := l.toLoggableErrorOrAddTrace(err, l.trace(), DebugLevel)
+
+	return lErr
 }
 
-func (l *abstract) LogPropagate(err error) error {
-	file, function, line := l.trace()
-	l.log(err, file, function, line)
-	return err
+func (l *abstract) Debug(srtOrErr any) {
+	lErr := l.toLoggableErrorOrAddTrace(srtOrErr, l.trace(), DebugLevel)
+
+	l.log(DebugLevel, lErr)
 }
 
 func (l *abstract) Info(strOrErr any) {
-	file, function, line := l.trace()
+	lErr := l.toLoggableErrorOrAddTrace(strOrErr, l.trace(), InfoLevel)
 
-	err := l.error(strOrErr)
-
-	l.errCh <- &infoLevelError{
-		introspectionError{
-			Dt: time.Now(),
-			Mg: err.Error(),
-			Tp: InfoLogType,
-			Fl: file,
-			Fn: function,
-			Ln: line,
-		},
-	}
-}
-
-func (l *abstract) InfoPropagate(strOrErr any) error {
-	file, function, line := l.trace()
-
-	err := l.error(strOrErr)
-
-	l.errCh <- &infoLevelError{
-		introspectionError{
-			Dt: time.Now(),
-			Mg: err.Error(),
-			Tp: InfoLogType,
-			Fl: file,
-			Fn: function,
-			Ln: line,
-		},
-	}
-
-	return err
-}
-
-func (l *abstract) Debug(strOrErr any) {
-	file, function, line := l.trace()
-
-	err := l.error(strOrErr)
-
-	l.errCh <- &debugLevelError{
-		introspectionError{
-			Dt: time.Now(),
-			Mg: err.Error(),
-			Tp: DebugLogType,
-			Fl: file,
-			Fn: function,
-			Ln: line,
-		},
-	}
-}
-
-func (l *abstract) DebugPropagate(strOrErr any) error {
-	file, function, line := l.trace()
-
-	err := l.error(strOrErr)
-
-	l.errCh <- &debugLevelError{
-		introspectionError{
-			Dt: time.Now(),
-			Mg: err.Error(),
-			Tp: DebugLogType,
-			Fl: file,
-			Fn: function,
-			Ln: line,
-		},
-	}
-
-	return err
+	l.log(WarnLevel, lErr)
 }
 
 func (l *abstract) Warn(strOrErr any) {
-	file, function, line := l.trace()
+	lErr := l.toLoggableErrorOrAddTrace(strOrErr, l.trace(), WarnLevel)
 
-	err := l.error(strOrErr)
-
-	l.errCh <- &warnLevelError{
-		introspectionError{
-			Dt: time.Now(),
-			Mg: err.Error(),
-			Tp: ErrorLogType,
-			Fl: file,
-			Fn: function,
-			Ln: line,
-		},
-	}
-}
-
-func (l *abstract) WarnPropagate(strOrErr any) error {
-	file, function, line := l.trace()
-
-	err := l.error(strOrErr)
-
-	l.errCh <- &warnLevelError{
-		introspectionError{
-			Dt: time.Now(),
-			Mg: err.Error(),
-			Tp: ErrorLogType,
-			Fl: file,
-			Fn: function,
-			Ln: line,
-		},
-	}
-
-	return err
+	l.log(WarnLevel, lErr)
 }
 
 func (l *abstract) Error(strOrErr any) {
-	file, function, line := l.trace()
+	lErr := l.toLoggableErrorOrAddTrace(strOrErr, l.trace(), ErrorLevel)
 
-	err := l.error(strOrErr)
-
-	l.errCh <- &errorLevelError{
-		introspectionError{
-			Dt: time.Now(),
-			Mg: err.Error(),
-			Tp: ErrorLogType,
-			Fl: file,
-			Fn: function,
-			Ln: line,
-		},
-	}
-}
-
-func (l *abstract) ErrorPropagate(strOrErr any) error {
-	file, function, line := l.trace()
-
-	err := l.error(strOrErr)
-
-	l.errCh <- &errorLevelError{
-		introspectionError{
-			Dt: time.Now(),
-			Mg: err.Error(),
-			Tp: ErrorLogType,
-			Fl: file,
-			Fn: function,
-			Ln: line,
-		},
-	}
-
-	return err
+	l.log(ErrorLevel, lErr)
 }
 
 func (l *abstract) Critical(strOrErr any) {
-	file, function, line := l.trace()
+	lErr := l.toLoggableErrorOrAddTrace(strOrErr, l.trace(), CriticalLevel)
 
-	err := l.error(strOrErr)
-
-	l.errCh <- &criticalLevelError{
-		introspectionError{
-			Dt: time.Now(),
-			Mg: err.Error(),
-			Tp: ErrorLogType,
-			Fl: file,
-			Fn: function,
-			Ln: line,
-		},
-	}
-}
-
-func (l *abstract) CriticalPropagate(strOrErr any) error {
-	file, function, line := l.trace()
-
-	err := l.error(strOrErr)
-
-	l.errCh <- &criticalLevelError{
-		introspectionError{
-			Dt: time.Now(),
-			Mg: err.Error(),
-			Tp: ErrorLogType,
-			Fl: file,
-			Fn: function,
-			Ln: line,
-		},
-	}
-
-	return err
+	l.log(CriticalLevel, lErr)
 }
 
 func (l *abstract) handle() {
@@ -314,106 +147,30 @@ func (l *abstract) handle() {
 	}()
 }
 
-func (l *abstract) log(e error, file string, function string, line int) {
-	err, isLoggableErr := e.(LoggableError)
-	if !isLoggableErr {
-		l.errCh <- &errorLevelError{
-			introspectionError{
-				Dt: time.Now(),
-				Mg: e.Error(),
-				Tp: ErrorLogType,
-				Fl: file,
-				Fn: function,
-				Ln: line,
-			},
-		}
-		return
-	}
-
-	switch err.Level() {
-	case InfoLevel:
-		l.errCh <- &infoLevelError{
-			introspectionError{
-				Dt: time.Now(),
-				Mg: err.Error(),
-				Tp: InfoLogType,
-				Fl: file,
-				Fn: function,
-				Ln: line,
-			},
-		}
-		return
-	case DebugLevel:
-		l.errCh <- &debugLevelError{
-			introspectionError{
-				Dt: time.Now(),
-				Mg: err.Error(),
-				Tp: DebugLogType,
-				Fl: file,
-				Fn: function,
-				Ln: line,
-			},
-		}
-		return
-	case WarnLevel:
-		l.errCh <- &warnLevelError{
-			introspectionError{
-				Dt: time.Now(),
-				Mg: err.Error(),
-				Tp: ErrorLogType,
-				Fl: file,
-				Fn: function,
-				Ln: line,
-			},
-		}
-		return
-	case ErrorLevel:
-		l.errCh <- &errorLevelError{
-			introspectionError{
-				Dt: time.Now(),
-				Mg: err.Error(),
-				Tp: ErrorLogType,
-				Fl: file,
-				Fn: function,
-				Ln: line,
-			},
-		}
-		return
-	case CriticalLevel:
-		l.errCh <- &criticalLevelError{
-			introspectionError{
-				Dt: time.Now(),
-				Mg: err.Error(),
-				Tp: ErrorLogType,
-				Fl: file,
-				Fn: function,
-				Ln: line,
-			},
-		}
-		return
-	default:
-		panic("logger.log(): undefined error level received")
-	}
+func (l *abstract) log(_ Level, lErr LoggableError) {
+	l.errCh <- lErr
 }
 
-func (l *abstract) trace() (file string, function string, line int) {
+func (l *abstract) trace() *Trace {
 	pc := make([]uintptr, 15)
 	n := runtime.Callers(3, pc)
 	frames := runtime.CallersFrames(pc[:n])
 	frame, _ := frames.Next()
 
-	return frame.File, frame.Func.Name(), frame.Line
+	return &Trace{
+		File: frame.File,
+		Func: frame.Func.Name(),
+		Line: frame.Line,
+	}
 }
 
-func (l *abstract) error(strOrErr any) error {
-	err, isErr := strOrErr.(error)
-	if isErr {
-		return err
-	} else {
-		str, isStr := strOrErr.(string)
-		if isStr {
-			return errors.New(str)
-		}
+func (l *abstract) toLoggableErrorOrAddTrace(a any, trace *Trace, lvl Level) LoggableError {
+	err, isLoggableErr := a.(LoggableError)
+	if !isLoggableErr {
+		return newLoggableError(a, trace, lvl)
 	}
-	panic("logger.error(): logging data is not a string or error type")
+
+	err.AddTrace(trace)
+
+	return err
 }

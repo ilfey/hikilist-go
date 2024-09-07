@@ -28,7 +28,7 @@ func NewAnime(container diInterface.ServiceContainer) (*AnimeBuilder, error) {
 
 	extractor, err := container.GetRequestParametersExtractorService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &AnimeBuilder{
@@ -42,10 +42,10 @@ func (b *AnimeBuilder) BuildCreateRequestDTOFromRequest(r *http.Request) (*dto.A
 
 	if err := json.NewDecoder(r.Body).Decode(dto); err != nil {
 		if errors.Is(err, io.EOF) {
-			return nil, b.logger.LogPropagate(errtype.NewBodyIsEmptyError())
+			return nil, b.logger.Propagate(errtype.NewBodyIsEmptyError())
 		}
 
-		return nil, b.logger.LogPropagate(err)
+		return nil, b.logger.Propagate(err)
 	}
 
 	return dto, nil
@@ -56,12 +56,12 @@ func (b *AnimeBuilder) BuildDetailRequestDTOFromRequest(r *http.Request) (*dto.A
 
 	stringId, err := b.extractor.GetParameter(r, "id")
 	if err != nil {
-		return nil, b.logger.LogPropagate(err)
+		return nil, b.logger.Propagate(err)
 	}
 
 	animeId, err := strconv.ParseUint(stringId, 10, 64)
 	if err != nil {
-		b.logger.Log(err)
+		b.logger.Error(err)
 
 		return nil, errtype.NewFieldMustBeIntegerError("id")
 	}
@@ -80,11 +80,11 @@ func (b *AnimeBuilder) BuildListRequestDTOFromRequest(r *http.Request) (*dto.Ani
 
 	stringPage, err := b.extractor.GetParameter(r, "page")
 	if err != nil {
-		limit = 10
+		page = 1
 	} else {
 		page, err = strconv.ParseUint(stringPage, 10, 64)
 		if err != nil {
-			b.logger.Log(err)
+			b.logger.Error(err)
 
 			return nil, errtype.NewFieldMustBeIntegerError("page")
 		}
@@ -92,11 +92,11 @@ func (b *AnimeBuilder) BuildListRequestDTOFromRequest(r *http.Request) (*dto.Ani
 
 	stringLimit, err := b.extractor.GetParameter(r, "limit")
 	if err != nil {
-		page = 1
+		limit = 10
 	} else {
 		limit, err = strconv.ParseUint(stringLimit, 10, 64)
 		if err != nil {
-			b.logger.Log(err)
+			b.logger.Error(err)
 
 			return nil, errtype.NewFieldMustBeIntegerError("limit")
 		}

@@ -32,22 +32,22 @@ func NewActionListController(
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	action, err := container.GetActionService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	actionBuilder, err := container.GetActionBuilder()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	actionValidator, err := container.GetActionValidator()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &ActionListController{
@@ -64,21 +64,21 @@ func (c *ActionListController) ActionList(w http.ResponseWriter, r *http.Request
 	// Build dto.
 	listRequestDTO, err := c.builder.BuildListRequestDTOFromRequest(r)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 		return
 	}
 
 	// Validate dto.
 	err = c.validator.ValidateListRequestDTO(listRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 		return
 	}
 
 	// Detail listDTO.
 	listDTO, err := c.action.GetListDTO(r.Context(), listRequestDTO, nil)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 		return
 	}
 

@@ -32,22 +32,22 @@ func NewRemoveAnimeController(
 
 	responder, err := container.GetResponderService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	collection, err := container.GetCollectionService()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	collectionBuilder, err := container.GetCollectionBuilder()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	collectionValidator, err := container.GetCollectionValidator()
 	if err != nil {
-		return nil, log.LogPropagate(err)
+		return nil, log.Propagate(err)
 	}
 
 	return &RemoveAnimeController{
@@ -64,7 +64,7 @@ func (c *RemoveAnimeController) GetRemoveAnime(w http.ResponseWriter, r *http.Re
 	// Build dto.
 	addAnimeRequestDTO, err := c.builder.BuildRemoveAnimeRequestDTOFromRequest(r)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -72,7 +72,7 @@ func (c *RemoveAnimeController) GetRemoveAnime(w http.ResponseWriter, r *http.Re
 	// Validate dto.
 	err = c.validator.ValidateRemoveAnimeRequestDTO(addAnimeRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}
@@ -80,7 +80,7 @@ func (c *RemoveAnimeController) GetRemoveAnime(w http.ResponseWriter, r *http.Re
 	// RemoveAnime collection.
 	err = c.collection.RemoveAnimes(r.Context(), addAnimeRequestDTO)
 	if err != nil {
-		c.responder.Respond(w, c.logger.LogPropagate(err))
+		c.responder.Respond(w, c.logger.Propagate(err))
 
 		return
 	}

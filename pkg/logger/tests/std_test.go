@@ -39,8 +39,8 @@ func (s *StdSuite) TestLog() {
 func (s *StdSuite) TestLogPropagate() {
 	s.NotPanics(func() {
 		s.Error(
-			s.log.LogPropagate(
-				errors.New("test LogPropagate"),
+			s.log.Propagate(
+				errors.New("test Propagate"),
 			),
 		)
 	})
@@ -48,7 +48,7 @@ func (s *StdSuite) TestLogPropagate() {
 
 func (s *StdSuite) TestLogData() {
 	s.NotPanics(func() {
-		s.log.LogData("test LogData")
+		s.log.Object("test Object")
 	})
 }
 

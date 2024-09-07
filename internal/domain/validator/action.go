@@ -18,7 +18,7 @@ func NewAction(log loggerInterface.Logger) *Action {
 	}
 }
 
-func (b *Action) ValidateListRequestDTO(dto *dto.ActionListRequestDTO) error {
+func (v *Action) ValidateListRequestDTO(dto *dto.ActionListRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
@@ -38,7 +38,7 @@ func (b *Action) ValidateListRequestDTO(dto *dto.ActionListRequestDTO) error {
 		},
 	)
 	if !ok {
-		return errtype.NewValidatorError("GetActionList", expectations)
+		return v.log.Propagate(errtype.NewValidatorError(expectations))
 	}
 
 	return nil

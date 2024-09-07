@@ -25,7 +25,7 @@ func (s *BcryptService) Hash(source string) (string, error) {
 		bcrypt.DefaultCost,
 	)
 	if err != nil {
-		return "", s.log.LogPropagate(err)
+		return "", s.log.Propagate(err)
 	}
 
 	return string(hash), nil
