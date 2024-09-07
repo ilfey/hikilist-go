@@ -457,13 +457,11 @@ func (a *App) InitAction() error {
 		return err
 	}
 
-	db, err := a.container.GetPostgresDatabase()
-	if err != nil {
-		return err
-	}
-
 	// Repository.
-	repo := repositories.NewAction(log, db)
+	repo, err := repositories.NewAction(a.container)
+	if err != nil {
+		return log.Propagate(err)
+	}
 
 	a.container.Set(repo, reflectTypeOfNil[repositoryInterface.Action]())
 
@@ -481,7 +479,10 @@ func (a *App) InitAction() error {
 	a.container.Set(build, reflectTypeOfNil[builderInterface.Action]())
 
 	// Validator.
-	valid := validator.NewAction(log)
+	valid, err := validator.NewAction(a.container)
+	if err != nil {
+		return log.Propagate(err)
+	}
 
 	a.container.Set(valid, reflectTypeOfNil[validatorInterface.Action]())
 
@@ -496,13 +497,11 @@ func (a *App) InitAnime() error {
 		return err
 	}
 
-	db, err := a.container.GetPostgresDatabase()
-	if err != nil {
-		return err
-	}
-
 	// Repository.
-	repo := repositories.NewAnime(log, db)
+	repo, err := repositories.NewAnime(a.container)
+	if err != nil {
+		return log.Propagate(err)
+	}
 
 	a.container.Set(repo, reflectTypeOfNil[repositoryInterface.Anime]())
 
@@ -520,7 +519,10 @@ func (a *App) InitAnime() error {
 	a.container.Set(build, reflectTypeOfNil[builderInterface.Anime]())
 
 	// Validator.
-	valid := validator.NewAnime(log)
+	valid, err := validator.NewAnime(a.container)
+	if err != nil {
+		return log.Propagate(err)
+	}
 
 	a.container.Set(valid, reflectTypeOfNil[validatorInterface.Anime]())
 
@@ -535,20 +537,16 @@ func (a *App) InitCollection() error {
 		return err
 	}
 
-	db, err := a.container.GetPostgresDatabase()
+	animeCollectionRepo, err := repositories.NewAnimeCollection(a.container)
 	if err != nil {
-		return err
+		return log.Propagate(err)
 	}
-
-	actionRepo, err := a.container.GetActionRepository()
-	if err != nil {
-		return err
-	}
-
-	animeCollectionRepo := repositories.NewAnimeCollection(log, db)
 
 	// Repository.
-	collectionRepo := repositories.NewCollection(log, db, actionRepo)
+	collectionRepo, err := repositories.NewCollection(a.container)
+	if err != nil {
+		return log.Propagate(err)
+	}
 
 	a.container.Set(collectionRepo, reflectTypeOfNil[repositoryInterface.Collection]())
 
@@ -566,7 +564,10 @@ func (a *App) InitCollection() error {
 	a.container.Set(build, reflectTypeOfNil[builderInterface.Collection]())
 
 	// Validator.
-	valid := validator.NewCollection(log)
+	valid, err := validator.NewCollection(a.container)
+	if err != nil {
+		return log.Propagate(err)
+	}
 
 	a.container.Set(valid, reflectTypeOfNil[validatorInterface.Collection]())
 
@@ -581,13 +582,11 @@ func (a *App) InitToken() error {
 		return err
 	}
 
-	db, err := a.container.GetPostgresDatabase()
-	if err != nil {
-		return err
-	}
-
 	// Repository.
-	repo := repositories.NewToken(log, db)
+	repo, err := repositories.NewToken(a.container)
+	if err != nil {
+		return log.Propagate(err)
+	}
 
 	a.container.Set(repo, reflectTypeOfNil[repositoryInterface.Token]())
 
@@ -602,23 +601,19 @@ func (a *App) InitUser() error {
 		return err
 	}
 
-	db, err := a.container.GetPostgresDatabase()
-	if err != nil {
-		return log.Propagate(err)
-	}
-
-	actionRepo, err := a.container.GetActionRepository()
-	if err != nil {
-		return log.Propagate(err)
-	}
-
 	// Repository.
-	collectionRepo := repositories.NewUser(log, db, actionRepo)
+	collectionRepo, err := repositories.NewUser(a.container)
+	if err != nil {
+		return log.Propagate(err)
+	}
 
 	a.container.Set(collectionRepo, reflectTypeOfNil[repositoryInterface.User]())
 
 	// Validator.
-	valid := validator.NewUser(log)
+	valid, err := validator.NewUser(a.container)
+	if err != nil {
+		return log.Propagate(err)
+	}
 
 	a.container.Set(valid, reflectTypeOfNil[validatorInterface.User]())
 
@@ -688,7 +683,10 @@ func (a *App) InitAuth() error {
 	a.container.Set(build, reflectTypeOfNil[builderInterface.Auth]())
 
 	// Validator.
-	valid := validator.NewAuth(log)
+	valid, err := validator.NewAuth(a.container)
+	if err != nil {
+		return log.Propagate(err)
+	}
 
 	a.container.Set(valid, reflectTypeOfNil[validatorInterface.Auth]())
 

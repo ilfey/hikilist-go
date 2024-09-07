@@ -6,6 +6,7 @@ import (
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/errtype"
 	repositoryInterface "github.com/ilfey/hikilist-go/internal/domain/repository/interface"
+	diInterface "github.com/ilfey/hikilist-go/internal/domain/service/di/interface"
 	loggerInterface "github.com/ilfey/hikilist-go/pkg/logger/interface"
 	"github.com/ilfey/hikilist-go/pkg/postgres"
 	"github.com/jackc/pgx/v5"
@@ -32,12 +33,27 @@ type Collection struct {
 	db     postgres.RW
 }
 
-func NewCollection(log loggerInterface.Logger, db postgres.RW, actionRepo repositoryInterface.Action) *Collection {
+func NewCollection(container diInterface.ServiceContainer) (*Collection, error) {
+	log, err := container.GetLogger()
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := container.GetPostgresDatabase()
+	if err != nil {
+		return nil, log.Propagate(err)
+	}
+
+	action, err := container.GetActionRepository()
+	if err != nil {
+		return nil, log.Propagate(err)
+	}
+
 	return &Collection{
 		log:    log,
-		action: actionRepo,
+		action: action,
 		db:     db,
-	}
+	}, nil
 }
 
 func (r *Collection) WithTx(tx postgres.RW) repositoryInterface.Collection {

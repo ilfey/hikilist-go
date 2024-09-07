@@ -5,6 +5,7 @@ import (
 	"github.com/ilfey/hikilist-go/internal/domain/agg"
 	"github.com/ilfey/hikilist-go/internal/domain/errtype"
 	repositoryInterface "github.com/ilfey/hikilist-go/internal/domain/repository/interface"
+	diInterface "github.com/ilfey/hikilist-go/internal/domain/service/di/interface"
 	loggerInterface "github.com/ilfey/hikilist-go/pkg/logger/interface"
 	"github.com/ilfey/hikilist-go/pkg/postgres"
 	"github.com/jackc/pgx/v5"
@@ -26,11 +27,21 @@ type Token struct {
 	db  postgres.RW
 }
 
-func NewToken(log loggerInterface.Logger, db postgres.RW) *Token {
+func NewToken(container diInterface.ServiceContainer) (*Token, error) {
+	log, err := container.GetLogger()
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := container.GetPostgresDatabase()
+	if err != nil {
+		return nil, log.Propagate(err)
+	}
+
 	return &Token{
 		log: log,
 		db:  db,
-	}
+	}, nil
 }
 
 func (r *Token) WithTx(tx postgres.RW) repositoryInterface.Token {

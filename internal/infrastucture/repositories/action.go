@@ -6,6 +6,7 @@ import (
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/errtype"
 	repositoryInterface "github.com/ilfey/hikilist-go/internal/domain/repository/interface"
+	diInterface "github.com/ilfey/hikilist-go/internal/domain/service/di/interface"
 	loggerInterface "github.com/ilfey/hikilist-go/pkg/logger/interface"
 	"github.com/ilfey/hikilist-go/pkg/postgres"
 
@@ -23,11 +24,21 @@ var (
 	ErrActionsCountFailed = errtype.NewInternalRepositoryError("unable to count actions")
 )
 
-func NewAction(log loggerInterface.Logger, db postgres.RW) *Action {
+func NewAction(container diInterface.ServiceContainer) (*Action, error) {
+	log, err := container.GetLogger()
+	if err != nil {
+		return nil, err
+	}
+
+	db, err := container.GetPostgresDatabase()
+	if err != nil {
+		return nil, log.Propagate(err)
+	}
+
 	return &Action{
 		log: log,
 		db:  db,
-	}
+	}, nil
 }
 
 func (r *Action) WithTx(tx postgres.RW) repositoryInterface.Action {

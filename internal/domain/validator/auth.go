@@ -3,6 +3,7 @@ package validator
 import (
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/errtype"
+	diInterface "github.com/ilfey/hikilist-go/internal/domain/service/di/interface"
 	loggerInterface "github.com/ilfey/hikilist-go/pkg/logger/interface"
 	"github.com/ilfey/hikilist-go/pkg/validator"
 	"github.com/ilfey/hikilist-go/pkg/validator/options"
@@ -12,10 +13,15 @@ type Auth struct {
 	log loggerInterface.Logger
 }
 
-func NewAuth(log loggerInterface.Logger) *Auth {
+func NewAuth(container diInterface.ServiceContainer) (*Auth, error) {
+	log, err := container.GetLogger()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Auth{
 		log: log,
-	}
+	}, nil
 }
 
 func (v *Auth) ValidateDeleteRequestDTO(dto *dto.UserDeleteRequestDTO) error {
