@@ -8,17 +8,17 @@ import (
 	"github.com/ilfey/hikilist-go/pkg/validator/options"
 )
 
-type UserValidator struct {
-	logger loggerInterface.Logger
+type User struct {
+	log loggerInterface.Logger
 }
 
-func NewUser(logger loggerInterface.Logger) *UserValidator {
-	return &UserValidator{
-		logger: logger,
+func NewUser(log loggerInterface.Logger) *User {
+	return &User{
+		log: log,
 	}
 }
 
-func (b *UserValidator) ValidateCreateRequestDTO(req *dto.UserCreateRequestDTO) error {
+func (v *User) ValidateCreateRequestDTO(req *dto.UserCreateRequestDTO) error {
 	expectations, ok := validator.Validate(
 		req,
 		map[string][]options.Option{
@@ -41,16 +41,19 @@ func (b *UserValidator) ValidateCreateRequestDTO(req *dto.UserCreateRequestDTO) 
 	return nil
 }
 
-func (b *UserValidator) ValidateListRequestDTO(req *dto.UserListRequestDTO) error {
+func (v *User) ValidateListRequestDTO(req *dto.UserListRequestDTO) error {
 	expectations, ok := validator.Validate(
 		req,
 		map[string][]options.Option{
+			"Page": {
+				options.GreaterThan[uint64](0),
+			},
 			"Limit": {
+				options.GreaterThan[uint64](0),
 				options.LessThan[uint64](101),
 			},
 			"Order": {
 				options.InList([]string{
-					"",
 					"id",
 					"-id",
 					"username",
@@ -66,7 +69,7 @@ func (b *UserValidator) ValidateListRequestDTO(req *dto.UserListRequestDTO) erro
 	return nil
 }
 
-func (b *UserValidator) ValidateDetailRequestDTO(req *dto.UserDetailRequestDTO) error {
+func (v *User) ValidateDetailRequestDTO(req *dto.UserDetailRequestDTO) error {
 	expectations, ok := validator.Validate(
 		req,
 		map[string][]options.Option{
@@ -82,7 +85,7 @@ func (b *UserValidator) ValidateDetailRequestDTO(req *dto.UserDetailRequestDTO) 
 	return nil
 }
 
-func (b *UserValidator) ValidateMeRequestDTO(req *dto.UserMeRequestDTO) error {
+func (v *User) ValidateMeRequestDTO(req *dto.UserMeRequestDTO) error {
 	expectations, ok := validator.Validate(
 		req,
 		map[string][]options.Option{
@@ -98,7 +101,7 @@ func (b *UserValidator) ValidateMeRequestDTO(req *dto.UserMeRequestDTO) error {
 	return nil
 }
 
-func (b *UserValidator) ValidateCollectionRequestDTO(req *dto.UserCollectionsRequestDTO) error {
+func (v *User) ValidateCollectionRequestDTO(req *dto.UserCollectionsRequestDTO) error {
 	expectations, ok := validator.Validate(
 		req,
 		map[string][]options.Option{

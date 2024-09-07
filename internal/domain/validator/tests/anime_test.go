@@ -3,6 +3,7 @@ package tests
 import (
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/validator"
+	"github.com/ilfey/hikilist-go/pkg/logger"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )
@@ -14,9 +15,7 @@ type AnimeValidatorSuite struct {
 }
 
 func (s *AnimeValidatorSuite) SetupTest() {
-	s.Validator = &validator.Anime{
-		// TODO: Provide logger.
-	}
+	s.Validator = validator.NewAnime(logger.NewTest(s.T()))
 }
 
 func (s *AnimeValidatorSuite) TestValidatePaginate() {
@@ -37,7 +36,7 @@ func (s *AnimeValidatorSuite) TestValidatePaginate() {
 		{
 			desc: "Invalid offset",
 			req: &dto.AnimeListRequestDTO{
-				Page:  -1,
+				Page:  0,
 				Limit: 10,
 				Order: "-id",
 			},
@@ -46,8 +45,8 @@ func (s *AnimeValidatorSuite) TestValidatePaginate() {
 		{
 			desc: "Invalid limit",
 			req: &dto.AnimeListRequestDTO{
-				Page:  0,
-				Limit: -1,
+				Page:  1,
+				Limit: 0,
 				Order: "-id",
 			},
 			isValid: false,
@@ -55,7 +54,7 @@ func (s *AnimeValidatorSuite) TestValidatePaginate() {
 		{
 			desc:    "Empty request",
 			req:     &dto.AnimeListRequestDTO{},
-			isValid: true,
+			isValid: false,
 		},
 	}
 	for _, tC := range testCases {

@@ -10,7 +10,7 @@ type Token interface {
 	WithTx(tx postgres.RW) Token
 
 	Create(ctx context.Context, cm *agg.TokenCreate) error
-	// Detail(ctx context.Context, conds any) (*dto.TokenDetail, error)
+
 	Has(ctx context.Context, token string) (bool, error)
 
 	Delete(ctx context.Context, conds any) error

@@ -26,14 +26,14 @@ var (
 )
 
 type User struct {
-	logger loggerInterface.Logger
+	log    loggerInterface.Logger
 	db     postgres.RW
 	action repositoryInterface.Action
 }
 
-func NewUser(logger loggerInterface.Logger, db postgres.RW, actionRepo repositoryInterface.Action) repositoryInterface.User {
+func NewUser(log loggerInterface.Logger, db postgres.RW, actionRepo repositoryInterface.Action) repositoryInterface.User {
 	return &User{
-		logger: logger,
+		log:    log,
 		db:     db,
 		action: actionRepo,
 	}
@@ -41,7 +41,7 @@ func NewUser(logger loggerInterface.Logger, db postgres.RW, actionRepo repositor
 
 func (r *User) WithTx(tx postgres.RW) repositoryInterface.User {
 	return &User{
-		logger: r.logger,
+		log:    r.log,
 		action: r.action,
 		db:     tx,
 	}
@@ -52,12 +52,12 @@ func (r *User) Create(ctx context.Context, cm *dto.UserCreateRequestDTO) error {
 		// Create user.
 		sql, args, err := r.CreateSQL(cm)
 		if err != nil {
-			return r.logger.CriticalPropagate(err)
+			return r.log.CriticalPropagate(err)
 		}
 
 		err = r.db.QueryRow(ctx, sql, args...).Scan(&cm.UserID)
 		if err != nil {
-			r.logger.Log(err)
+			r.log.Log(err)
 
 			if postgres.PgErrCodeEquals(err, postgres.UniqueViolation) {
 				return ErrUserAlreadyExist
@@ -76,14 +76,14 @@ func (r *User) Create(ctx context.Context, cm *dto.UserCreateRequestDTO) error {
 func (r *User) Get(ctx context.Context, conds any) (*agg.UserDetail, error) {
 	sql, args, err := r.GetSQL(conds)
 	if err != nil {
-		return nil, r.logger.CriticalPropagate(err)
+		return nil, r.log.CriticalPropagate(err)
 	}
 
 	var dm agg.UserDetail
 
 	err = pgxscan.Get(ctx, r.db, &dm, sql, args...)
 	if err != nil {
-		r.logger.Log(err)
+		r.log.Log(err)
 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrUserNotFoundById
@@ -98,14 +98,14 @@ func (r *User) Get(ctx context.Context, conds any) (*agg.UserDetail, error) {
 func (r *User) Find(ctx context.Context, dto *dto.UserListRequestDTO, conds any) ([]*agg.UserListItem, error) {
 	sql, args, err := r.FindWithPaginatorSQL(dto, conds)
 	if err != nil {
-		return nil, r.logger.CriticalPropagate(err)
+		return nil, r.log.CriticalPropagate(err)
 	}
 
 	var items []*agg.UserListItem
 
 	err = pgxscan.Select(ctx, r.db, &items, sql, args...)
 	if err != nil {
-		r.logger.Log(err)
+		r.log.Log(err)
 
 		return nil, ErrUsersFindFailed
 	}
@@ -116,14 +116,14 @@ func (r *User) Find(ctx context.Context, dto *dto.UserListRequestDTO, conds any)
 func (r *User) Count(ctx context.Context, conds any) (uint64, error) {
 	sql, args, err := r.CountSQL(conds)
 	if err != nil {
-		return 0, r.logger.CriticalPropagate(err)
+		return 0, r.log.CriticalPropagate(err)
 	}
 
 	var count uint64
 
 	err = r.db.QueryRow(ctx, sql, args...).Scan(&count)
 	if err != nil {
-		r.logger.Log(err)
+		r.log.Log(err)
 
 		return 0, ErrUsersCountFailed
 	}
@@ -136,12 +136,12 @@ func (r *User) UpdateUsername(ctx context.Context, userId uint64, oldUsername, n
 		// Update user username.
 		sql, args, err := r.UpdateUsernameSQL(userId, newUsername)
 		if err != nil {
-			return r.logger.CriticalPropagate(err)
+			return r.log.CriticalPropagate(err)
 		}
 
 		_, err = r.db.Exec(ctx, sql, args...)
 		if err != nil {
-			r.logger.Log(err)
+			r.log.Log(err)
 
 			if errors.Is(err, pgx.ErrNoRows) {
 				return ErrUserNotFoundById
@@ -161,12 +161,12 @@ func (r *User) UpdateUsername(ctx context.Context, userId uint64, oldUsername, n
 func (r *User) UpdateLastOnline(ctx context.Context, userId uint64) error {
 	sql, args, err := r.UpdateLastOnlineSQL(userId)
 	if err != nil {
-		return r.logger.CriticalPropagate(err)
+		return r.log.CriticalPropagate(err)
 	}
 
 	_, err = r.db.Exec(ctx, sql, args...)
 	if err != nil {
-		r.logger.Log(err)
+		r.log.Log(err)
 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrUserNotFoundById
@@ -181,12 +181,12 @@ func (r *User) UpdateLastOnline(ctx context.Context, userId uint64) error {
 func (r *User) UpdatePassword(ctx context.Context, userId uint64, hash string) error {
 	sql, args, err := r.UpdatePasswordSQL(userId, hash)
 	if err != nil {
-		return r.logger.CriticalPropagate(err)
+		return r.log.CriticalPropagate(err)
 	}
 
 	_, err = r.db.Exec(ctx, sql, args...)
 	if err != nil {
-		r.logger.Log(err)
+		r.log.Log(err)
 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return ErrUserNotFoundById
@@ -201,7 +201,7 @@ func (r *User) UpdatePassword(ctx context.Context, userId uint64, hash string) e
 func (r *User) Delete(ctx context.Context, conds any) error {
 	sql, args, err := r.DeleteSQL(conds)
 	if err != nil {
-		return r.logger.CriticalPropagate(err)
+		return r.log.CriticalPropagate(err)
 	}
 
 	var id uint64

@@ -391,9 +391,9 @@ func (l *abstract) log(e error, file string, function string, line int) {
 			},
 		}
 		return
+	default:
+		panic("logger.log(): undefined error level received")
 	}
-
-	panic("logger.log(): undefined error level received")
 }
 
 func (l *abstract) trace() (file string, function string, line int) {
@@ -416,36 +416,4 @@ func (l *abstract) error(strOrErr any) error {
 		}
 	}
 	panic("logger.error(): logging data is not a string or error type")
-}
-
-func ToReadableLevel(err introspectedError) string {
-	switch err.Level() {
-	case InfoLevel:
-		return InfoLevelReadable
-	case DebugLevel:
-		return DebugLevelReadable
-	case WarnLevel:
-		return WarnLevelReadable
-	case ErrorLevel:
-		return ErrorLevelReadable
-	case CriticalLevel:
-		return CriticalLevelReadable
-	}
-	panic("logger.ToReadableLevel(): received undefined error level")
-}
-
-func ToLevel(readableLevel string) int {
-	switch readableLevel {
-	case InfoLevelReadable:
-		return InfoLevel
-	case DebugLevelReadable:
-		return DebugLevel
-	case WarnLevelReadable:
-		return WarnLevel
-	case ErrorLevelReadable:
-		return ErrorLevel
-	case CriticalLevelReadable:
-		return CriticalLevel
-	}
-	panic("logger.ToLevel(): received undefined readable level")
 }

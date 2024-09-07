@@ -3,6 +3,7 @@ package tests
 import (
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/validator"
+	"github.com/ilfey/hikilist-go/pkg/logger"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )
@@ -10,11 +11,11 @@ import (
 type UserValidatorSuite struct {
 	suite.Suite
 
-	Validator *validator.UserValidator
+	Validator *validator.User
 }
 
 func (s *UserValidatorSuite) SetupTest() {
-	s.Validator = &validator.UserValidator{}
+	s.Validator = validator.NewUser(logger.NewTest(s.T()))
 }
 
 func (s *UserValidatorSuite) TestValidateListRequestDTO() {
@@ -34,7 +35,7 @@ func (s *UserValidatorSuite) TestValidateListRequestDTO() {
 		{
 			desc: "Invalid offset",
 			req: &dto.UserListRequestDTO{
-				Page:  -1,
+				Page:  0,
 				Limit: 10,
 			},
 			isValid: false,
@@ -42,15 +43,15 @@ func (s *UserValidatorSuite) TestValidateListRequestDTO() {
 		{
 			desc: "Invalid limit",
 			req: &dto.UserListRequestDTO{
-				Page:  0,
-				Limit: -1,
+				Page:  1,
+				Limit: 0,
 			},
 			isValid: false,
 		},
 		{
 			desc:    "Empty request",
 			req:     &dto.UserListRequestDTO{},
-			isValid: true,
+			isValid: false,
 		},
 	}
 	for _, tC := range testCases {

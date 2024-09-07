@@ -8,14 +8,14 @@ import (
 )
 
 type BcryptService struct {
-	logger loggerInterface.Logger
-	config *hasher.Config
+	log loggerInterface.Logger
+	cfg *hasher.Config
 }
 
-func NewBcryptService(logger loggerInterface.Logger, config *hasher.Config) *BcryptService {
+func NewBcryptService(log loggerInterface.Logger, cfg *hasher.Config) *BcryptService {
 	return &BcryptService{
-		logger: logger,
-		config: config,
+		log: log,
+		cfg: cfg,
 	}
 }
 
@@ -25,7 +25,7 @@ func (s *BcryptService) Hash(source string) (string, error) {
 		bcrypt.DefaultCost,
 	)
 	if err != nil {
-		return "", s.logger.LogPropagate(err)
+		return "", s.log.LogPropagate(err)
 	}
 
 	return string(hash), nil

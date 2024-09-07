@@ -11,14 +11,14 @@ import (
 )
 
 type Anime struct {
-	logger loggerInterface.Logger
+	log loggerInterface.Logger
 
 	anime repositoryInterface.Anime
 }
 
-func NewAnime(logger loggerInterface.Logger, anime repositoryInterface.Anime) animeInterface.Anime {
+func NewAnime(log loggerInterface.Logger, anime repositoryInterface.Anime) animeInterface.Anime {
 	return &Anime{
-		logger: logger,
+		log: log,
 
 		anime: anime,
 	}
@@ -27,7 +27,7 @@ func NewAnime(logger loggerInterface.Logger, anime repositoryInterface.Anime) an
 func (s *Anime) Create(ctx context.Context, cm *dto.AnimeCreateRequestDTO) error {
 	err := s.anime.Create(ctx, cm)
 	if err != nil {
-		return s.logger.LogPropagate(err)
+		return s.log.LogPropagate(err)
 	}
 
 	return nil
@@ -36,7 +36,7 @@ func (s *Anime) Create(ctx context.Context, cm *dto.AnimeCreateRequestDTO) error
 func (s *Anime) Get(ctx context.Context, conds any) (*agg.AnimeDetail, error) {
 	dm, err := s.anime.Get(ctx, conds)
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.log.LogPropagate(err)
 	}
 
 	return dm, nil
@@ -71,7 +71,7 @@ func (s *Anime) GetListModel(ctx context.Context, dto *dto.AnimeListRequestDTO, 
 
 	err := g.Wait()
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.log.LogPropagate(err)
 	}
 
 	return &lm, nil
@@ -106,7 +106,7 @@ func (s *Anime) GetFromCollectionListDTO(ctx context.Context, dto *dto.AnimeList
 
 	err := g.Wait()
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.log.LogPropagate(err)
 	}
 
 	return &lm, nil
@@ -115,7 +115,7 @@ func (s *Anime) GetFromCollectionListDTO(ctx context.Context, dto *dto.AnimeList
 func (s *Anime) FindWithPaginator(ctx context.Context, dto *dto.AnimeListRequestDTO, conds any) ([]*agg.AnimeListItem, error) {
 	items, err := s.anime.FindWithPaginator(ctx, dto, conds)
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.log.LogPropagate(err)
 	}
 
 	return items, nil
@@ -127,7 +127,7 @@ func (s *Anime) FindFromCollectionWithPaginator(
 ) ([]*agg.AnimeListItem, error) {
 	items, err := s.anime.FindFromCollectionWithPaginator(ctx, dto)
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.log.LogPropagate(err)
 	}
 
 	return items, nil
@@ -136,7 +136,7 @@ func (s *Anime) FindFromCollectionWithPaginator(
 func (s *Anime) CountInCollection(ctx context.Context, dto *dto.AnimeListFromCollectionRequestDTO) (uint64, error) {
 	count, err := s.anime.CountInCollection(ctx, dto)
 	if err != nil {
-		return 0, s.logger.LogPropagate(err)
+		return 0, s.log.LogPropagate(err)
 	}
 
 	return count, nil
@@ -145,7 +145,7 @@ func (s *Anime) CountInCollection(ctx context.Context, dto *dto.AnimeListFromCol
 func (s *Anime) Count(ctx context.Context, conds any) (uint64, error) {
 	count, err := s.anime.Count(ctx, conds)
 	if err != nil {
-		return 0, s.logger.LogPropagate(err)
+		return 0, s.log.LogPropagate(err)
 	}
 
 	return count, nil

@@ -9,62 +9,14 @@ import (
 )
 
 type Auth struct {
-	logger loggerInterface.Logger
+	log loggerInterface.Logger
 }
 
-func NewAuth(logger loggerInterface.Logger) *Auth {
+func NewAuth(log loggerInterface.Logger) *Auth {
 	return &Auth{
-		logger: logger,
+		log: log,
 	}
 }
-
-//func (b *Auth) ValidateChangePasswordRequestDTO(dto *dto.AuthChangePasswordRequestDTO) error {
-//	expectations, ok := validator.Validate(
-//		dto,
-//		map[string][]options.Option{
-//			"OldPassword": {
-//				options.Required(),
-//				options.LenLessThan(32),
-//				options.LenGreaterThan(5),
-//			},
-//			"NewPassword": {
-//				options.Required(),
-//				options.LenLessThan(32),
-//				options.LenGreaterThan(5),
-//			},
-//		},
-//	)
-//	if !ok {
-//		return errtype.NewValidatorError("ChangePassword", expectations)
-//	}
-//
-//	return nil
-//}
-//
-//func (b *Auth) ValidateChangeUsernameRequestDTO(dto *dto.AuthChangeUsernameRequestDTO) error {
-//	expectations, ok := validator.Validate(
-//		dto,
-//		map[string][]options.Option{
-//			"NewUsername": {
-//				options.Required(),
-//				options.LenLessThan(32),
-//				options.LenGreaterThan(3),
-//			},
-//			"Password": {
-//				options.Required(),
-//				options.LenLessThan(32),
-//				options.LenGreaterThan(5),
-//			},
-//		},
-//	)
-//
-//	if !ok {
-//		return errtype.NewValidatorError("ChangeUsername", expectations)
-//	}
-//
-//	return nil
-//
-//}
 
 func (b *Auth) ValidateDeleteRequestDTO(dto *dto.UserDeleteRequestDTO) error {
 	expectations, ok := validator.Validate(

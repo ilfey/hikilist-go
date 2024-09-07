@@ -3,6 +3,7 @@ package tests
 import (
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/validator"
+	"github.com/ilfey/hikilist-go/pkg/logger"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )
@@ -14,9 +15,7 @@ type ActionValidatorSuite struct {
 }
 
 func (s *ActionValidatorSuite) SetupTest() {
-	s.Validator = &validator.Action{
-		// TODO: provide logger.
-	}
+	s.Validator = validator.NewAction(logger.NewTest(s.T()))
 }
 
 func (s *ActionValidatorSuite) TestValidatePaginate() {
@@ -36,10 +35,10 @@ func (s *ActionValidatorSuite) TestValidatePaginate() {
 			isValid: true,
 		},
 		{
-			desc: "Invalid offset",
+			desc: "Invalid page",
 			req: &dto.ActionListRequestDTO{
 				UserID: 0,
-				Page:   -1,
+				Page:   0,
 				Limit:  10,
 				Order:  "-id",
 			},
@@ -49,8 +48,8 @@ func (s *ActionValidatorSuite) TestValidatePaginate() {
 			desc: "Invalid limit",
 			req: &dto.ActionListRequestDTO{
 				UserID: 0,
-				Page:   0,
-				Limit:  -1,
+				Page:   1,
+				Limit:  0,
 				Order:  "-id",
 			},
 			isValid: false,
@@ -58,7 +57,7 @@ func (s *ActionValidatorSuite) TestValidatePaginate() {
 		{
 			desc:    "Empty request",
 			req:     &dto.ActionListRequestDTO{},
-			isValid: true,
+			isValid: false,
 		},
 	}
 	for _, tC := range testCases {

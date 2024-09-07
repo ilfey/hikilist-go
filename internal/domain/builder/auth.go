@@ -27,34 +27,6 @@ func NewAuth(container diInterface.ServiceContainer) (*AuthBuilder, error) {
 	}, nil
 }
 
-func (b *AuthBuilder) BuildChangePasswordRequestDTOFromRequest(r *http.Request) (*dto.AuthChangePasswordRequestDTO, error) {
-	model := new(dto.AuthChangePasswordRequestDTO)
-
-	if err := json.NewDecoder(r.Body).Decode(model); err != nil {
-		if errors.Is(err, io.EOF) {
-			return nil, b.logger.LogPropagate(errtype.NewBodyIsEmptyError())
-		}
-
-		return nil, b.logger.LogPropagate(err)
-	}
-
-	return model, nil
-}
-
-func (b *AuthBuilder) BuildChangeUsernameRequestDTOFromRequest(r *http.Request) (*dto.AuthChangeUsernameRequestDTO, error) {
-	model := new(dto.AuthChangeUsernameRequestDTO)
-
-	if err := json.NewDecoder(r.Body).Decode(model); err != nil {
-		if errors.Is(err, io.EOF) {
-			return nil, b.logger.LogPropagate(errtype.NewBodyIsEmptyError())
-		}
-
-		return nil, b.logger.LogPropagate(err)
-	}
-
-	return model, nil
-}
-
 func (b *AuthBuilder) BuildDeleteRequestDTOFromRequest(r *http.Request) (*dto.UserDeleteRequestDTO, error) {
 	deleteDTO := new(dto.UserDeleteRequestDTO)
 

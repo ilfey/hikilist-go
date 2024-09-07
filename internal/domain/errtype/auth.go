@@ -55,23 +55,6 @@ func NewAuthFailedError(msg string) *AuthFailedError {
 	}
 }
 
-/* ===== AccessTokenIsEmptyOrOmittedError ===== */
-
-type AccessTokenIsEmptyOrOmittedError struct{ publicError }
-
-func NewAccessTokenIsEmptyOrOmittedError() *AccessTokenIsEmptyOrOmittedError {
-	return &AccessTokenIsEmptyOrOmittedError{
-		publicError{
-			errored{
-				ErrorDetail: "authorization failed: token is empty or omitted",
-				ErrorType:   authErrType,
-				errorStatus: publicAuthErrStatus,
-				errorLevel:  publicAuthErrLevel,
-			},
-		},
-	}
-}
-
 /* ===== TokenIsInvalidError ===== */
 
 type TokenIsInvalidError struct{ publicError }

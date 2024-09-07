@@ -29,6 +29,7 @@ func (s *AnimeCollectionSuite) TestGetCollectionIdSQL() {
 	)
 }
 
+//goland:noinspection ALL
 func (s *AnimeCollectionSuite) TestAddAnimesSQL() {
 	// Test one anime.
 	aam := &dto.CollectionAddAnimeRequestDTO{
@@ -77,6 +78,7 @@ func (s *AnimeCollectionSuite) TestAddAnimesSQL() {
 	})
 }
 
+//goland:noinspection ALL
 func (s *AnimeCollectionSuite) TestRemoveAnimesSQL() {
 	// Test one anime.
 	ram := &dto.CollectionRemoveAnimeRequestDTO{

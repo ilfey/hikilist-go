@@ -2,7 +2,6 @@ package validator
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/ilfey/hikilist-go/pkg/errorsx"
 )
@@ -28,10 +27,4 @@ func (e *ValidateError) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(_map)
-}
-
-func IsValidateError(err error) bool {
-	var vErr *ValidateError
-
-	return errors.As(err, &vErr)
 }

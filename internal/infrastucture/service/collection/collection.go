@@ -11,20 +11,20 @@ import (
 )
 
 type Collection struct {
-	logger loggerInterface.Logger
+	log loggerInterface.Logger
 
 	animeCollection repositoryInterface.AnimeCollection
 	collection      repositoryInterface.Collection
 }
 
 func NewCollection(
-	logger loggerInterface.Logger,
+	log loggerInterface.Logger,
 
 	animeCollection repositoryInterface.AnimeCollection,
 	collection repositoryInterface.Collection,
 ) collectionInterface.Collection {
 	return &Collection{
-		logger: logger,
+		log: log,
 
 		animeCollection: animeCollection,
 		collection:      collection,
@@ -40,7 +40,7 @@ func (s *Collection) Create(ctx context.Context, cm *dto.CollectionCreateRequest
 
 	err := s.collection.Create(ctx, cm)
 	if err != nil {
-		return s.logger.LogPropagate(err)
+		return s.log.LogPropagate(err)
 	}
 
 	return nil
@@ -49,7 +49,7 @@ func (s *Collection) Create(ctx context.Context, cm *dto.CollectionCreateRequest
 func (s *Collection) Get(ctx context.Context, conds any) (*agg.CollectionDetail, error) {
 	dm, err := s.collection.Get(ctx, conds)
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.log.LogPropagate(err)
 	}
 
 	return dm, nil
@@ -84,7 +84,7 @@ func (s *Collection) GetListDTO(ctx context.Context, p *dto.CollectionListReques
 
 	err := g.Wait()
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.log.LogPropagate(err)
 	}
 
 	return &lm, nil
@@ -93,7 +93,7 @@ func (s *Collection) GetListDTO(ctx context.Context, p *dto.CollectionListReques
 func (s *Collection) Find(ctx context.Context, dto *dto.CollectionListRequestDTO, conds any) ([]*agg.CollectionListItem, error) {
 	items, err := s.collection.Find(ctx, dto, conds)
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.log.LogPropagate(err)
 	}
 
 	return items, nil
@@ -102,7 +102,7 @@ func (s *Collection) Find(ctx context.Context, dto *dto.CollectionListRequestDTO
 func (s *Collection) Count(ctx context.Context, conds any) (uint64, error) {
 	count, err := s.collection.Count(ctx, conds)
 	if err != nil {
-		return 0, s.logger.LogPropagate(err)
+		return 0, s.log.LogPropagate(err)
 	}
 
 	return count, nil
@@ -111,7 +111,7 @@ func (s *Collection) Count(ctx context.Context, conds any) (uint64, error) {
 func (s *Collection) Update(ctx context.Context, um *dto.CollectionUpdateRequestDTO) error {
 	err := s.collection.Update(ctx, um)
 	if err != nil {
-		return s.logger.LogPropagate(err)
+		return s.log.LogPropagate(err)
 	}
 
 	return nil
@@ -122,7 +122,7 @@ func (s *Collection) Update(ctx context.Context, um *dto.CollectionUpdateRequest
 func (s *Collection) AddAnimes(ctx context.Context, aam *dto.CollectionAddAnimeRequestDTO) error {
 	err := s.animeCollection.AddAnimes(ctx, aam)
 	if err != nil {
-		return s.logger.LogPropagate(err)
+		return s.log.LogPropagate(err)
 	}
 
 	return nil
@@ -131,7 +131,7 @@ func (s *Collection) AddAnimes(ctx context.Context, aam *dto.CollectionAddAnimeR
 func (s *Collection) RemoveAnimes(ctx context.Context, ram *dto.CollectionRemoveAnimeRequestDTO) error {
 	err := s.animeCollection.RemoveAnimes(ctx, ram)
 	if err != nil {
-		return s.logger.LogPropagate(err)
+		return s.log.LogPropagate(err)
 	}
 
 	return nil

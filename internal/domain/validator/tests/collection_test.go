@@ -3,6 +3,7 @@ package tests
 import (
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/validator"
+	"github.com/ilfey/hikilist-go/pkg/logger"
 	"github.com/stretchr/testify/suite"
 	"testing"
 )
@@ -14,7 +15,7 @@ type CollectionValidatorSuite struct {
 }
 
 func (s *CollectionValidatorSuite) SetupTest() {
-	s.Validator = &validator.Collection{}
+	s.Validator = validator.NewCollection(logger.NewTest(s.T()))
 }
 
 func (s *CollectionValidatorSuite) TestValidateRemoveAnimeRequestDTO() {
@@ -197,7 +198,7 @@ func (s *CollectionValidatorSuite) TestValidateListRequestDTO() {
 		{
 			desc: "Invalid offset",
 			req: &dto.CollectionListRequestDTO{
-				Page:  -1,
+				Page:  0,
 				Limit: 10,
 				Order: "-id",
 			},
@@ -206,8 +207,8 @@ func (s *CollectionValidatorSuite) TestValidateListRequestDTO() {
 		{
 			desc: "Invalid limit",
 			req: &dto.CollectionListRequestDTO{
-				Page:  0,
-				Limit: -1,
+				Page:  1,
+				Limit: 0,
 				Order: "-id",
 			},
 			isValid: false,
@@ -215,7 +216,7 @@ func (s *CollectionValidatorSuite) TestValidateListRequestDTO() {
 		{
 			desc:    "Empty request",
 			req:     &dto.CollectionListRequestDTO{},
-			isValid: true,
+			isValid: false,
 		},
 	}
 	for _, tC := range testCases {

@@ -9,12 +9,12 @@ import (
 )
 
 type Anime struct {
-	logger loggerInterface.Logger
+	log loggerInterface.Logger
 }
 
-func NewAnime(logger loggerInterface.Logger) *Anime {
+func NewAnime(log loggerInterface.Logger) *Anime {
 	return &Anime{
-		logger: logger,
+		log: log,
 	}
 }
 
@@ -75,12 +75,15 @@ func (b *Anime) ValidateListRequestDTO(dto *dto.AnimeListRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
+			"Page": {
+				options.GreaterThan[uint64](0),
+			},
 			"Limit": {
+				options.GreaterThan[uint64](0),
 				options.LessThan[uint64](101),
 			},
 			"Order": {
 				options.InList([]string{
-					"",
 					"id",
 					"-id",
 					"title",

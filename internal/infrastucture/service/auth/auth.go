@@ -16,7 +16,7 @@ import (
 )
 
 type Auth struct {
-	logger loggerInterface.Logger
+	log loggerInterface.Logger
 
 	hasher securityInterface.Hasher
 
@@ -25,7 +25,7 @@ type Auth struct {
 }
 
 func NewAuth(
-	logger loggerInterface.Logger,
+	log loggerInterface.Logger,
 
 	hasher securityInterface.Hasher,
 	tokenizer tokenizerInterface.Tokenizer,
@@ -33,7 +33,7 @@ func NewAuth(
 	user repositoryInterface.User,
 ) *Auth {
 	return &Auth{
-		logger: logger,
+		log: log,
 
 		hasher:    hasher,
 		tokenizer: tokenizer,
@@ -46,12 +46,12 @@ func (s *Auth) IsAuthed(request *http.Request) (uint64, error) {
 	// Detail token from header.
 	header := request.Header.Get(enum.AccessTokenHeaderKey)
 	if header == "" {
-		return 0, s.logger.LogPropagate(errtype.NewAuthFailedError("token not provided"))
+		return 0, s.log.LogPropagate(errtype.NewAuthFailedError("token not provided"))
 	}
 
 	// Check Bearer prefix.
 	if !strings.HasPrefix(header, "Bearer ") {
-		return 0, s.logger.LogPropagate(errtype.NewAuthFailedError("invalid token prefix"))
+		return 0, s.log.LogPropagate(errtype.NewAuthFailedError("invalid token prefix"))
 	}
 
 	// Remove Bearer prefix.
@@ -60,7 +60,7 @@ func (s *Auth) IsAuthed(request *http.Request) (uint64, error) {
 	// Verify token.
 	userId, err := s.tokenizer.Verify(request.Context(), token)
 	if err != nil {
-		return 0, s.logger.LogPropagate(err)
+		return 0, s.log.LogPropagate(err)
 	}
 
 	return userId, nil
@@ -69,12 +69,12 @@ func (s *Auth) IsAuthed(request *http.Request) (uint64, error) {
 func (s *Auth) ChangePassword(ctx context.Context, userId uint64, password string) error {
 	hash, err := s.hasher.Hash(password)
 	if err != nil {
-		return s.logger.LogPropagate(err)
+		return s.log.LogPropagate(err)
 	}
 
 	err = s.userRepo.UpdatePassword(ctx, userId, hash)
 	if err != nil {
-		return s.logger.LogPropagate(err)
+		return s.log.LogPropagate(err)
 	}
 
 	return nil
@@ -89,7 +89,7 @@ func (s *Auth) DeleteUser(ctx context.Context, deleteDTO *dto.UserDeleteRequestD
 	}
 
 	if !s.hasher.Verify(user, deleteDTO.Password) {
-		return s.logger.LogPropagate(errtype.NewPasswordNotMatchError())
+		return s.log.LogPropagate(errtype.NewPasswordNotMatchError())
 	}
 
 	g := errgroup.Group{}
@@ -98,7 +98,7 @@ func (s *Auth) DeleteUser(ctx context.Context, deleteDTO *dto.UserDeleteRequestD
 	g.Go(func() error {
 		err := s.tokenizer.Block(ctx, deleteDTO.Refresh)
 		if err != nil {
-			return s.logger.LogPropagate(err)
+			return s.log.LogPropagate(err)
 		}
 
 		return nil
@@ -108,7 +108,7 @@ func (s *Auth) DeleteUser(ctx context.Context, deleteDTO *dto.UserDeleteRequestD
 	g.Go(func() error {
 		err := s.userRepo.Delete(ctx, deleteDTO.UserID)
 		if err != nil {
-			return s.logger.LogPropagate(err)
+			return s.log.LogPropagate(err)
 		}
 
 		return nil
@@ -122,16 +122,16 @@ func (s *Auth) Login(ctx context.Context, login *dto.AuthLoginRequestDTO) (*agg.
 		"username": login.Username,
 	})
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.log.LogPropagate(err)
 	}
 
 	if !s.hasher.Verify(user, login.Password) {
-		return nil, s.logger.LogPropagate(errtype.NewAuthFailedError("invalid credentials"))
+		return nil, s.log.LogPropagate(errtype.NewAuthFailedError("invalid credentials"))
 	}
 
 	tokensModel, err := s.tokenizer.Generate(user.ID)
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.log.LogPropagate(err)
 	}
 
 	return tokensModel, nil
@@ -140,7 +140,7 @@ func (s *Auth) Login(ctx context.Context, login *dto.AuthLoginRequestDTO) (*agg.
 func (s *Auth) Register(ctx context.Context, registerModel *dto.AuthRegisterRequestDTO) (*dto.UserCreateRequestDTO, error) {
 	hash, err := s.hasher.Hash(registerModel.Password)
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.log.LogPropagate(err)
 	}
 
 	cm := dto.UserCreateRequestDTO{
@@ -150,7 +150,7 @@ func (s *Auth) Register(ctx context.Context, registerModel *dto.AuthRegisterRequ
 
 	err = s.userRepo.Create(ctx, &cm)
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.log.LogPropagate(err)
 	}
 
 	return &cm, nil
@@ -160,19 +160,19 @@ func (s *Auth) Refresh(ctx context.Context, refresh *dto.AuthRefreshRequestDTO) 
 	// Detail userId
 	userId, err := s.tokenizer.Verify(ctx, refresh.Refresh)
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.log.LogPropagate(err)
 	}
 
 	// Block old refresh token
 	err = s.tokenizer.Block(ctx, refresh.Refresh)
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.log.LogPropagate(err)
 	}
 
 	// Generate new tokens
 	tokensModel, err := s.tokenizer.Generate(userId)
 	if err != nil {
-		return nil, s.logger.LogPropagate(err)
+		return nil, s.log.LogPropagate(err)
 	}
 
 	return tokensModel, nil
@@ -181,7 +181,7 @@ func (s *Auth) Refresh(ctx context.Context, refresh *dto.AuthRefreshRequestDTO) 
 func (s *Auth) Logout(ctx context.Context, logoutModel *dto.AuthLogoutRequestDTO) error {
 	err := s.tokenizer.Block(ctx, logoutModel.Refresh)
 	if err != nil {
-		return s.logger.LogPropagate(err)
+		return s.log.LogPropagate(err)
 	}
 
 	return nil

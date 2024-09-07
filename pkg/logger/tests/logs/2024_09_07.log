@@ -1,0 +1,81 @@
+{
+  "date": "2024-09-07T17:45:19.1285269+07:00",
+  "type": "error",
+  "message": "test Critical",
+  "file": "D:/Projects/hikilist-go/pkg/logger/tests/std_test.go",
+  "function": "github.com/ilfey/hikilist-go/pkg/logger/tests.(*StdSuite).TestCritical.func1",
+  "line": 99
+}
+{
+  "date": "2024-09-07T17:45:19.1295282+07:00",
+  "type": "error",
+  "message": "test CriticalPropagate",
+  "file": "D:/Projects/hikilist-go/pkg/logger/tests/std_test.go",
+  "function": "github.com/ilfey/hikilist-go/pkg/logger/tests.(*StdSuite).TestCriticalPropagate.func1",
+  "line": 106
+}
+{
+  "date": "2024-09-07T17:45:19.1295282+07:00",
+  "type": "debug",
+  "message": "test Debug",
+  "file": "D:/Projects/hikilist-go/pkg/logger/tests/std_test.go",
+  "function": "github.com/ilfey/hikilist-go/pkg/logger/tests.(*StdSuite).TestDebug.func1",
+  "line": 71
+}
+{
+  "date": "2024-09-07T17:45:19.1295282+07:00",
+  "type": "debug",
+  "message": "test DebugPropagate",
+  "file": "D:/Projects/hikilist-go/pkg/logger/tests/std_test.go",
+  "function": "github.com/ilfey/hikilist-go/pkg/logger/tests.(*StdSuite).TestDebugPropagate.func1",
+  "line": 78
+}
+{
+  "date": "2024-09-07T17:45:19.1295282+07:00",
+  "type": "info",
+  "message": "test Info",
+  "file": "D:/Projects/hikilist-go/pkg/logger/tests/std_test.go",
+  "function": "github.com/ilfey/hikilist-go/pkg/logger/tests.(*StdSuite).TestInfo.func1",
+  "line": 57
+}
+{
+  "date": "2024-09-07T17:45:19.1295282+07:00",
+  "type": "info",
+  "message": "test InfoPropagate",
+  "file": "D:/Projects/hikilist-go/pkg/logger/tests/std_test.go",
+  "function": "github.com/ilfey/hikilist-go/pkg/logger/tests.(*StdSuite).TestInfoPropagate.func1",
+  "line": 64
+}
+{
+  "date": "2024-09-07T17:45:19.1295282+07:00",
+  "type": "error",
+  "message": "test Log",
+  "file": "D:/Projects/hikilist-go/pkg/logger/tests/std_test.go",
+  "function": "github.com/ilfey/hikilist-go/pkg/logger/tests.(*StdSuite).TestLog.func1",
+  "line": 35
+}
+{
+  "date": "2024-09-07T17:45:19.1295282+07:00",
+  "type": "error",
+  "message": "test LogPropagate",
+  "file": "D:/Projects/hikilist-go/pkg/logger/tests/std_test.go",
+  "function": "github.com/ilfey/hikilist-go/pkg/logger/tests.(*StdSuite).TestLogPropagate.func1",
+  "line": 42
+}
+"test LogData"
+{
+  "date": "2024-09-07T17:45:19.1295282+07:00",
+  "type": "error",
+  "message": "test Warn",
+  "file": "D:/Projects/hikilist-go/pkg/logger/tests/std_test.go",
+  "function": "github.com/ilfey/hikilist-go/pkg/logger/tests.(*StdSuite).TestWarn.func1",
+  "line": 85
+}
+{
+  "date": "2024-09-07T17:45:19.1295282+07:00",
+  "type": "error",
+  "message": "test WarnPropagate",
+  "file": "D:/Projects/hikilist-go/pkg/logger/tests/std_test.go",
+  "function": "github.com/ilfey/hikilist-go/pkg/logger/tests.(*StdSuite).TestWarnPropagate.func1",
+  "line": 92
+}

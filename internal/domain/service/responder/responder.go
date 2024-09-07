@@ -27,19 +27,19 @@ func NewErrorResponse(err error) ErrorResponse {
 }
 
 type Responder struct {
-	logger loggerInterface.Logger
+	log loggerInterface.Logger
 }
 
-func NewResponder(logger loggerInterface.Logger) *Responder {
+func NewResponder(log loggerInterface.Logger) *Responder {
 	return &Responder{
-		logger: logger,
+		log: log,
 	}
 }
 
 func (r *Responder) Respond(w io.Writer, dataOrErr any) {
 	err, isErr := dataOrErr.(error)
 	if isErr {
-		r.logger.Log(err)
+		r.log.Log(err)
 
 		publicErr, isPublicErr := err.(errtypeInterface.PublicError)
 		if isPublicErr {
@@ -53,7 +53,7 @@ func (r *Responder) Respond(w io.Writer, dataOrErr any) {
 					NewErrorResponse(publicErr),
 				),
 			); err != nil {
-				r.logger.Critical(err)
+				r.log.Critical(err)
 			}
 		} else {
 			// handle the case when write is http.ResponseWriter
@@ -68,7 +68,7 @@ func (r *Responder) Respond(w io.Writer, dataOrErr any) {
 					),
 				),
 			); err != nil {
-				r.logger.Critical(err)
+				r.log.Critical(err)
 			}
 		}
 		return
@@ -79,7 +79,7 @@ func (r *Responder) Respond(w io.Writer, dataOrErr any) {
 
 	// writing a response data
 	if _, err = w.Write(r.toBytes(resp)); err != nil {
-		r.logger.Critical(err)
+		r.log.Critical(err)
 	}
 
 	// logging a response
@@ -87,7 +87,7 @@ func (r *Responder) Respond(w io.Writer, dataOrErr any) {
 }
 
 func (r *Responder) logResponse(resp DataResponse) {
-	r.logger.LogData(
+	r.log.LogData(
 		&LoggableData{
 			Date:         time.Now(),
 			Type:         LogType,
@@ -99,7 +99,7 @@ func (r *Responder) logResponse(resp DataResponse) {
 func (r *Responder) toBytes(resp any) []byte {
 	bytes, err := json.Marshal(resp)
 	if err != nil {
-		r.logger.Critical(err)
+		r.log.Critical(err)
 	}
 	return bytes
 }

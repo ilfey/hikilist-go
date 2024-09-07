@@ -24,14 +24,14 @@ var (
 )
 
 type Anime struct {
-	logger loggerInterface.Logger
-	db     postgres.RW
+	log loggerInterface.Logger
+	db  postgres.RW
 }
 
-func NewAnime(logger loggerInterface.Logger, db postgres.RW) *Anime {
+func NewAnime(log loggerInterface.Logger, db postgres.RW) *Anime {
 	return &Anime{
-		logger: logger,
-		db:     db,
+		log: log,
+		db:  db,
 	}
 }
 
@@ -44,12 +44,12 @@ func (r *Anime) WithTx(tx postgres.RW) repositoryInterface.Anime {
 func (r *Anime) Create(ctx context.Context, cm *dto.AnimeCreateRequestDTO) error {
 	sql, args, err := r.CreateSQL(cm)
 	if err != nil {
-		return r.logger.CriticalPropagate(err)
+		return r.log.CriticalPropagate(err)
 	}
 
 	err = r.db.QueryRow(ctx, sql, args...).Scan(&cm.ID)
 	if err != nil {
-		r.logger.Log(err)
+		r.log.Log(err)
 
 		return ErrAnimeCreateFailed
 	}
@@ -60,14 +60,14 @@ func (r *Anime) Create(ctx context.Context, cm *dto.AnimeCreateRequestDTO) error
 func (r *Anime) Get(ctx context.Context, conds any) (*agg.AnimeDetail, error) {
 	sql, args, err := r.GetSQL(conds)
 	if err != nil {
-		return nil, r.logger.CriticalPropagate(err)
+		return nil, r.log.CriticalPropagate(err)
 	}
 
 	var dm agg.AnimeDetail
 
 	err = pgxscan.Get(ctx, r.db, &dm, sql, args...)
 	if err != nil {
-		r.logger.Log(err)
+		r.log.Log(err)
 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrAnimeNotFoundById
@@ -82,14 +82,14 @@ func (r *Anime) Get(ctx context.Context, conds any) (*agg.AnimeDetail, error) {
 func (r *Anime) FindWithPaginator(ctx context.Context, dto *dto.AnimeListRequestDTO, conds any) ([]*agg.AnimeListItem, error) {
 	sql, args, err := r.FindWithPaginatorSQL(dto, conds)
 	if err != nil {
-		return nil, r.logger.CriticalPropagate(err)
+		return nil, r.log.CriticalPropagate(err)
 	}
 
 	var items []*agg.AnimeListItem
 
 	err = pgxscan.Select(ctx, r.db, &items, sql, args...)
 	if err != nil {
-		r.logger.Log(err)
+		r.log.Log(err)
 
 		return nil, ErrAnimesFindFailed
 	}
@@ -100,14 +100,14 @@ func (r *Anime) FindWithPaginator(ctx context.Context, dto *dto.AnimeListRequest
 func (r *Anime) FindFromCollectionWithPaginator(ctx context.Context, dto *dto.AnimeListFromCollectionRequestDTO) ([]*agg.AnimeListItem, error) {
 	sql, args, err := r.FindFromCollectionWithPaginatorSQL(dto)
 	if err != nil {
-		return nil, r.logger.CriticalPropagate(err)
+		return nil, r.log.CriticalPropagate(err)
 	}
 
 	var items []*agg.AnimeListItem
 
 	err = pgxscan.Select(ctx, r.db, &items, sql, args...)
 	if err != nil {
-		r.logger.Log(err)
+		r.log.Log(err)
 
 		return nil, ErrAnimesFindInCollectionFailed
 	}
@@ -118,14 +118,14 @@ func (r *Anime) FindFromCollectionWithPaginator(ctx context.Context, dto *dto.An
 func (r *Anime) CountInCollection(ctx context.Context, dto *dto.AnimeListFromCollectionRequestDTO) (uint64, error) {
 	sql, args, err := r.CountInCollectionSQL(dto)
 	if err != nil {
-		return 0, r.logger.CriticalPropagate(err)
+		return 0, r.log.CriticalPropagate(err)
 	}
 
 	var count uint64
 
 	err = r.db.QueryRow(ctx, sql, args...).Scan(&count)
 	if err != nil {
-		r.logger.Log(err)
+		r.log.Log(err)
 
 		return 0, ErrAnimesCountInCollectionFailed
 	}
@@ -136,14 +136,14 @@ func (r *Anime) CountInCollection(ctx context.Context, dto *dto.AnimeListFromCol
 func (r *Anime) Count(ctx context.Context, conds any) (uint64, error) {
 	sql, args, err := r.CountSQL(conds)
 	if err != nil {
-		return 0, r.logger.CriticalPropagate(err)
+		return 0, r.log.CriticalPropagate(err)
 	}
 
 	var count uint64
 
 	err = r.db.QueryRow(ctx, sql, args...).Scan(&count)
 	if err != nil {
-		r.logger.Log(err)
+		r.log.Log(err)
 
 		return 0, ErrAnimesCountFailed
 	}

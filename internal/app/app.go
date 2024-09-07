@@ -189,9 +189,14 @@ func (a *App) InitAuthedControllers() ([]controller.Controller, error) {
 		return nil, log.LogPropagate(err)
 	}
 
-	// CRUDService.
+	// User.
 
 	meController, err := userController.NewMeController(a.container)
+	if err != nil {
+		return nil, log.LogPropagate(err)
+	}
+
+	actionListController, err := userController.NewActionListController(a.container)
 	if err != nil {
 		return nil, log.LogPropagate(err)
 	}
@@ -207,8 +212,9 @@ func (a *App) InitAuthedControllers() ([]controller.Controller, error) {
 		addAnimeCollectionController,
 		removeAnimeCollectionController,
 
-		// CRUDService.
+		// User.
 		meController,
+		actionListController,
 	}, nil
 }
 

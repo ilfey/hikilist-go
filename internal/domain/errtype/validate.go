@@ -3,7 +3,6 @@ package errtype
 import (
 	"fmt"
 	"github.com/ilfey/hikilist-go/pkg/logger"
-	"github.com/pkg/errors"
 	"net/http"
 )
 
@@ -12,9 +11,6 @@ const (
 
 	publicValidateLevel  = logger.ErrorLevel
 	publicValidateStatus = http.StatusBadRequest
-
-	internalValidateLevel  = logger.CriticalLevel
-	internalValidateStatus = http.StatusInternalServerError
 )
 
 /* ===== FieldCannotBeEmptyError ===== */
@@ -34,10 +30,6 @@ func NewFieldCannotBeEmptyError(field string) *FieldCannotBeEmptyError {
 	}
 }
 
-func IsFieldCannotBeEmptyError(err error) bool {
-	return errors.As(err, &FieldCannotBeEmptyError{})
-}
-
 /* ===== FieldMustBeIntegerError ===== */
 
 type FieldMustBeIntegerError struct{ publicError }
@@ -53,10 +45,6 @@ func NewFieldMustBeIntegerError(field string) *FieldMustBeIntegerError {
 			},
 		},
 	}
-}
-
-func IsFieldMustBeIntegerError(err error) bool {
-	return errors.As(err, &FieldMustBeIntegerError{})
 }
 
 /* ===== ValidatorError ===== */
@@ -81,10 +69,6 @@ func NewValidatorError(dto string, expectations map[string][]string) *ValidatorE
 	}
 }
 
-func IsValidatorError(err error) bool {
-	return errors.As(err, &ValidatorError{})
-}
-
 /* ===== BodyIsEmptyError ===== */
 
 type BodyIsEmptyError struct{ publicError }
@@ -100,25 +84,4 @@ func NewBodyIsEmptyError() *BodyIsEmptyError {
 			},
 		},
 	}
-}
-
-/* ===== InternalValidateError ===== */
-
-type InternalValidateError struct{ internalError }
-
-func NewInternalValidateError(msg string) *InternalValidateError {
-	return &InternalValidateError{
-		internalError{
-			errored{
-				ErrorDetail: msg,
-				ErrorType:   validateType,
-				errorLevel:  internalValidateLevel,
-				errorStatus: internalValidateStatus,
-			},
-		},
-	}
-}
-
-func IsInternalValidateError(err error) bool {
-	return errors.As(err, &InternalValidateError{})
 }

@@ -1,7 +1,5 @@
 package errtype
 
-import "github.com/pkg/errors"
-
 // errored is a base error struct, implements sketch of necessary fields and base functionality.
 type errored struct {
 	ErrorDetail string `json:"detail"` // Error is error interface implementation.
@@ -37,14 +35,4 @@ type internalError struct{ errored }
 
 func (e internalError) Internal() bool {
 	return true
-}
-
-/* ===== Utils ===== */
-
-func IsPublic(err error) bool {
-	return errors.As(err, &publicError{})
-}
-
-func IsInternal(err error) bool {
-	return errors.As(err, &internalError{})
 }

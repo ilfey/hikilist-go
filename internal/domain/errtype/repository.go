@@ -3,7 +3,6 @@ package errtype
 import (
 	"fmt"
 	"github.com/ilfey/hikilist-go/pkg/logger"
-	"github.com/pkg/errors"
 	"net/http"
 )
 
@@ -47,10 +46,6 @@ func NewEntityNotFoundError(where, entity string, by string) *EntityNotFoundErro
 			},
 		},
 	}
-}
-
-func IsEntityNotFoundError(err error) bool {
-	return errors.As(err, &EntityNotFoundError{})
 }
 
 /* ===== InternalRepositoryError ===== */

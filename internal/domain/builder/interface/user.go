@@ -10,5 +10,4 @@ type User interface {
 	BuildDetailRequestDTOFromRequest(r *http.Request) (*dto.UserDetailRequestDTO, error)
 	BuildMeRequestDTOFromRequest(r *http.Request) (*dto.UserMeRequestDTO, error)
 	BuildCollectionRequestDTOFromRequest(r *http.Request) (*dto.UserCollectionsRequestDTO, error)
-	// TODO: add BuildUpdateRequestDTOFromRequest(r *http.Request) (*user.UserUpdateRequestDTO, error)
 }

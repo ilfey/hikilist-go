@@ -11,12 +11,6 @@ const (
 	ErrorLevel
 	CriticalLevel
 
-	InfoLevelReadable     = "INFO"
-	DebugLevelReadable    = "DEBUG"
-	WarnLevelReadable     = "WARN"
-	ErrorLevelReadable    = "ERROR"
-	CriticalLevelReadable = "CRITICAL"
-
 	DebugLogType = "debug"
 	InfoLogType  = "info"
 	ErrorLogType = "error"

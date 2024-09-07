@@ -9,12 +9,12 @@ import (
 )
 
 type Action struct {
-	logger loggerInterface.Logger
+	log loggerInterface.Logger
 }
 
-func NewAction(logger loggerInterface.Logger) *Action {
+func NewAction(log loggerInterface.Logger) *Action {
 	return &Action{
-		logger: logger,
+		log: log,
 	}
 }
 
@@ -22,12 +22,15 @@ func (b *Action) ValidateListRequestDTO(dto *dto.ActionListRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
+			"Page": {
+				options.GreaterThan[uint64](0),
+			},
 			"Limit": {
+				options.GreaterThan[uint64](0),
 				options.LessThan[uint64](101),
 			},
 			"Order": {
 				options.InList([]string{
-					"",
 					"id",
 					"-id",
 				}),

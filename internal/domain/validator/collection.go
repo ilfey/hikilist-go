@@ -9,12 +9,12 @@ import (
 )
 
 type Collection struct {
-	logger loggerInterface.Logger
+	log loggerInterface.Logger
 }
 
-func NewCollection(logger loggerInterface.Logger) *Collection {
+func NewCollection(log loggerInterface.Logger) *Collection {
 	return &Collection{
-		logger: logger,
+		log: log,
 	}
 }
 
@@ -29,7 +29,7 @@ func (b *Collection) ValidateAddAnimeRequestDTO(dto *dto.CollectionAddAnimeReque
 		},
 	)
 	if !ok {
-		return b.logger.LogPropagate(errtype.NewValidatorError("AddAnimeToCollection", expectations))
+		return b.log.LogPropagate(errtype.NewValidatorError("AddAnimeToCollection", expectations))
 	}
 
 	return nil
@@ -46,7 +46,7 @@ func (b *Collection) ValidateRemoveAnimeRequestDTO(dto *dto.CollectionRemoveAnim
 		},
 	)
 	if !ok {
-		return b.logger.LogPropagate(errtype.NewValidatorError("AddAnimeToCollection", expectations))
+		return b.log.LogPropagate(errtype.NewValidatorError("AddAnimeToCollection", expectations))
 	}
 
 	return nil
@@ -71,7 +71,7 @@ func (b *Collection) ValidateUpdateRequestDTO(dto *dto.CollectionUpdateRequestDT
 		},
 	)
 	if !ok {
-		return b.logger.LogPropagate(errtype.NewValidatorError("UpdateCollection", expectations))
+		return b.log.LogPropagate(errtype.NewValidatorError("UpdateCollection", expectations))
 	}
 
 	return nil
@@ -88,7 +88,7 @@ func (b *Collection) ValidateRemoveRequestDTO(dto *dto.CollectionRemoveAnimeRequ
 		},
 	)
 	if !ok {
-		return b.logger.LogPropagate(errtype.NewValidatorError("UpdateCollection", expectations))
+		return b.log.LogPropagate(errtype.NewValidatorError("UpdateCollection", expectations))
 	}
 
 	return nil
@@ -111,7 +111,7 @@ func (b *Collection) ValidateCreateRequestDTO(dto *dto.CollectionCreateRequestDT
 		},
 	)
 	if !ok {
-		return b.logger.LogPropagate(errtype.NewValidatorError("UpdateCollection", expectations))
+		return b.log.LogPropagate(errtype.NewValidatorError("UpdateCollection", expectations))
 	}
 
 	return nil
@@ -121,12 +121,15 @@ func (b *Collection) ValidateListRequestDTO(dto *dto.CollectionListRequestDTO) e
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
+			"Page": {
+				options.GreaterThan[uint64](0),
+			},
 			"Limit": {
+				options.GreaterThan[uint64](0),
 				options.LessThan[uint64](101),
 			},
 			"Order": {
 				options.InList([]string{
-					"",
 					"id",
 					"-id",
 				}),
@@ -144,12 +147,15 @@ func (b *Collection) ValidateAnimeListFromCollectionRequestDTO(dto *dto.AnimeLis
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
+			"Page": {
+				options.GreaterThan[uint64](0),
+			},
 			"Limit": {
+				options.GreaterThan[uint64](0),
 				options.LessThan[uint64](101),
 			},
 			"Order": {
 				options.InList([]string{
-					"",
 					"id",
 					"-id",
 				}),
@@ -167,12 +173,15 @@ func (b *Collection) ValidateDetailRequestDTO(dto *dto.CollectionDetailRequestDT
 	expectations, ok := validator.Validate(
 		dto,
 		map[string][]options.Option{
+			"Page": {
+				options.GreaterThan[uint64](0),
+			},
 			"Limit": {
+				options.GreaterThan[uint64](0),
 				options.LessThan[uint64](101),
 			},
 			"Order": {
 				options.InList([]string{
-					"",
 					"id",
 					"-id",
 				}),

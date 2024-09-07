@@ -13,5 +13,4 @@ type Collection interface {
 	BuildAddAnimeRequestDTOFromRequest(r *http.Request) (*dto.CollectionAddAnimeRequestDTO, error)
 	BuildListRequestDTOFromRequest(r *http.Request) (*dto.CollectionListRequestDTO, error)
 	BuildDetailRequestDTOFromRequest(r *http.Request) (*dto.CollectionDetailRequestDTO, error)
-	// TODO: Add BuildDeleteRequestDTOFromRequest(r *http.Request) (*collection.CollectionDeleteRequestDTO, error)
 }
