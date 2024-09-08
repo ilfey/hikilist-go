@@ -21,10 +21,8 @@ var (
 	ErrCollectionNotFoundById = errtype.NewEntityNotFoundError("database", "collection", "id")
 	ErrCollectionsCountFailed = errtype.NewInternalRepositoryError("unable to count collections")
 	ErrCollectionUpdateFailed = errtype.NewInternalRepositoryError("unable to update collection")
-
-	//ErrCollectionsDeleteFailed = errtype.NewInternalRepositoryError("unable to delete collection")
-
-	ErrCollectionGetFailed = errtype.NewInternalRepositoryError("unable to get collection")
+	ErrCollectionDeleteFailed = errtype.NewInternalRepositoryError("unable to delete collection")
+	ErrCollectionGetFailed    = errtype.NewInternalRepositoryError("unable to get collection")
 )
 
 type Collection struct {
@@ -227,6 +225,26 @@ func (r *Collection) Update(ctx context.Context, um *agg.CollectionDetail) error
 		r.log.Error(err)
 
 		return ErrCollectionUpdateFailed
+	}
+
+	return err
+}
+
+func (r *Collection) Delete(ctx context.Context, req *dto.CollectionDeleteRequestDTO) error {
+	sql, args, err := r.DeleteSQL(req)
+	if err != nil {
+		return r.log.Propagate(err)
+	}
+
+	var id uint64
+
+	err = r.db.QueryRow(ctx, sql, args...).Scan(&id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrCollectionNotFoundById
+		}
+
+		return ErrCollectionDeleteFailed
 	}
 
 	return err

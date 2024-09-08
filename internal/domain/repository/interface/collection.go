@@ -10,13 +10,33 @@ import (
 type Collection interface {
 	WithTx(tx postgres.RW) Collection
 
-	Create(ctx context.Context, cm *dto.CollectionCreateRequestDTO) error
+	// Create creates new collection and action.
+	Create(ctx context.Context, req *dto.CollectionCreateRequestDTO) error
+
+	// Get returns collection.
 	Get(ctx context.Context, conds any) (*agg.CollectionDetail, error)
-	Find(ctx context.Context, dto *dto.CollectionListRequestDTO, conds any) ([]*agg.CollectionListItem, error)
-	FindUserPublicCollectionList(ctx context.Context, dto *dto.UserCollectionListRequestDTO) ([]*agg.CollectionListItem, error)
-	FindUserCollectionList(ctx context.Context, dto *dto.UserCollectionListRequestDTO) ([]*agg.CollectionListItem, error)
+
+	// Find returns collection list.
+	Find(ctx context.Context, req *dto.CollectionListRequestDTO, conds any) ([]*agg.CollectionListItem, error)
+
+	// FindUserPublicCollectionList returns user public collection list.
+	FindUserPublicCollectionList(ctx context.Context, req *dto.UserCollectionListRequestDTO) ([]*agg.CollectionListItem, error)
+
+	// FindUserCollectionList returns user collection list with private and public collections.
+	FindUserCollectionList(ctx context.Context, req *dto.UserCollectionListRequestDTO) ([]*agg.CollectionListItem, error)
+
+	// Count returns count of collections.
 	Count(ctx context.Context, conds any) (uint64, error)
-	CountUserPublicCollection(ctx context.Context, dto *dto.UserCollectionListRequestDTO) (uint64, error)
-	CountUserCollection(ctx context.Context, dto *dto.UserCollectionListRequestDTO) (uint64, error)
-	Update(ctx context.Context, um *agg.CollectionDetail) error
+
+	// CountUserPublicCollection returns count of user public collections.
+	CountUserPublicCollection(ctx context.Context, req *dto.UserCollectionListRequestDTO) (uint64, error)
+
+	// CountUserCollection returns count of user collections with private and public collections.
+	CountUserCollection(ctx context.Context, req *dto.UserCollectionListRequestDTO) (uint64, error)
+
+	// Update updates collection.
+	Update(ctx context.Context, req *agg.CollectionDetail) error
+
+	// Delete deletes collection.
+	Delete(ctx context.Context, req *dto.CollectionDeleteRequestDTO) error
 }

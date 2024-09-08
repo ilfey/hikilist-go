@@ -1,4 +1,4 @@
-package user
+package collection
 
 import (
 	"github.com/gorilla/mux"
@@ -11,20 +11,20 @@ import (
 	"net/http"
 )
 
-const MeCollectionListControllerPath = "/users/me/collections"
+const DeleteControllerPath = "/collections/{id:[0-9]+}"
 
-type MeCollectionListController struct {
+type DeleteController struct {
 	logger    loggerInterface.Logger
 	responder responderInterface.Responder
 
-	builder    builderInterface.User
-	validator  validatorInterface.User
+	builder    builderInterface.Collection
+	validator  validatorInterface.Collection
 	collection collectionInterface.Collection
 }
 
-func NewMeCollectionListController(
+func NewDeleteController(
 	container diInterface.AppContainer,
-) (*MeCollectionListController, error) {
+) (*DeleteController, error) {
 	log, err := container.GetLogger()
 	if err != nil {
 		return nil, err
@@ -40,54 +40,59 @@ func NewMeCollectionListController(
 		return nil, log.Propagate(err)
 	}
 
-	userBuilder, err := container.GetUserBuilder()
+	collectionBuilder, err := container.GetCollectionBuilder()
 	if err != nil {
 		return nil, log.Propagate(err)
 	}
 
-	userValidator, err := container.GetUserValidator()
+	collectionValidator, err := container.GetCollectionValidator()
 	if err != nil {
 		return nil, log.Propagate(err)
 	}
 
-	return &MeCollectionListController{
+	return &DeleteController{
 		logger:    log,
 		responder: responder,
 
 		collection: collection,
-		builder:    userBuilder,
-		validator:  userValidator,
+		builder:    collectionBuilder,
+		validator:  collectionValidator,
 	}, nil
 }
 
-func (c *MeCollectionListController) MeCollectionList(w http.ResponseWriter, r *http.Request) {
+func (c *DeleteController) Delete(w http.ResponseWriter, r *http.Request) {
 	// Build dto.
-	listRequestDTO, err := c.builder.BuildCollectionListRequestDTOFromRequest(r)
+	deleteRequestDTO, err := c.builder.BuildDeleteRequestDTOFromRequest(r)
 	if err != nil {
 		c.responder.Respond(w, c.logger.Propagate(err))
+
 		return
 	}
 
 	// Validate dto.
-	err = c.validator.ValidateCollectionListRequestDTO(listRequestDTO)
+	err = c.validator.ValidateDeleteRequestDTO(deleteRequestDTO)
 	if err != nil {
 		c.responder.Respond(w, c.logger.Propagate(err))
+
 		return
 	}
 
-	// Detail listDTO.
-	listDTO, err := c.collection.GetUserCollectionList(r.Context(), listRequestDTO)
+	// Delete collection.
+	err = c.collection.Delete(r.Context(), deleteRequestDTO)
 	if err != nil {
 		c.responder.Respond(w, c.logger.Propagate(err))
+
 		return
 	}
 
-	c.responder.Respond(w, listDTO)
+	c.responder.Respond(w, map[string]any{
+		"detail": "ok",
+	})
 }
 
-func (c *MeCollectionListController) AddRoute(router *mux.Router) {
+func (c *DeleteController) AddRoute(router *mux.Router) {
 	router.
-		Path(MeCollectionListControllerPath).
-		HandlerFunc(c.MeCollectionList).
-		Methods(http.MethodGet)
+		Path(DeleteControllerPath).
+		HandlerFunc(c.Delete).
+		Methods(http.MethodDelete)
 }

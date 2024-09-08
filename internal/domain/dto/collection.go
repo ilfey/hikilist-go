@@ -9,6 +9,8 @@ type CollectionAddAnimeRequestDTO struct {
 	Animes []uint64 `json:"animes"`
 }
 
+/* ===== AnimeListFromCollection ===== */
+
 type AnimeListFromCollectionRequestDTO struct {
 	UserID       uint64 `json:"-"`
 	CollectionID uint64 `json:"-"`
@@ -26,6 +28,11 @@ type CollectionCreateRequestDTO struct {
 	Title       string  `json:"title"`
 	Description *string `json:"description"`
 	IsPublic    *bool   `json:"is_public"`
+}
+
+type CollectionDeleteRequestDTO struct {
+	UserID       uint64 `json:"-"`
+	CollectionID uint64 `json:"-"`
 }
 
 /* ===== Detail ===== */

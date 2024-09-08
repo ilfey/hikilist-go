@@ -76,7 +76,7 @@ func (c *ListController) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Detail listDTO.
-	listDTO, err := c.collection.GetListDTO(r.Context(), getListDTO, nil)
+	listDTO, err := c.collection.GetList(r.Context(), getListDTO, nil)
 	if err != nil {
 		c.responder.Respond(w, c.logger.Propagate(err))
 		return

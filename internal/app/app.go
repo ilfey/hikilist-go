@@ -168,7 +168,7 @@ func (a *App) InitAuthedControllers() ([]controller.Controller, error) {
 		return nil, log.Propagate(err)
 	}
 
-	deleteController, err := authController.NewDeleteController(a.container)
+	deleteUserController, err := authController.NewDeleteController(a.container)
 	if err != nil {
 		return nil, log.Propagate(err)
 	}
@@ -195,6 +195,11 @@ func (a *App) InitAuthedControllers() ([]controller.Controller, error) {
 		return nil, log.Propagate(err)
 	}
 
+	deleteCollectionController, err := collectionController.NewDeleteController(a.container)
+	if err != nil {
+		return nil, log.Propagate(err)
+	}
+
 	// User.
 
 	meController, err := userController.NewMeController(a.container)
@@ -215,13 +220,14 @@ func (a *App) InitAuthedControllers() ([]controller.Controller, error) {
 	return []controller.Controller{
 		// Auth.
 		logoutController,
-		deleteController,
+		deleteUserController,
 
 		// Collection.
 		createCollectionController,
 		updateCollectionController,
 		addAnimeCollectionController,
 		removeAnimeCollectionController,
+		deleteCollectionController,
 
 		// User.
 		meController,

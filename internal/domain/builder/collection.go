@@ -16,6 +16,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type CollectionBuilder struct {
@@ -227,6 +228,28 @@ func (b *CollectionBuilder) BuildDetailRequestDTOFromRequest(r *http.Request) (*
 	return detailRequestDTO, nil
 }
 
+func (b *CollectionBuilder) BuildDeleteRequestDTOFromRequest(r *http.Request) (*dto.CollectionDeleteRequestDTO, error) {
+	deleteRequestDTO := new(dto.CollectionDeleteRequestDTO)
+
+	stringCollectionId, err := b.extractor.GetParameter(r, "id")
+	if err != nil {
+		return nil, b.log.Propagate(err)
+	}
+
+	collectionId, err := strconv.ParseUint(stringCollectionId, 10, 64)
+	if err != nil {
+		return nil, b.log.Propagate(errtype.NewFieldMustBeIntegerError("id"))
+	}
+
+	deleteRequestDTO.CollectionID = collectionId
+
+	if userId, ok := r.Context().Value(enum.UserIDContextKey).(uint64); ok {
+		deleteRequestDTO.UserID = userId
+	}
+
+	return deleteRequestDTO, nil
+}
+
 func (b *CollectionBuilder) BuildAggFromUpdateRequestDTO(ctx context.Context, req *dto.CollectionUpdateRequestDTO) (*agg.CollectionDetail, error) {
 	var changes int
 
@@ -259,6 +282,8 @@ func (b *CollectionBuilder) BuildAggFromUpdateRequestDTO(ctx context.Context, re
 	if changes == 0 {
 		return nil, b.log.Propagate(errtype.NewBadRequestError("nothing to update"))
 	}
+
+	stored.UpdatedAt = time.Now()
 
 	return stored, nil
 }

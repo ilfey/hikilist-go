@@ -129,14 +129,25 @@ func (r *Collection) CountUserCollectionSQL(req *dto.UserCollectionListRequestDT
 		ToSql()
 }
 
-func (r *Collection) UpdateSQL(um *agg.CollectionDetail) (string, []any, error) {
+func (r *Collection) UpdateSQL(req *agg.CollectionDetail) (string, []any, error) {
 	return squirrel.Update(CollectionTN).
-		Set("title", um.Title).
-		Set("description", um.Description).
-		Set("is_public", um.IsPublic).
+		Set("title", req.Title).
+		Set("description", req.Description).
+		Set("is_public", req.IsPublic).
+		Set("updated_at", req.UpdatedAt).
 		Where(squirrel.Eq{
-			"id":      um.ID,
-			"user_id": um.UserID,
+			"id":      req.ID,
+			"user_id": req.UserID,
 		}).
+		ToSql()
+}
+
+func (r *Collection) DeleteSQL(req *dto.CollectionDeleteRequestDTO) (string, []any, error) {
+	return squirrel.Delete(CollectionTN).
+		Where(squirrel.Eq{
+			"id":      req.CollectionID,
+			"user_id": req.UserID,
+		}).
+		Suffix("RETURNING id").
 		ToSql()
 }

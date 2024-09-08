@@ -83,6 +83,12 @@ func (v *Collection) ValidateUpdateRequestDTO(dto *dto.CollectionUpdateRequestDT
 	return nil
 }
 
+func (v *Collection) ValidateDeleteRequestDTO(req *dto.CollectionDeleteRequestDTO) error {
+	// No validation for now.
+
+	return nil
+}
+
 func (v *Collection) ValidateRemoveRequestDTO(dto *dto.CollectionRemoveAnimeRequestDTO) error {
 	expectations, ok := validator.Validate(
 		dto,
@@ -176,27 +182,7 @@ func (v *Collection) ValidateAnimeListFromCollectionRequestDTO(dto *dto.AnimeLis
 }
 
 func (v *Collection) ValidateDetailRequestDTO(dto *dto.CollectionDetailRequestDTO) error {
-	expectations, ok := validator.Validate(
-		dto,
-		map[string][]options.Option{
-			"Page": {
-				options.GreaterThan[uint64](0),
-			},
-			"Limit": {
-				options.GreaterThan[uint64](0),
-				options.LessThan[uint64](101),
-			},
-			"Order": {
-				options.InList([]string{
-					"id",
-					"-id",
-				}),
-			},
-		},
-	)
-	if !ok {
-		return v.log.Propagate(errtype.NewValidatorError(expectations))
-	}
+	// No validation for now.
 
 	return nil
 }

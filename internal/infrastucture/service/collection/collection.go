@@ -55,7 +55,7 @@ func (s *Collection) Get(ctx context.Context, conds any) (*agg.CollectionDetail,
 	return dm, nil
 }
 
-func (s *Collection) GetListDTO(ctx context.Context, p *dto.CollectionListRequestDTO, conds any) (*agg.CollectionList, error) {
+func (s *Collection) GetList(ctx context.Context, p *dto.CollectionListRequestDTO, conds any) (*agg.CollectionList, error) {
 	var lm agg.CollectionList
 
 	g := errgroup.Group{}
@@ -90,7 +90,7 @@ func (s *Collection) GetListDTO(ctx context.Context, p *dto.CollectionListReques
 	return &lm, nil
 }
 
-func (s *Collection) GetUserPublicCollectionListDTO(ctx context.Context, req *dto.UserCollectionListRequestDTO) (*agg.CollectionList, error) {
+func (s *Collection) GetUserPublicCollectionList(ctx context.Context, req *dto.UserCollectionListRequestDTO) (*agg.CollectionList, error) {
 	var lm agg.CollectionList
 
 	g := errgroup.Group{}
@@ -125,7 +125,7 @@ func (s *Collection) GetUserPublicCollectionListDTO(ctx context.Context, req *dt
 	return &lm, nil
 }
 
-func (s *Collection) GetUserCollectionListDTO(ctx context.Context, req *dto.UserCollectionListRequestDTO) (*agg.CollectionList, error) {
+func (s *Collection) GetUserCollectionList(ctx context.Context, req *dto.UserCollectionListRequestDTO) (*agg.CollectionList, error) {
 	var lm agg.CollectionList
 
 	g := errgroup.Group{}
@@ -162,6 +162,15 @@ func (s *Collection) GetUserCollectionListDTO(ctx context.Context, req *dto.User
 
 func (s *Collection) Update(ctx context.Context, um *agg.CollectionDetail) error {
 	err := s.collection.Update(ctx, um)
+	if err != nil {
+		return s.log.Propagate(err)
+	}
+
+	return nil
+}
+
+func (s *Collection) Delete(ctx context.Context, req *dto.CollectionDeleteRequestDTO) error {
+	err := s.collection.Delete(ctx, req)
 	if err != nil {
 		return s.log.Propagate(err)
 	}

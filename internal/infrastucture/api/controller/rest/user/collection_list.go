@@ -76,7 +76,7 @@ func (c *CollectionListController) CollectionList(w http.ResponseWriter, r *http
 	}
 
 	// Detail listDTO.
-	listDTO, err := c.collection.GetUserPublicCollectionListDTO(r.Context(), listRequestDTO)
+	listDTO, err := c.collection.GetUserPublicCollectionList(r.Context(), listRequestDTO)
 	if err != nil {
 		c.responder.Respond(w, c.logger.Propagate(err))
 		return
