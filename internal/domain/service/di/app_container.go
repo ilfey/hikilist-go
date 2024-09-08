@@ -1,4 +1,4 @@
-package container
+package di
 
 import (
 	"context"
@@ -10,31 +10,32 @@ import (
 	animeInterface "github.com/ilfey/hikilist-go/internal/domain/service/anime/interface"
 	authInterface "github.com/ilfey/hikilist-go/internal/domain/service/auth/interface"
 	collectionInterface "github.com/ilfey/hikilist-go/internal/domain/service/collection/interface"
+	"github.com/ilfey/hikilist-go/internal/domain/service/di/container"
+	"github.com/ilfey/hikilist-go/internal/domain/service/di/container/interface"
 	extractorInterface "github.com/ilfey/hikilist-go/internal/domain/service/extractor/interface"
 	responderInterface "github.com/ilfey/hikilist-go/internal/domain/service/responder/interface"
 	securityInterface "github.com/ilfey/hikilist-go/internal/domain/service/security/interface"
 	tokenizerInterface "github.com/ilfey/hikilist-go/internal/domain/service/tokenizer/interface"
 	userInterface "github.com/ilfey/hikilist-go/internal/domain/service/user/interface"
 	validatorInterface "github.com/ilfey/hikilist-go/internal/domain/validator/interface"
-	diInterface "github.com/ilfey/hikilist-go/internal/infrastucture/di/container/interface"
 	loggerInterface "github.com/ilfey/hikilist-go/pkg/logger/interface"
 	"github.com/ilfey/hikilist-go/pkg/postgres"
 	"reflect"
 )
 
-type ServiceContainer struct {
-	diInterface.Container
+type AppContainer struct {
+	containerInterface.Container
 }
 
-func NewServiceContainerManager() *ServiceContainer {
-	return &ServiceContainer{
-		Container: NewServiceContainer(),
+func NewServiceContainerManager() *AppContainer {
+	return &AppContainer{
+		Container: container.NewServiceContainer(),
 	}
 }
 
 /* ===== Config ===== */
 
-func (s *ServiceContainer) GetAppConfig() (*config.AppConfig, error) {
+func (s *AppContainer) GetAppConfig() (*config.AppConfig, error) {
 	key := (*config.AppConfig)(nil)
 	service, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -49,7 +50,7 @@ func (s *ServiceContainer) GetAppConfig() (*config.AppConfig, error) {
 
 /* ===== AppContext ===== */
 
-func (s *ServiceContainer) GetAppContext() (context.Context, error) {
+func (s *AppContainer) GetAppContext() (context.Context, error) {
 	key := (*context.Context)(nil)
 	service, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -64,7 +65,7 @@ func (s *ServiceContainer) GetAppContext() (context.Context, error) {
 
 /* ===== CancelFunc ===== */
 
-func (s *ServiceContainer) GetCancelFunc() (context.CancelFunc, error) {
+func (s *AppContainer) GetCancelFunc() (context.CancelFunc, error) {
 	key := (*context.CancelFunc)(nil)
 	service, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -79,7 +80,7 @@ func (s *ServiceContainer) GetCancelFunc() (context.CancelFunc, error) {
 
 /* ===== Logger ===== */
 
-func (s *ServiceContainer) GetLogger() (loggerInterface.Logger, error) {
+func (s *AppContainer) GetLogger() (loggerInterface.Logger, error) {
 	key := (*loggerInterface.Logger)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -94,7 +95,7 @@ func (s *ServiceContainer) GetLogger() (loggerInterface.Logger, error) {
 
 /* ===== Extractor ===== */
 
-func (s *ServiceContainer) GetRequestParametersExtractorService() (extractorInterface.RequestParams, error) {
+func (s *AppContainer) GetRequestParametersExtractorService() (extractorInterface.RequestParams, error) {
 	key := (*extractorInterface.RequestParams)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -109,7 +110,7 @@ func (s *ServiceContainer) GetRequestParametersExtractorService() (extractorInte
 
 /* ===== Responder ===== */
 
-func (s *ServiceContainer) GetResponderService() (responderInterface.Responder, error) {
+func (s *AppContainer) GetResponderService() (responderInterface.Responder, error) {
 	key := (*responderInterface.Responder)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -124,7 +125,7 @@ func (s *ServiceContainer) GetResponderService() (responderInterface.Responder, 
 
 /* ===== Hasher ===== */
 
-func (s *ServiceContainer) GetHasherService() (securityInterface.Hasher, error) {
+func (s *AppContainer) GetHasherService() (securityInterface.Hasher, error) {
 	key := (*securityInterface.Hasher)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -139,7 +140,7 @@ func (s *ServiceContainer) GetHasherService() (securityInterface.Hasher, error) 
 
 /* ===== Postgres ===== */
 
-func (s *ServiceContainer) GetPostgresDatabase() (postgres.DB, error) {
+func (s *AppContainer) GetPostgresDatabase() (postgres.DB, error) {
 	key := (*postgres.DB)(nil)
 	service, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -152,9 +153,24 @@ func (s *ServiceContainer) GetPostgresDatabase() (postgres.DB, error) {
 	return database, nil
 }
 
+/* ===== Pagination ===== */
+
+func (s *AppContainer) GetPaginationBuilder() (builderInterface.Pagination, error) {
+	key := (*builderInterface.Pagination)(nil)
+	service, err := s.Get(reflect.TypeOf(key))
+	if err != nil {
+		return nil, errtype.NewServiceWasNotFoundIntoContainerError(reflect.TypeOf(key))
+	}
+	database, ok := service.Interface().(builderInterface.Pagination)
+	if !ok {
+		return nil, errtype.NewTypesMismatchedServiceContainerError(reflect.TypeOf(service), reflect.TypeOf(key))
+	}
+	return database, nil
+}
+
 /* ===== Action ===== */
 
-func (s *ServiceContainer) GetActionRepository() (repositoryInterface.Action, error) {
+func (s *AppContainer) GetActionRepository() (repositoryInterface.Action, error) {
 	key := (*repositoryInterface.Action)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -167,7 +183,7 @@ func (s *ServiceContainer) GetActionRepository() (repositoryInterface.Action, er
 	return service, nil
 }
 
-func (s *ServiceContainer) GetActionService() (actionInterface.Action, error) {
+func (s *AppContainer) GetActionService() (actionInterface.Action, error) {
 	key := (*actionInterface.Action)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -180,7 +196,7 @@ func (s *ServiceContainer) GetActionService() (actionInterface.Action, error) {
 	return service, nil
 }
 
-func (s *ServiceContainer) GetActionBuilder() (builderInterface.Action, error) {
+func (s *AppContainer) GetActionBuilder() (builderInterface.Action, error) {
 	key := (*builderInterface.Action)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -193,7 +209,7 @@ func (s *ServiceContainer) GetActionBuilder() (builderInterface.Action, error) {
 	return service, nil
 }
 
-func (s *ServiceContainer) GetActionValidator() (validatorInterface.Action, error) {
+func (s *AppContainer) GetActionValidator() (validatorInterface.Action, error) {
 	key := (*validatorInterface.Action)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -208,7 +224,7 @@ func (s *ServiceContainer) GetActionValidator() (validatorInterface.Action, erro
 
 /* ===== Anime ===== */
 
-func (s *ServiceContainer) GetAnimeRepository() (repositoryInterface.Anime, error) {
+func (s *AppContainer) GetAnimeRepository() (repositoryInterface.Anime, error) {
 	key := (*repositoryInterface.Anime)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -221,7 +237,7 @@ func (s *ServiceContainer) GetAnimeRepository() (repositoryInterface.Anime, erro
 	return service, nil
 }
 
-func (s *ServiceContainer) GetAnimeService() (animeInterface.Anime, error) {
+func (s *AppContainer) GetAnimeService() (animeInterface.Anime, error) {
 	key := (*animeInterface.Anime)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -234,7 +250,7 @@ func (s *ServiceContainer) GetAnimeService() (animeInterface.Anime, error) {
 	return service, nil
 }
 
-func (s *ServiceContainer) GetAnimeBuilder() (builderInterface.Anime, error) {
+func (s *AppContainer) GetAnimeBuilder() (builderInterface.Anime, error) {
 	key := (*builderInterface.Anime)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -247,7 +263,7 @@ func (s *ServiceContainer) GetAnimeBuilder() (builderInterface.Anime, error) {
 	return service, nil
 }
 
-func (s *ServiceContainer) GetAnimeValidator() (validatorInterface.Anime, error) {
+func (s *AppContainer) GetAnimeValidator() (validatorInterface.Anime, error) {
 	key := (*validatorInterface.Anime)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -262,7 +278,7 @@ func (s *ServiceContainer) GetAnimeValidator() (validatorInterface.Anime, error)
 
 /* ===== AnimeCollection ===== */
 
-func (s *ServiceContainer) GetAnimeCollectionRepository() (repositoryInterface.AnimeCollection, error) {
+func (s *AppContainer) GetAnimeCollectionRepository() (repositoryInterface.AnimeCollection, error) {
 	key := (*repositoryInterface.AnimeCollection)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -277,7 +293,7 @@ func (s *ServiceContainer) GetAnimeCollectionRepository() (repositoryInterface.A
 
 /* ===== Collection ===== */
 
-func (s *ServiceContainer) GetCollectionRepository() (repositoryInterface.Collection, error) {
+func (s *AppContainer) GetCollectionRepository() (repositoryInterface.Collection, error) {
 	key := (*repositoryInterface.Collection)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -290,7 +306,7 @@ func (s *ServiceContainer) GetCollectionRepository() (repositoryInterface.Collec
 	return service, nil
 }
 
-func (s *ServiceContainer) GetCollectionService() (collectionInterface.Collection, error) {
+func (s *AppContainer) GetCollectionService() (collectionInterface.Collection, error) {
 	key := (*collectionInterface.Collection)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -303,7 +319,7 @@ func (s *ServiceContainer) GetCollectionService() (collectionInterface.Collectio
 	return service, nil
 }
 
-func (s *ServiceContainer) GetCollectionBuilder() (builderInterface.Collection, error) {
+func (s *AppContainer) GetCollectionBuilder() (builderInterface.Collection, error) {
 	key := (*builderInterface.Collection)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -316,7 +332,7 @@ func (s *ServiceContainer) GetCollectionBuilder() (builderInterface.Collection, 
 	return service, nil
 }
 
-func (s *ServiceContainer) GetCollectionValidator() (validatorInterface.Collection, error) {
+func (s *AppContainer) GetCollectionValidator() (validatorInterface.Collection, error) {
 	key := (*validatorInterface.Collection)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -331,7 +347,7 @@ func (s *ServiceContainer) GetCollectionValidator() (validatorInterface.Collecti
 
 /* ===== Token ===== */
 
-func (s *ServiceContainer) GetTokenRepository() (repositoryInterface.Token, error) {
+func (s *AppContainer) GetTokenRepository() (repositoryInterface.Token, error) {
 	key := (*repositoryInterface.Token)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -346,7 +362,7 @@ func (s *ServiceContainer) GetTokenRepository() (repositoryInterface.Token, erro
 
 /* ===== CRUD ===== */
 
-func (s *ServiceContainer) GetUserRepository() (repositoryInterface.User, error) {
+func (s *AppContainer) GetUserRepository() (repositoryInterface.User, error) {
 	key := (*repositoryInterface.User)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -359,7 +375,7 @@ func (s *ServiceContainer) GetUserRepository() (repositoryInterface.User, error)
 	return service, nil
 }
 
-func (s *ServiceContainer) GetUserService() (userInterface.CRUD, error) {
+func (s *AppContainer) GetUserService() (userInterface.CRUD, error) {
 	key := (*userInterface.CRUD)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -372,7 +388,7 @@ func (s *ServiceContainer) GetUserService() (userInterface.CRUD, error) {
 	return service, nil
 }
 
-func (s *ServiceContainer) GetUserBuilder() (builderInterface.User, error) {
+func (s *AppContainer) GetUserBuilder() (builderInterface.User, error) {
 	key := (*builderInterface.User)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -385,7 +401,7 @@ func (s *ServiceContainer) GetUserBuilder() (builderInterface.User, error) {
 	return service, nil
 }
 
-func (s *ServiceContainer) GetUserValidator() (validatorInterface.User, error) {
+func (s *AppContainer) GetUserValidator() (validatorInterface.User, error) {
 	key := (*validatorInterface.User)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -400,7 +416,7 @@ func (s *ServiceContainer) GetUserValidator() (validatorInterface.User, error) {
 
 /* ===== Tokenizer ===== */
 
-func (s *ServiceContainer) GetTokenizerService() (tokenizerInterface.Tokenizer, error) {
+func (s *AppContainer) GetTokenizerService() (tokenizerInterface.Tokenizer, error) {
 	key := (*tokenizerInterface.Tokenizer)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -415,7 +431,7 @@ func (s *ServiceContainer) GetTokenizerService() (tokenizerInterface.Tokenizer, 
 
 /* ===== Auth ===== */
 
-func (s *ServiceContainer) GetAuthService() (authInterface.Auth, error) {
+func (s *AppContainer) GetAuthService() (authInterface.Auth, error) {
 	key := (*authInterface.Auth)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -428,7 +444,7 @@ func (s *ServiceContainer) GetAuthService() (authInterface.Auth, error) {
 	return service, nil
 }
 
-func (s *ServiceContainer) GetAuthBuilder() (builderInterface.Auth, error) {
+func (s *AppContainer) GetAuthBuilder() (builderInterface.Auth, error) {
 	key := (*builderInterface.Auth)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {
@@ -441,7 +457,7 @@ func (s *ServiceContainer) GetAuthBuilder() (builderInterface.Auth, error) {
 	return service, nil
 }
 
-func (s *ServiceContainer) GetAuthValidator() (validatorInterface.Auth, error) {
+func (s *AppContainer) GetAuthValidator() (validatorInterface.Auth, error) {
 	key := (*validatorInterface.Auth)(nil)
 	reflectService, err := s.Get(reflect.TypeOf(key))
 	if err != nil {

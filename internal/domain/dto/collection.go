@@ -1,7 +1,5 @@
 package dto
 
-import "github.com/ilfey/hikilist-go/internal/domain/types"
-
 /* ===== AddAnime ===== */
 
 type CollectionAddAnimeRequestDTO struct {
@@ -15,9 +13,7 @@ type AnimeListFromCollectionRequestDTO struct {
 	UserID       uint64 `json:"-"`
 	CollectionID uint64 `json:"-"`
 
-	Page  uint64      `json:"page"`
-	Limit uint64      `json:"limit"`
-	Order types.Order `json:"order"`
+	*PaginationRequestDTO `json:"-"`
 }
 
 /* ===== Create ===== */
@@ -42,9 +38,7 @@ type CollectionDetailRequestDTO struct {
 /* ===== List ===== */
 
 type CollectionListRequestDTO struct {
-	Page  uint64      `json:"page"`
-	Limit uint64      `json:"limit"`
-	Order types.Order `json:"order"`
+	*PaginationRequestDTO `json:"-"`
 }
 
 /* ===== RemoveAnime ===== */

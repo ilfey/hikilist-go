@@ -9,19 +9,19 @@ import (
 	"github.com/ilfey/hikilist-go/internal/domain/service/anime/interface"
 	"github.com/ilfey/hikilist-go/internal/domain/service/auth/interface"
 	"github.com/ilfey/hikilist-go/internal/domain/service/collection/interface"
+	containerInterface "github.com/ilfey/hikilist-go/internal/domain/service/di/container/interface"
 	"github.com/ilfey/hikilist-go/internal/domain/service/extractor/interface"
 	"github.com/ilfey/hikilist-go/internal/domain/service/responder/interface"
 	"github.com/ilfey/hikilist-go/internal/domain/service/security/interface"
 	tokenizerInterface "github.com/ilfey/hikilist-go/internal/domain/service/tokenizer/interface"
 	"github.com/ilfey/hikilist-go/internal/domain/service/user/interface"
 	"github.com/ilfey/hikilist-go/internal/domain/validator/interface"
-	diInterface "github.com/ilfey/hikilist-go/internal/infrastucture/di/container/interface"
 	"github.com/ilfey/hikilist-go/pkg/logger/interface"
 	"github.com/ilfey/hikilist-go/pkg/postgres"
 )
 
-type ServiceContainer interface {
-	diInterface.Container
+type AppContainer interface {
+	containerInterface.Container
 
 	GetAppConfig() (*config.AppConfig, error)
 	GetAppContext() (context.Context, error)
@@ -36,6 +36,8 @@ type ServiceContainer interface {
 	GetHasherService() (securityInterface.Hasher, error)
 
 	GetPostgresDatabase() (postgres.DB, error)
+
+	GetPaginationBuilder() (builderInterface.Pagination, error)
 
 	GetActionRepository() (repositoryInterface.Action, error)
 	GetActionService() (actionInterface.Action, error)

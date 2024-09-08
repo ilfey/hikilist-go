@@ -24,7 +24,7 @@ var (
 	ErrActionsCountFailed = errtype.NewInternalRepositoryError("unable to count actions")
 )
 
-func NewAction(container diInterface.ServiceContainer) (*Action, error) {
+func NewAction(container diInterface.AppContainer) (*Action, error) {
 	log, err := container.GetLogger()
 	if err != nil {
 		return nil, err

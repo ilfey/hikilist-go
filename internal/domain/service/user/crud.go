@@ -18,7 +18,7 @@ type CRUDService struct {
 	validator validatorInterface.User
 }
 
-func NewCRUDService(container diInterface.ServiceContainer) (userInterface.CRUD, error) {
+func NewCRUDService(container diInterface.AppContainer) (userInterface.CRUD, error) {
 	log, err := container.GetLogger()
 	if err != nil {
 		return nil, err

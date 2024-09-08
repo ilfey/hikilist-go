@@ -23,7 +23,7 @@ type DetailController struct {
 }
 
 func NewDetailController(
-	container diInterface.ServiceContainer,
+	container diInterface.AppContainer,
 ) (*DetailController, error) {
 	log, err := container.GetLogger()
 	if err != nil {

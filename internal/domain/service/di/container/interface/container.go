@@ -1,4 +1,4 @@
-package diInterface
+package containerInterface
 
 import "reflect"
 

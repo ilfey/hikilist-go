@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/ilfey/hikilist-go/internal/app"
 	config2 "github.com/ilfey/hikilist-go/internal/config"
-	"github.com/ilfey/hikilist-go/internal/infrastucture/di/container"
+	"github.com/ilfey/hikilist-go/internal/domain/service/di"
 	"sync"
 )
 
@@ -18,7 +18,7 @@ func main() {
 
 	go app.NewApp(
 		cfg,
-		container.NewServiceContainerManager(),
+		di.NewServiceContainerManager(),
 	).Run(wg)
 
 	wg.Wait()

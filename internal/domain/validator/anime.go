@@ -13,7 +13,7 @@ type Anime struct {
 	log loggerInterface.Logger
 }
 
-func NewAnime(container diInterface.ServiceContainer) (*Anime, error) {
+func NewAnime(container diInterface.AppContainer) (*Anime, error) {
 	log, err := container.GetLogger()
 	if err != nil {
 		return nil, err

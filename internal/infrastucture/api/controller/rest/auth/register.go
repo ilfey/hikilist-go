@@ -23,7 +23,7 @@ type RegisterController struct {
 }
 
 func NewRegisterController(
-	container diInterface.ServiceContainer,
+	container diInterface.AppContainer,
 ) (*RegisterController, error) {
 	log, err := container.GetLogger()
 	if err != nil {

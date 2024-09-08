@@ -23,7 +23,7 @@ type ActionListController struct {
 }
 
 func NewActionListController(
-	container diInterface.ServiceContainer,
+	container diInterface.AppContainer,
 ) (*ActionListController, error) {
 	log, err := container.GetLogger()
 	if err != nil {

@@ -23,7 +23,7 @@ type CreateController struct {
 }
 
 func NewCreateController(
-	container diInterface.ServiceContainer,
+	container diInterface.AppContainer,
 ) (*CreateController, error) {
 	log, err := container.GetLogger()
 	if err != nil {

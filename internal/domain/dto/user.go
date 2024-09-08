@@ -33,8 +33,7 @@ type UserDeleteRequestDTO struct {
 /* ===== List ===== */
 
 type UserListRequestDTO struct {
-	Page  uint64 `json:"page"`
-	Limit uint64 `json:"limit"`
+	*PaginationRequestDTO `json:"-"`
 }
 
 /* ===== Me ===== */

@@ -2,12 +2,12 @@ package builder
 
 import (
 	"encoding/json"
+	builderInterface "github.com/ilfey/hikilist-go/internal/domain/builder/interface"
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/enum"
 	"github.com/ilfey/hikilist-go/internal/domain/errtype"
 	diInterface "github.com/ilfey/hikilist-go/internal/domain/service/di/interface"
 	extractorInterface "github.com/ilfey/hikilist-go/internal/domain/service/extractor/interface"
-	"github.com/ilfey/hikilist-go/internal/domain/types"
 	loggerInterface "github.com/ilfey/hikilist-go/pkg/logger/interface"
 	"github.com/pkg/errors"
 	"io"
@@ -16,11 +16,12 @@ import (
 )
 
 type CollectionBuilder struct {
-	logger    loggerInterface.Logger
-	extractor extractorInterface.RequestParams
+	log        loggerInterface.Logger
+	extractor  extractorInterface.RequestParams
+	pagination builderInterface.Pagination
 }
 
-func NewCollection(container diInterface.ServiceContainer) (*CollectionBuilder, error) {
+func NewCollection(container diInterface.AppContainer) (*CollectionBuilder, error) {
 	log, err := container.GetLogger()
 	if err != nil {
 		return nil, err
@@ -31,9 +32,15 @@ func NewCollection(container diInterface.ServiceContainer) (*CollectionBuilder, 
 		return nil, log.Propagate(err)
 	}
 
+	pagination, err := container.GetPaginationBuilder()
+	if err != nil {
+		return nil, log.Propagate(err)
+	}
+
 	return &CollectionBuilder{
-		logger:    log,
-		extractor: extractor,
+		log:        log,
+		extractor:  extractor,
+		pagination: pagination,
 	}, nil
 }
 
@@ -42,20 +49,20 @@ func (b *CollectionBuilder) BuildUpdateRequestDTOFromRequest(r *http.Request) (*
 
 	if err := json.NewDecoder(r.Body).Decode(updateReqDTO); err != nil {
 		if errors.Is(err, io.EOF) {
-			return nil, b.logger.Propagate(errtype.NewBodyIsEmptyError())
+			return nil, b.log.Propagate(errtype.NewBodyIsEmptyError())
 		}
 
-		return nil, b.logger.Propagate(err)
+		return nil, b.log.Propagate(err)
 	}
 
 	stringCollectionId, err := b.extractor.GetParameter(r, "id")
 	if err != nil {
-		return nil, b.logger.Propagate(err)
+		return nil, b.log.Propagate(err)
 	}
 
 	collectionId, err := strconv.ParseUint(stringCollectionId, 10, 64)
 	if err != nil {
-		return nil, b.logger.Propagate(errtype.NewFieldMustBeIntegerError("id"))
+		return nil, b.log.Propagate(errtype.NewFieldMustBeIntegerError("id"))
 	}
 
 	updateReqDTO.CollectionID = collectionId
@@ -72,20 +79,20 @@ func (b *CollectionBuilder) BuildRemoveAnimeRequestDTOFromRequest(r *http.Reques
 
 	if err := json.NewDecoder(r.Body).Decode(removeAnimeReqDTO); err != nil {
 		if errors.Is(err, io.EOF) {
-			return nil, b.logger.Propagate(errtype.NewBodyIsEmptyError())
+			return nil, b.log.Propagate(errtype.NewBodyIsEmptyError())
 		}
 
-		return nil, b.logger.Propagate(err)
+		return nil, b.log.Propagate(err)
 	}
 
 	stringCollectionId, err := b.extractor.GetParameter(r, "id")
 	if err != nil {
-		return nil, b.logger.Propagate(err)
+		return nil, b.log.Propagate(err)
 	}
 
 	collectionId, err := strconv.ParseUint(stringCollectionId, 10, 64)
 	if err != nil {
-		return nil, b.logger.Propagate(errtype.NewFieldMustBeIntegerError("id"))
+		return nil, b.log.Propagate(errtype.NewFieldMustBeIntegerError("id"))
 	}
 
 	removeAnimeReqDTO.CollectionID = collectionId
@@ -102,10 +109,10 @@ func (b *CollectionBuilder) BuildCreateRequestDTOFromRequest(r *http.Request) (*
 
 	if err := json.NewDecoder(r.Body).Decode(createReqDTO); err != nil {
 		if errors.Is(err, io.EOF) {
-			return nil, b.logger.Propagate(errtype.NewBodyIsEmptyError())
+			return nil, b.log.Propagate(errtype.NewBodyIsEmptyError())
 		}
 
-		return nil, b.logger.Propagate(err)
+		return nil, b.log.Propagate(err)
 	}
 
 	if userId, ok := r.Context().Value(enum.UserIDContextKey).(uint64); ok {
@@ -120,20 +127,20 @@ func (b *CollectionBuilder) BuildAddAnimeRequestDTOFromRequest(r *http.Request) 
 
 	if err := json.NewDecoder(r.Body).Decode(addAnimeReqDTO); err != nil {
 		if errors.Is(err, io.EOF) {
-			return nil, b.logger.Propagate(errtype.NewBodyIsEmptyError())
+			return nil, b.log.Propagate(errtype.NewBodyIsEmptyError())
 		}
 
-		return nil, b.logger.Propagate(err)
+		return nil, b.log.Propagate(err)
 	}
 
 	stringCollectionId, err := b.extractor.GetParameter(r, "id")
 	if err != nil {
-		return nil, b.logger.Propagate(err)
+		return nil, b.log.Propagate(err)
 	}
 
 	collectionId, err := strconv.ParseUint(stringCollectionId, 10, 64)
 	if err != nil {
-		return nil, b.logger.Propagate(errtype.NewFieldMustBeIntegerError("id"))
+		return nil, b.log.Propagate(errtype.NewFieldMustBeIntegerError("id"))
 	}
 
 	addAnimeReqDTO.CollectionID = collectionId
@@ -146,98 +153,35 @@ func (b *CollectionBuilder) BuildAddAnimeRequestDTOFromRequest(r *http.Request) 
 }
 
 func (b *CollectionBuilder) BuildListRequestDTOFromRequest(r *http.Request) (*dto.CollectionListRequestDTO, error) {
-	var (
-		page  uint64
-		limit uint64
-		//order types.Order
-	)
-
-	stringPage, err := b.extractor.GetParameter(r, "page")
+	pagination, err := b.pagination.BuildPaginationRequestDROFromRequest(r)
 	if err != nil {
-		page = 1
-	} else {
-		page, err = strconv.ParseUint(stringPage, 10, 64)
-		if err != nil {
-			b.logger.Error(err)
-
-			return nil, errtype.NewFieldMustBeIntegerError("page")
-		}
+		return nil, b.log.Propagate(err)
 	}
-
-	stringLimit, err := b.extractor.GetParameter(r, "limit")
-	if err != nil {
-		limit = 10
-	} else {
-		limit, err = strconv.ParseUint(stringLimit, 10, 64)
-		if err != nil {
-			b.logger.Error(err)
-
-			return nil, errtype.NewFieldMustBeIntegerError("limit")
-		}
-	}
-
-	//stringOrder, err := b.extractor.GetParameter(r, "order")
-	//if err != nil {
-	//	order = "-id"
-	//} else {
-	//	order = types.Order(stringOrder)
-	//}
 
 	return &dto.CollectionListRequestDTO{
-		Page:  page,
-		Limit: limit,
-		//Order: order,
+		PaginationRequestDTO: pagination,
 	}, nil
 }
 
 func (b *CollectionBuilder) BuildAnimeListFromCollectionRequestDTOFromRequest(r *http.Request) (*dto.AnimeListFromCollectionRequestDTO, error) {
 	var (
-		page         uint64
-		limit        uint64
-		order        types.Order
 		collectionId uint64
 		userId       uint64
 	)
 
-	stringPage, err := b.extractor.GetParameter(r, "page")
+	pagination, err := b.pagination.BuildPaginationRequestDROFromRequest(r)
 	if err != nil {
-		limit = 10
-	} else {
-		page, err = strconv.ParseUint(stringPage, 10, 64)
-		if err != nil {
-			b.logger.Error(err)
-
-			return nil, errtype.NewFieldMustBeIntegerError("page")
-		}
-	}
-
-	stringLimit, err := b.extractor.GetParameter(r, "limit")
-	if err != nil {
-		page = 1
-	} else {
-		limit, err = strconv.ParseUint(stringLimit, 10, 64)
-		if err != nil {
-			b.logger.Error(err)
-
-			return nil, errtype.NewFieldMustBeIntegerError("limit")
-		}
-	}
-
-	stringOrder, err := b.extractor.GetParameter(r, "order")
-	if err != nil {
-		order = "-id"
-	} else {
-		order = types.Order(stringOrder)
+		return nil, b.log.Propagate(err)
 	}
 
 	stringCollectionId, err := b.extractor.GetParameter(r, "id")
 	if err != nil {
-		return nil, b.logger.Propagate(err)
+		return nil, b.log.Propagate(err)
 	}
 
 	collectionId, err = strconv.ParseUint(stringCollectionId, 10, 64)
 	if err != nil {
-		return nil, b.logger.Propagate(errtype.NewFieldMustBeIntegerError("id"))
+		return nil, b.log.Propagate(errtype.NewFieldMustBeIntegerError("id"))
 	}
 
 	if id, ok := r.Context().Value(enum.UserIDContextKey).(uint64); ok {
@@ -245,11 +189,9 @@ func (b *CollectionBuilder) BuildAnimeListFromCollectionRequestDTOFromRequest(r 
 	}
 
 	return &dto.AnimeListFromCollectionRequestDTO{
-		UserID:       userId,
-		CollectionID: collectionId,
-		Page:         page,
-		Limit:        limit,
-		Order:        order,
+		UserID:               userId,
+		CollectionID:         collectionId,
+		PaginationRequestDTO: pagination,
 	}, nil
 }
 
@@ -258,12 +200,12 @@ func (b *CollectionBuilder) BuildDetailRequestDTOFromRequest(r *http.Request) (*
 
 	stringCollectionId, err := b.extractor.GetParameter(r, "id")
 	if err != nil {
-		return nil, b.logger.Propagate(err)
+		return nil, b.log.Propagate(err)
 	}
 
 	collectionId, err := strconv.ParseUint(stringCollectionId, 10, 64)
 	if err != nil {
-		return nil, b.logger.Propagate(errtype.NewFieldMustBeIntegerError("id"))
+		return nil, b.log.Propagate(errtype.NewFieldMustBeIntegerError("id"))
 	}
 
 	detailRequestDTO.CollectionID = collectionId

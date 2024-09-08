@@ -23,7 +23,7 @@ type AddAnimeController struct {
 }
 
 func NewAddAnimeController(
-	container diInterface.ServiceContainer,
+	container diInterface.AppContainer,
 ) (*AddAnimeController, error) {
 	log, err := container.GetLogger()
 	if err != nil {
