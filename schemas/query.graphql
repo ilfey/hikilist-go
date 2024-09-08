@@ -1,0 +1,4 @@
+type Query {
+    anime(id: ID!): Anime
+    page(page: Uint64, limit: Uint64): Page!
+}

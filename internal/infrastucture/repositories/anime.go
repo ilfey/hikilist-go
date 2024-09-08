@@ -68,13 +68,13 @@ func (r *Anime) Create(ctx context.Context, cm *dto.AnimeCreateRequestDTO) error
 	return nil
 }
 
-func (r *Anime) Get(ctx context.Context, conds any) (*agg.AnimeDetail, error) {
+func (r *Anime) Get(ctx context.Context, conds any) (*agg.Anime, error) {
 	sql, args, err := r.GetSQL(conds)
 	if err != nil {
 		return nil, r.log.Propagate(err)
 	}
 
-	var dm agg.AnimeDetail
+	var dm agg.Anime
 
 	err = pgxscan.Get(ctx, r.db, &dm, sql, args...)
 	if err != nil {
@@ -90,6 +90,45 @@ func (r *Anime) Get(ctx context.Context, conds any) (*agg.AnimeDetail, error) {
 	return &dm, nil
 }
 
+func (r *Anime) GetByID(ctx context.Context, id uint64) (*agg.Anime, error) {
+	sql, args, err := r.GetByIDSQL(id)
+	if err != nil {
+		return nil, r.log.Propagate(err)
+	}
+
+	var dm agg.Anime
+
+	err = pgxscan.Get(ctx, r.db, &dm, sql, args...)
+	if err != nil {
+		r.log.Error(err)
+
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrAnimeNotFoundById
+		}
+
+		return nil, ErrAnimeGetFailed
+	}
+
+	return &dm, nil
+}
+
+func (r *Anime) Find(ctx context.Context, req *dto.PaginationRequestDTO) ([]agg.Anime, error) {
+	sql, args, err := r.FindSQL(req)
+	if err != nil {
+		return nil, r.log.Propagate(err)
+	}
+
+	var list []agg.Anime
+
+	err = pgxscan.Select(ctx, r.db, &list, sql, args...)
+	if err != nil {
+		r.log.Error(err)
+
+		return nil, ErrAnimesFindFailed
+	}
+
+	return list, nil
+}
 func (r *Anime) FindWithPaginator(ctx context.Context, dto *dto.AnimeListRequestDTO, conds any) ([]*agg.AnimeListItem, error) {
 	sql, args, err := r.FindWithPaginatorSQL(dto, conds)
 	if err != nil {

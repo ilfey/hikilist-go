@@ -1,0 +1,12 @@
+type Anime {
+    id: ID!
+    title: String!
+    poster: String
+    description: String
+    episodes: Uint64
+    episodes_released: Uint64!
+    mal_id: Uint64
+    shiki_id: Uint64
+    created_at: Time!
+    updated_at: Time!
+}

@@ -22,6 +22,7 @@ import (
 	"github.com/ilfey/hikilist-go/internal/domain/validator"
 	validatorInterface "github.com/ilfey/hikilist-go/internal/domain/validator/interface"
 	"github.com/ilfey/hikilist-go/internal/infrastucture/api/controller"
+	"github.com/ilfey/hikilist-go/internal/infrastucture/api/controller/graph"
 	animeController "github.com/ilfey/hikilist-go/internal/infrastucture/api/controller/rest/anime"
 	authController "github.com/ilfey/hikilist-go/internal/infrastucture/api/controller/rest/auth"
 	collectionController "github.com/ilfey/hikilist-go/internal/infrastucture/api/controller/rest/collection"
@@ -95,6 +96,12 @@ func (a *App) Run(mWg *sync.WaitGroup) {
 
 	// ReqRes.
 	if err := a.InitReqRes(); err != nil {
+		log.Critical(err)
+		return
+	}
+
+	// Pagination.
+	if err := a.InitPagination(); err != nil {
 		log.Critical(err)
 		return
 	}
@@ -229,6 +236,13 @@ func (a *App) InitUnauthedControllers() ([]controller.Controller, error) {
 		return nil, log.Propagate(err)
 	}
 
+	// GraphQL.
+
+	gqlController, err := graph.NewGQLController(a.container)
+	if err != nil {
+		return nil, log.Propagate(err)
+	}
+
 	// Anime.
 
 	animeListController, err := animeController.NewListController(a.container)
@@ -288,6 +302,9 @@ func (a *App) InitUnauthedControllers() ([]controller.Controller, error) {
 	}
 
 	controllers := []controller.Controller{
+		// GraphQL.
+		gqlController,
+
 		// Anime.
 		animeListController,
 		animeDetailController,
@@ -449,6 +466,33 @@ func (a *App) InitReqRes() error {
 	return nil
 }
 
+/* ===== Paginatation ===== */
+
+func (a *App) InitPagination() error {
+	log, err := a.container.GetLogger()
+	if err != nil {
+		return err
+	}
+
+	// Builder.
+	builder, err := builder.NewPagination(a.container)
+	if err != nil {
+		return log.Propagate(err)
+	}
+
+	a.container.Set(builder, reflectTypeOfNil[builderInterface.Pagination]())
+
+	// Validator.
+	validator, err := validator.NewPagination(a.container)
+	if err != nil {
+		return log.Propagate(err)
+	}
+
+	a.container.Set(validator, reflectTypeOfNil[validatorInterface.Pagination]())
+
+	return nil
+}
+
 /* ===== Action ===== */
 
 func (a *App) InitAction() error {
@@ -505,8 +549,19 @@ func (a *App) InitAnime() error {
 
 	a.container.Set(repo, reflectTypeOfNil[repositoryInterface.Anime]())
 
+	// Validator.
+	valid, err := validator.NewAnime(a.container)
+	if err != nil {
+		return log.Propagate(err)
+	}
+
+	a.container.Set(valid, reflectTypeOfNil[validatorInterface.Anime]())
+
 	// Service.
-	service := anime.NewAnime(log, repo)
+	service, err := anime.NewAnime(a.container)
+	if err != nil {
+		return log.Propagate(err)
+	}
 
 	a.container.Set(service, reflectTypeOfNil[animeInterface.Anime]())
 
@@ -517,14 +572,6 @@ func (a *App) InitAnime() error {
 	}
 
 	a.container.Set(build, reflectTypeOfNil[builderInterface.Anime]())
-
-	// Validator.
-	valid, err := validator.NewAnime(a.container)
-	if err != nil {
-		return log.Propagate(err)
-	}
-
-	a.container.Set(valid, reflectTypeOfNil[validatorInterface.Anime]())
 
 	return nil
 }

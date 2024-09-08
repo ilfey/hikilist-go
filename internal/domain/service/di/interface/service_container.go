@@ -37,6 +37,9 @@ type ServiceContainer interface {
 
 	GetPostgresDatabase() (postgres.DB, error)
 
+	GetPaginationBuilder() (builderInterface.Pagination, error)
+	GetPaginationValidator() (validatorInterface.Pagination, error)
+
 	GetActionRepository() (repositoryInterface.Action, error)
 	GetActionService() (actionInterface.Action, error)
 	GetActionBuilder() (builderInterface.Action, error)

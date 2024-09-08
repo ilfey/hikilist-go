@@ -53,6 +53,47 @@ func (r *Anime) GetSQL(conds any) (string, []any, error) {
 		ToSql()
 }
 
+func (r *Anime) GetByIDSQL(id uint64) (string, []any, error) {
+	return squirrel.Select(
+		"id",
+		"title",
+		"description",
+		"poster",
+		"episodes",
+		"episodes_released",
+		"mal_id",
+		"shiki_id",
+		"created_at",
+		"updated_at",
+	).
+		From(AnimeTN).
+		Where(squirrel.Eq{
+			"id": id,
+		}).
+		Limit(1).
+		ToSql()
+}
+
+func (r *Anime) FindSQL(req *dto.PaginationRequestDTO) (string, []any, error) {
+	return squirrel.Select(
+		"id",
+		"title",
+		"description",
+		"poster",
+		"episodes",
+		"episodes_released",
+		"mal_id",
+		"shiki_id",
+		"created_at",
+		"updated_at",
+	).
+		From(AnimeTN).
+		OrderBy(req.Order.ToQuery()).
+		Offset((req.Page - 1) * req.Limit).
+		Limit(req.Limit).
+		ToSql()
+}
+
 func (r *Anime) FindWithPaginatorSQL(dto *dto.AnimeListRequestDTO, conds any) (string, []any, error) {
 	b := squirrel.Select(
 		"id",

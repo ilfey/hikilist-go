@@ -1,0 +1,74 @@
+
+exec:
+  filename: ./internal/infrastucture/api/controller/graph/exec/generated.go
+  package: exec
+
+schema: ./schemas/*.graphql
+
+omit_slice_element_pointers: true
+
+# Remove Query and Mutation from generated models
+omit_root_models: true
+
+# Remove resolver fields from generated models
+omit_resolver_fields: true
+
+# Use pointers
+struct_fields_always_pointers: true
+resolvers_always_return_pointers: true
+return_pointers_in_unmarshalinput: true
+
+# Disable adding omitempty to nullable fields
+nullable_input_omittable: false
+
+# Disable skip validation
+skip_validation: false
+
+# Skip running go mod tidy
+skip_mod_tidy: true
+
+autobind:
+  - "github.com/ilfey/hikilist-go/internal/domain/agg"
+
+model:
+  filename: ./internal/domain/agg/generated.go
+  package: agg
+
+resolver:
+  layout: follow-schema
+  dir: ./internal/infrastucture/api/controller/graph/resolvers
+  package: resolvers
+  filename_template: "{name}.resolvers.go"
+
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.Uint64
+      - github.com/99designs/gqlgen/graphql.Int32
+
+  Time:
+    model:
+      - github.com/99designs/gqlgen/graphql.Time
+
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+
+  Uint64:
+    model:
+      - github.com/99designs/gqlgen/graphql.Uint64
+
+  Order:
+    model:
+      - github.com/ilfey/hikilist-go/internal/domain/types.Order
+
+  Pagination:
+    model:
+      - github.com/ilfey/hikilist-go/internal/domain/dto.PaginationRequestDTO
+
+  Page:
+    fields:
+      animes:
+        resolver: true

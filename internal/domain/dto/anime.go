@@ -8,13 +8,13 @@ type AnimeCreateRequestDTO struct {
 	ID uint64 `json:"-"`
 
 	Title            string  `json:"title"`
-	Description      *string `json:"description"`
-	Poster           *string `json:"poster"`
-	Episodes         *uint64 `json:"episodes"`
+	Description      *string `json:"description,omitempty"`
+	Poster           *string `json:"poster,omitempty"`
+	Episodes         *uint64 `json:"episodes,omitempty"`
 	EpisodesReleased uint64  `json:"episodes_released"`
 
-	MalID   *uint64 `json:"mal_id"`
-	ShikiID *uint64 `json:"shiki_id"`
+	MalID   *uint64 `json:"mal_id,omitempty"`
+	ShikiID *uint64 `json:"shiki_id,omitempty"`
 }
 
 /* ===== Detail ===== */

@@ -1,0 +1,11 @@
+type Page {
+    info: PageInfo!
+
+    animes(
+        order: Order
+    ): [Anime!]
+}
+
+type PageInfo {
+    pagination: Pagination!
+}

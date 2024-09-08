@@ -14,13 +14,13 @@ import (
 	"strconv"
 )
 
-type AnimeBuilder struct {
+type Anime struct {
 	logger loggerInterface.Logger
 
 	extractor extractorInterface.RequestParams
 }
 
-func NewAnime(container diInterface.ServiceContainer) (*AnimeBuilder, error) {
+func NewAnime(container diInterface.ServiceContainer) (*Anime, error) {
 	log, err := container.GetLogger()
 	if err != nil {
 		return nil, err
@@ -31,13 +31,13 @@ func NewAnime(container diInterface.ServiceContainer) (*AnimeBuilder, error) {
 		return nil, log.Propagate(err)
 	}
 
-	return &AnimeBuilder{
+	return &Anime{
 		logger:    log,
 		extractor: extractor,
 	}, nil
 }
 
-func (b *AnimeBuilder) BuildCreateRequestDTOFromRequest(r *http.Request) (*dto.AnimeCreateRequestDTO, error) {
+func (b *Anime) BuildCreateRequestDTOFromRequest(r *http.Request) (*dto.AnimeCreateRequestDTO, error) {
 	dto := new(dto.AnimeCreateRequestDTO)
 
 	if err := json.NewDecoder(r.Body).Decode(dto); err != nil {
@@ -51,7 +51,7 @@ func (b *AnimeBuilder) BuildCreateRequestDTOFromRequest(r *http.Request) (*dto.A
 	return dto, nil
 }
 
-func (b *AnimeBuilder) BuildDetailRequestDTOFromRequest(r *http.Request) (*dto.AnimeDetailRequestDTO, error) {
+func (b *Anime) BuildDetailRequestDTOFromRequest(r *http.Request) (*dto.AnimeDetailRequestDTO, error) {
 	dto := new(dto.AnimeDetailRequestDTO)
 
 	stringId, err := b.extractor.GetParameter(r, "id")
@@ -71,7 +71,7 @@ func (b *AnimeBuilder) BuildDetailRequestDTOFromRequest(r *http.Request) (*dto.A
 	return dto, nil
 }
 
-func (b *AnimeBuilder) BuildListRequestDTOFromRequest(r *http.Request) (*dto.AnimeListRequestDTO, error) {
+func (b *Anime) BuildListRequestDTOFromRequest(r *http.Request) (*dto.AnimeListRequestDTO, error) {
 	var (
 		page  uint64
 		limit uint64

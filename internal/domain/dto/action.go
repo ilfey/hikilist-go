@@ -19,6 +19,24 @@ type ActionCreateRequestDTO struct {
 	CreatedAt time.Time `json:"-"`
 }
 
+/* ===== CreateUserRegister ===== */
+
+type ActionCreateUserRegisterRequestDTO struct {
+	UserID uint64 `json:"-"`
+}
+
+/* ===== CreateUserUpdate ===== */
+
+type ActionCreateUserUpdateRequestDTO struct {
+	UserID uint64 `json:"-"`
+}
+
+/* ===== CreateCollection ===== */
+
+type CreateCollection struct {
+	UserID uint64 `json:"-"`
+}
+
 func NewRegisterUserAction(userId uint64) *ActionCreateRequestDTO {
 	return &ActionCreateRequestDTO{
 		UserID:      userId,

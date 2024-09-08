@@ -152,6 +152,34 @@ func (s *ServiceContainer) GetPostgresDatabase() (postgres.DB, error) {
 	return database, nil
 }
 
+/* ===== Pagination ===== */
+
+func (s *ServiceContainer) GetPaginationBuilder() (builderInterface.Pagination, error) {
+	key := (*builderInterface.Pagination)(nil)
+	reflectService, err := s.Get(reflect.TypeOf(key))
+	if err != nil {
+		return nil, errtype.NewServiceWasNotFoundIntoContainerError(reflect.TypeOf(key))
+	}
+	service, ok := reflectService.Interface().(builderInterface.Pagination)
+	if !ok {
+		return nil, errtype.NewTypesMismatchedServiceContainerError(reflect.TypeOf(reflectService), reflect.TypeOf(key))
+	}
+	return service, nil
+}
+
+func (s *ServiceContainer) GetPaginationValidator() (validatorInterface.Pagination, error) {
+	key := (*validatorInterface.Pagination)(nil)
+	reflectService, err := s.Get(reflect.TypeOf(key))
+	if err != nil {
+		return nil, errtype.NewServiceWasNotFoundIntoContainerError(reflect.TypeOf(key))
+	}
+	service, ok := reflectService.Interface().(validatorInterface.Pagination)
+	if !ok {
+		return nil, errtype.NewTypesMismatchedServiceContainerError(reflect.TypeOf(reflectService), reflect.TypeOf(key))
+	}
+	return service, nil
+}
+
 /* ===== Action ===== */
 
 func (s *ServiceContainer) GetActionRepository() (repositoryInterface.Action, error) {
