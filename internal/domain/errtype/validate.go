@@ -13,6 +13,21 @@ const (
 	publicValidateStatus = http.StatusBadRequest
 )
 
+type BadRequestError struct{ publicError }
+
+func NewBadRequestError(message string) *BadRequestError {
+	return &BadRequestError{
+		publicError{
+			errored{
+				ErrorDetail: message,
+				ErrorType:   validateType,
+				errorLevel:  publicValidateLevel,
+				errorStatus: publicValidateStatus,
+			},
+		},
+	}
+}
+
 /* ===== FieldCannotBeEmptyError ===== */
 
 type FieldCannotBeEmptyError struct{ publicError }

@@ -9,5 +9,5 @@ type User interface {
 	BuildListRequestDTOFromRequest(r *http.Request) (*dto.UserListRequestDTO, error)
 	BuildDetailRequestDTOFromRequest(r *http.Request) (*dto.UserDetailRequestDTO, error)
 	BuildMeRequestDTOFromRequest(r *http.Request) (*dto.UserMeRequestDTO, error)
-	BuildCollectionRequestDTOFromRequest(r *http.Request) (*dto.UserCollectionsRequestDTO, error)
+	BuildCollectionListRequestDTOFromRequest(r *http.Request) (*dto.UserCollectionListRequestDTO, error)
 }

@@ -10,7 +10,9 @@ type Collection interface {
 	Create(ctx context.Context, cm *dto.CollectionCreateRequestDTO) error
 	Get(ctx context.Context, conds any) (*agg.CollectionDetail, error)
 	GetListDTO(ctx context.Context, dto *dto.CollectionListRequestDTO, conds any) (*agg.CollectionList, error)
-	Update(ctx context.Context, um *dto.CollectionUpdateRequestDTO) error
+	GetUserPublicCollectionListDTO(ctx context.Context, dto *dto.UserCollectionListRequestDTO) (*agg.CollectionList, error)
+	GetUserCollectionListDTO(ctx context.Context, dto *dto.UserCollectionListRequestDTO) (*agg.CollectionList, error)
+	Update(ctx context.Context, um *agg.CollectionDetail) error
 
 	// TODO: create Remove(ctx context.Context, dto *dto.CollectionRemoveRequestDTO) error
 	//Remove(ctx context.Context, dto *dto.CollectionRemoveRequestDTO) error

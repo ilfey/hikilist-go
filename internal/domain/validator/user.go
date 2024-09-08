@@ -107,7 +107,7 @@ func (v *User) ValidateMeRequestDTO(req *dto.UserMeRequestDTO) error {
 	return nil
 }
 
-func (v *User) ValidateCollectionRequestDTO(req *dto.UserCollectionsRequestDTO) error {
+func (v *User) ValidateCollectionListRequestDTO(req *dto.UserCollectionListRequestDTO) error {
 	expectations, ok := validator.Validate(
 		req,
 		map[string][]options.Option{

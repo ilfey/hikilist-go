@@ -9,6 +9,6 @@ type User interface {
 	ValidateListRequestDTO(req *dto.UserListRequestDTO) error
 	ValidateDetailRequestDTO(req *dto.UserDetailRequestDTO) error
 	ValidateMeRequestDTO(req *dto.UserMeRequestDTO) error
-	ValidateCollectionRequestDTO(req *dto.UserCollectionsRequestDTO) error
+	ValidateCollectionListRequestDTO(req *dto.UserCollectionListRequestDTO) error
 	//TODO: Add ValidateUpdateRequestDTO(req *dto.UserUpdateRequestDTO) error
 }

@@ -87,17 +87,23 @@ func (b *UserBuilder) BuildMeRequestDTOFromRequest(r *http.Request) (*dto.UserMe
 	}, nil
 }
 
-func (b *UserBuilder) BuildCollectionRequestDTOFromRequest(r *http.Request) (*dto.UserCollectionsRequestDTO, error) {
+func (b *UserBuilder) BuildCollectionListRequestDTOFromRequest(r *http.Request) (*dto.UserCollectionListRequestDTO, error) {
 	var (
 		userID uint64
 	)
+
+	pagination, err := b.pagination.BuildPaginationRequestDROFromRequest(r)
+	if err != nil {
+		return nil, b.log.Propagate(err)
+	}
 
 	if id, ok := r.Context().Value(enum.UserIDContextKey).(uint64); ok {
 		userID = id
 	}
 
-	return &dto.UserCollectionsRequestDTO{
-		UserID: userID,
+	return &dto.UserCollectionListRequestDTO{
+		UserID:               userID,
+		PaginationRequestDTO: pagination,
 	}, nil
 }
 

@@ -126,6 +126,42 @@ func (r *Collection) Find(ctx context.Context, dto *dto.CollectionListRequestDTO
 	return items, nil
 }
 
+func (r *Collection) FindUserPublicCollectionList(ctx context.Context, req *dto.UserCollectionListRequestDTO) ([]*agg.CollectionListItem, error) {
+	sql, args, err := r.FindUserPublicCollectionListSQL(req)
+	if err != nil {
+		return nil, r.log.Propagate(err)
+	}
+
+	var items []*agg.CollectionListItem
+
+	err = pgxscan.Select(ctx, r.db, &items, sql, args...)
+	if err != nil {
+		r.log.Error(err)
+
+		return nil, ErrCollectionsFindFailed
+	}
+
+	return items, nil
+}
+
+func (r *Collection) FindUserCollectionList(ctx context.Context, req *dto.UserCollectionListRequestDTO) ([]*agg.CollectionListItem, error) {
+	sql, args, err := r.FindUserCollectionListSQL(req)
+	if err != nil {
+		return nil, r.log.Propagate(err)
+	}
+
+	var items []*agg.CollectionListItem
+
+	err = pgxscan.Select(ctx, r.db, &items, sql, args...)
+	if err != nil {
+		r.log.Error(err)
+
+		return nil, ErrCollectionsFindFailed
+	}
+
+	return items, nil
+}
+
 func (r *Collection) Count(ctx context.Context, conds any) (uint64, error) {
 	sql, args, err := r.CountSQL(conds)
 	if err != nil {
@@ -144,7 +180,43 @@ func (r *Collection) Count(ctx context.Context, conds any) (uint64, error) {
 	return count, nil
 }
 
-func (r *Collection) Update(ctx context.Context, um *dto.CollectionUpdateRequestDTO) error {
+func (r *Collection) CountUserPublicCollection(ctx context.Context, req *dto.UserCollectionListRequestDTO) (uint64, error) {
+	sql, args, err := r.CountUserPublicCollectionSQL(req)
+	if err != nil {
+		return 0, r.log.Propagate(err)
+	}
+
+	var count uint64
+
+	err = r.db.QueryRow(ctx, sql, args...).Scan(&count)
+	if err != nil {
+		r.log.Error(err)
+
+		return 0, ErrCollectionsCountFailed
+	}
+
+	return count, nil
+}
+
+func (r *Collection) CountUserCollection(ctx context.Context, req *dto.UserCollectionListRequestDTO) (uint64, error) {
+	sql, args, err := r.CountUserCollectionSQL(req)
+	if err != nil {
+		return 0, r.log.Propagate(err)
+	}
+
+	var count uint64
+
+	err = r.db.QueryRow(ctx, sql, args...).Scan(&count)
+	if err != nil {
+		r.log.Error(err)
+
+		return 0, ErrCollectionsCountFailed
+	}
+
+	return count, nil
+}
+
+func (r *Collection) Update(ctx context.Context, um *agg.CollectionDetail) error {
 	sql, args, err := r.UpdateSQL(um)
 	if err != nil {
 		return r.log.Propagate(err)

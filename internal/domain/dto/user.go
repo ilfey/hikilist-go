@@ -1,9 +1,11 @@
 package dto
 
-/* ===== Collection ===== */
+/* ===== CollectionList ===== */
 
-type UserCollectionsRequestDTO struct {
+type UserCollectionListRequestDTO struct {
 	UserID uint64 `json:"-"`
+
+	*PaginationRequestDTO
 }
 
 /* ===== Create ===== */

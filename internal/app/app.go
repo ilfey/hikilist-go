@@ -207,6 +207,11 @@ func (a *App) InitAuthedControllers() ([]controller.Controller, error) {
 		return nil, log.Propagate(err)
 	}
 
+	collectionListController, err := userController.NewMeCollectionListController(a.container)
+	if err != nil {
+		return nil, log.Propagate(err)
+	}
+
 	return []controller.Controller{
 		// Auth.
 		logoutController,
@@ -221,6 +226,7 @@ func (a *App) InitAuthedControllers() ([]controller.Controller, error) {
 		// User.
 		meController,
 		actionListController,
+		collectionListController,
 	}, nil
 }
 
@@ -276,6 +282,11 @@ func (a *App) InitUnauthedControllers() ([]controller.Controller, error) {
 		return nil, log.Propagate(err)
 	}
 
+	userCollectionListController, err := userController.NewCollectionListController(a.container)
+	if err != nil {
+		return nil, log.Propagate(err)
+	}
+
 	// Collection.
 
 	listCollectionController, err := collectionController.NewListController(a.container)
@@ -306,6 +317,7 @@ func (a *App) InitUnauthedControllers() ([]controller.Controller, error) {
 		// Users.
 		userListController,
 		userDetailController,
+		userCollectionListController,
 
 		// Collection.
 		listCollectionController,

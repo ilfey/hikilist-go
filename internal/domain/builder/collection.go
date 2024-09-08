@@ -1,11 +1,14 @@
 package builder
 
 import (
+	"context"
 	"encoding/json"
+	"github.com/ilfey/hikilist-go/internal/domain/agg"
 	builderInterface "github.com/ilfey/hikilist-go/internal/domain/builder/interface"
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/enum"
 	"github.com/ilfey/hikilist-go/internal/domain/errtype"
+	collectionInterface "github.com/ilfey/hikilist-go/internal/domain/service/collection/interface"
 	diInterface "github.com/ilfey/hikilist-go/internal/domain/service/di/interface"
 	extractorInterface "github.com/ilfey/hikilist-go/internal/domain/service/extractor/interface"
 	loggerInterface "github.com/ilfey/hikilist-go/pkg/logger/interface"
@@ -18,6 +21,7 @@ import (
 type CollectionBuilder struct {
 	log        loggerInterface.Logger
 	extractor  extractorInterface.RequestParams
+	service    collectionInterface.Collection
 	pagination builderInterface.Pagination
 }
 
@@ -37,9 +41,15 @@ func NewCollection(container diInterface.AppContainer) (*CollectionBuilder, erro
 		return nil, log.Propagate(err)
 	}
 
+	service, err := container.GetCollectionService()
+	if err != nil {
+		return nil, log.Propagate(err)
+	}
+
 	return &CollectionBuilder{
 		log:        log,
 		extractor:  extractor,
+		service:    service,
 		pagination: pagination,
 	}, nil
 }
@@ -215,4 +225,40 @@ func (b *CollectionBuilder) BuildDetailRequestDTOFromRequest(r *http.Request) (*
 	}
 
 	return detailRequestDTO, nil
+}
+
+func (b *CollectionBuilder) BuildAggFromUpdateRequestDTO(ctx context.Context, req *dto.CollectionUpdateRequestDTO) (*agg.CollectionDetail, error) {
+	var changes int
+
+	stored, err := b.service.Get(ctx, map[string]any{
+		"id": req.CollectionID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if stored.UserID != req.UserID {
+		return nil, b.log.Propagate(errtype.NewAuthFailedError("you are not the creator of this collection"))
+	}
+
+	if req.Title != nil && *req.Title != stored.Title {
+		stored.Title = *req.Title
+		changes++
+	}
+
+	if req.Description != nil && (stored.Description == nil || *req.Description != *stored.Description) {
+		stored.Description = req.Description
+		changes++
+	}
+
+	if req.IsPublic != nil && *req.IsPublic != stored.IsPublic {
+		stored.IsPublic = *req.IsPublic
+		changes++
+	}
+
+	if changes == 0 {
+		return nil, b.log.Propagate(errtype.NewBadRequestError("nothing to update"))
+	}
+
+	return stored, nil
 }

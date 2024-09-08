@@ -1,4 +1,4 @@
-package collection
+package user
 
 import (
 	"github.com/gorilla/mux"
@@ -11,20 +11,20 @@ import (
 	"net/http"
 )
 
-const UpdateControllerPath = "/collections/{id:[0-9]+}"
+const CollectionListControllerPath = "/users/{id:[0-9]+}/collections"
 
-type UpdateController struct {
+type CollectionListController struct {
 	logger    loggerInterface.Logger
 	responder responderInterface.Responder
 
-	builder    builderInterface.Collection
-	validator  validatorInterface.Collection
+	builder    builderInterface.User
+	validator  validatorInterface.User
 	collection collectionInterface.Collection
 }
 
-func NewUpdateController(
+func NewCollectionListController(
 	container diInterface.AppContainer,
-) (*UpdateController, error) {
+) (*CollectionListController, error) {
 	log, err := container.GetLogger()
 	if err != nil {
 		return nil, err
@@ -40,66 +40,54 @@ func NewUpdateController(
 		return nil, log.Propagate(err)
 	}
 
-	collectionBuilder, err := container.GetCollectionBuilder()
+	userBuilder, err := container.GetUserBuilder()
 	if err != nil {
 		return nil, log.Propagate(err)
 	}
 
-	collectionValidator, err := container.GetCollectionValidator()
+	userValidator, err := container.GetUserValidator()
 	if err != nil {
 		return nil, log.Propagate(err)
 	}
 
-	return &UpdateController{
+	return &CollectionListController{
 		logger:    log,
 		responder: responder,
 
 		collection: collection,
-		builder:    collectionBuilder,
-		validator:  collectionValidator,
+		builder:    userBuilder,
+		validator:  userValidator,
 	}, nil
 }
 
-func (c *UpdateController) GetUpdate(w http.ResponseWriter, r *http.Request) {
+func (c *CollectionListController) CollectionList(w http.ResponseWriter, r *http.Request) {
 	// Build dto.
-	updateRequestDTO, err := c.builder.BuildUpdateRequestDTOFromRequest(r)
+	listRequestDTO, err := c.builder.BuildCollectionListRequestDTOFromRequest(r)
 	if err != nil {
 		c.responder.Respond(w, c.logger.Propagate(err))
-
 		return
 	}
 
 	// Validate dto.
-	err = c.validator.ValidateUpdateRequestDTO(updateRequestDTO)
-	if err != nil {
-		c.responder.Respond(w, c.logger.Propagate(err))
-
-		return
-	}
-
-	// Build agg from dto.
-	agg, err := c.builder.BuildAggFromUpdateRequestDTO(r.Context(), updateRequestDTO)
+	err = c.validator.ValidateCollectionListRequestDTO(listRequestDTO)
 	if err != nil {
 		c.responder.Respond(w, c.logger.Propagate(err))
 		return
 	}
 
-	// Update collection.
-	err = c.collection.Update(r.Context(), agg)
+	// Detail listDTO.
+	listDTO, err := c.collection.GetUserPublicCollectionListDTO(r.Context(), listRequestDTO)
 	if err != nil {
 		c.responder.Respond(w, c.logger.Propagate(err))
-
 		return
 	}
 
-	c.responder.Respond(w, map[string]any{
-		"detail": "ok",
-	})
+	c.responder.Respond(w, listDTO)
 }
 
-func (c *UpdateController) AddRoute(router *mux.Router) {
+func (c *CollectionListController) AddRoute(router *mux.Router) {
 	router.
-		Path(UpdateControllerPath).
-		HandlerFunc(c.GetUpdate).
-		Methods(http.MethodPatch)
+		Path(CollectionListControllerPath).
+		HandlerFunc(c.CollectionList).
+		Methods(http.MethodGet)
 }

@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"github.com/Masterminds/squirrel"
+	"github.com/ilfey/hikilist-go/internal/domain/agg"
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 )
 
@@ -57,6 +58,41 @@ func (r *Collection) FindSQL(dto *dto.CollectionListRequestDTO, conds any) (stri
 	}
 
 	return b.
+		OrderBy(dto.Order.ToQuery()).
+		Offset((dto.Page - 1) * dto.Limit).
+		Limit(dto.Limit).
+		ToSql()
+}
+
+func (r *Collection) FindUserPublicCollectionListSQL(dto *dto.UserCollectionListRequestDTO) (string, []any, error) {
+	return squirrel.Select(
+		"id",
+		"user_id",
+		"title",
+		"description",
+	).
+		From(CollectionTN).
+		Where(squirrel.Eq{
+			"is_public": true,
+			"user_id":   dto.UserID,
+		}).
+		OrderBy("id DESC").
+		Offset((dto.Page - 1) * dto.Limit).
+		Limit(dto.Limit).
+		ToSql()
+}
+
+func (r *Collection) FindUserCollectionListSQL(dto *dto.UserCollectionListRequestDTO) (string, []any, error) {
+	return squirrel.Select(
+		"id",
+		"user_id",
+		"title",
+		"description",
+	).
+		From(CollectionTN).
+		Where(squirrel.Eq{
+			"user_id": dto.UserID,
+		}).
 		OrderBy("id DESC").
 		Offset((dto.Page - 1) * dto.Limit).
 		Limit(dto.Limit).
@@ -74,11 +110,32 @@ func (r *Collection) CountSQL(conds any) (string, []any, error) {
 	return b.ToSql()
 }
 
-func (r *Collection) UpdateSQL(um *dto.CollectionUpdateRequestDTO) (string, []any, error) {
-	return squirrel.Update(CollectionTN).
-		SetMap(updateModelToMap(um)).
+func (r *Collection) CountUserPublicCollectionSQL(req *dto.UserCollectionListRequestDTO) (string, []any, error) {
+	return squirrel.Select("COUNT(*)").
+		From(CollectionTN).
 		Where(squirrel.Eq{
-			"id":      um.CollectionID,
+			"is_public": true,
+			"user_id":   req.UserID,
+		}).
+		ToSql()
+}
+
+func (r *Collection) CountUserCollectionSQL(req *dto.UserCollectionListRequestDTO) (string, []any, error) {
+	return squirrel.Select("COUNT(*)").
+		From(CollectionTN).
+		Where(squirrel.Eq{
+			"user_id": req.UserID,
+		}).
+		ToSql()
+}
+
+func (r *Collection) UpdateSQL(um *agg.CollectionDetail) (string, []any, error) {
+	return squirrel.Update(CollectionTN).
+		Set("title", um.Title).
+		Set("description", um.Description).
+		Set("is_public", um.IsPublic).
+		Where(squirrel.Eq{
+			"id":      um.ID,
 			"user_id": um.UserID,
 		}).
 		ToSql()
