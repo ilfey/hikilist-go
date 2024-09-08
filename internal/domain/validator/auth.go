@@ -13,7 +13,7 @@ type Auth struct {
 	log loggerInterface.Logger
 }
 
-func NewAuth(container diInterface.ServiceContainer) (*Auth, error) {
+func NewAuth(container diInterface.AppContainer) (*Auth, error) {
 	log, err := container.GetLogger()
 	if err != nil {
 		return nil, err

@@ -27,7 +27,7 @@ type Token struct {
 	db  postgres.RW
 }
 
-func NewToken(container diInterface.ServiceContainer) (*Token, error) {
+func NewToken(container diInterface.AppContainer) (*Token, error) {
 	log, err := container.GetLogger()
 	if err != nil {
 		return nil, err

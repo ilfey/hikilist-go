@@ -23,7 +23,7 @@ type RemoveAnimeController struct {
 }
 
 func NewRemoveAnimeController(
-	container diInterface.ServiceContainer,
+	container diInterface.AppContainer,
 ) (*RemoveAnimeController, error) {
 	log, err := container.GetLogger()
 	if err != nil {

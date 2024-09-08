@@ -23,7 +23,7 @@ type LoginController struct {
 }
 
 func NewLoginController(
-	container diInterface.ServiceContainer,
+	container diInterface.AppContainer,
 ) (*LoginController, error) {
 	log, err := container.GetLogger()
 	if err != nil {

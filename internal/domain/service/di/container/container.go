@@ -1,7 +1,7 @@
 package container
 
 import (
-	diInterface "github.com/ilfey/hikilist-go/internal/infrastucture/di/container/interface"
+	"github.com/ilfey/hikilist-go/internal/domain/service/di/container/interface"
 	"github.com/pkg/errors"
 	"reflect"
 )
@@ -26,7 +26,7 @@ func NewServiceContainer(services ...any) *Container {
 	return s
 }
 
-func (s *Container) Set(service any, alias reflect.Type) (self diInterface.Container) {
+func (s *Container) Set(service any, alias reflect.Type) (self containerInterface.Container) {
 	if alias == nil || alias == reflect.TypeOf(nil) {
 		alias = reflect.TypeOf(service)
 	}

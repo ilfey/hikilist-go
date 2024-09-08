@@ -1,6 +1,7 @@
 package builder
 
 import (
+	builderInterface "github.com/ilfey/hikilist-go/internal/domain/builder/interface"
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/enum"
 	"github.com/ilfey/hikilist-go/internal/domain/errtype"
@@ -12,11 +13,12 @@ import (
 )
 
 type UserBuilder struct {
-	logger    loggerInterface.Logger
-	extractor extractorInterface.RequestParams
+	log        loggerInterface.Logger
+	extractor  extractorInterface.RequestParams
+	pagination builderInterface.Pagination
 }
 
-func NewUser(container diInterface.ServiceContainer) (*UserBuilder, error) {
+func NewUser(container diInterface.AppContainer) (*UserBuilder, error) {
 	log, err := container.GetLogger()
 	if err != nil {
 		return nil, err
@@ -27,9 +29,15 @@ func NewUser(container diInterface.ServiceContainer) (*UserBuilder, error) {
 		return nil, log.Propagate(err)
 	}
 
+	pagination, err := container.GetPaginationBuilder()
+	if err != nil {
+		return nil, log.Propagate(err)
+	}
+
 	return &UserBuilder{
-		logger:    log,
-		extractor: extractor,
+		log:        log,
+		extractor:  extractor,
+		pagination: pagination,
 	}, nil
 }
 
@@ -38,10 +46,10 @@ func NewUser(container diInterface.ServiceContainer) (*UserBuilder, error) {
 //
 //	if err := json.NewDecoder(r.Body).Decode(createRequest); err != nil {
 //		if errors.Is(err, io.EOF) {
-//			return nil, b.logger.Propagate(errtype.NewBodyIsEmptyError())
+//			return nil, b.log.Propagate(errtype.NewBodyIsEmptyError())
 //		}
 //
-//		return nil, b.logger.Propagate(err)
+//		return nil, b.log.Propagate(err)
 //	}
 //
 //	return createRequest, nil
@@ -55,7 +63,7 @@ func (b *UserBuilder) BuildDetailRequestDTOFromRequest(r *http.Request) (*dto.Us
 
 	id, err := strconv.ParseUint(stringId, 10, 64)
 	if err != nil {
-		b.logger.Error(err)
+		b.log.Error(err)
 
 		return nil, errtype.NewFieldMustBeIntegerError("id")
 	}
@@ -94,46 +102,12 @@ func (b *UserBuilder) BuildCollectionRequestDTOFromRequest(r *http.Request) (*dt
 }
 
 func (b *UserBuilder) BuildListRequestDTOFromRequest(r *http.Request) (*dto.UserListRequestDTO, error) {
-	var (
-		page  uint64
-		limit uint64
-		//order types.Order
-	)
-
-	stringPage, err := b.extractor.GetParameter(r, "page")
+	pagination, err := b.pagination.BuildPaginationRequestDROFromRequest(r)
 	if err != nil {
-		page = 1
-	} else {
-		page, err = strconv.ParseUint(stringPage, 10, 64)
-		if err != nil {
-			b.logger.Error(err)
-
-			return nil, errtype.NewFieldMustBeIntegerError("page")
-		}
+		return nil, b.log.Propagate(err)
 	}
-
-	stringLimit, err := b.extractor.GetParameter(r, "limit")
-	if err != nil {
-		limit = 10
-	} else {
-		limit, err = strconv.ParseUint(stringLimit, 10, 64)
-		if err != nil {
-			b.logger.Error(err)
-
-			return nil, errtype.NewFieldMustBeIntegerError("limit")
-		}
-	}
-
-	//stringOrder, err := b.extractor.GetParameter(r, "order")
-	//if err != nil {
-	//	order = "-id"
-	//} else {
-	//	order = types.Order(stringOrder)
-	//}
 
 	return &dto.UserListRequestDTO{
-		Page:  page,
-		Limit: limit,
-		//Order: order,
+		PaginationRequestDTO: pagination,
 	}, nil
 }

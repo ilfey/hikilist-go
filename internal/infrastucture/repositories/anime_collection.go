@@ -21,7 +21,7 @@ type AnimeCollection struct {
 	db  postgres.RW
 }
 
-func NewAnimeCollection(container diInterface.ServiceContainer) (*AnimeCollection, error) {
+func NewAnimeCollection(container diInterface.AppContainer) (*AnimeCollection, error) {
 	log, err := container.GetLogger()
 	if err != nil {
 		return nil, err

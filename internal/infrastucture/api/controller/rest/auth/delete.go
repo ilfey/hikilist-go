@@ -23,7 +23,7 @@ type DeleteController struct {
 }
 
 func NewDeleteController(
-	container diInterface.ServiceContainer,
+	container diInterface.AppContainer,
 ) (*DeleteController, error) {
 	log, err := container.GetLogger()
 	if err != nil {

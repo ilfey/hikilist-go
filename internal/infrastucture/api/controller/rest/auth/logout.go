@@ -23,7 +23,7 @@ type LogoutController struct {
 }
 
 func NewLogoutController(
-	container diInterface.ServiceContainer,
+	container diInterface.AppContainer,
 ) (*LogoutController, error) {
 	log, err := container.GetLogger()
 	if err != nil {

@@ -2,7 +2,6 @@ package dto
 
 import (
 	"fmt"
-	"github.com/ilfey/hikilist-go/internal/domain/types"
 	"time"
 )
 
@@ -50,9 +49,7 @@ func NewUpdateUsernameAction(userId uint64, oldUsername, newUsername string) *Ac
 /* ===== List ===== */
 
 type ActionListRequestDTO struct {
-	UserID uint64 `json:"user_id"`
+	UserID uint64 `json:"-"`
 
-	Page  uint64      `json:"page"`
-	Limit uint64      `json:"limit"`
-	Order types.Order `json:"order"`
+	*PaginationRequestDTO `json:"-"`
 }

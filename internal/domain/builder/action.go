@@ -1,23 +1,22 @@
 package builder
 
 import (
+	builderInterface "github.com/ilfey/hikilist-go/internal/domain/builder/interface"
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/enum"
-	"github.com/ilfey/hikilist-go/internal/domain/errtype"
 	diInterface "github.com/ilfey/hikilist-go/internal/domain/service/di/interface"
 	extractorInterface "github.com/ilfey/hikilist-go/internal/domain/service/extractor/interface"
-	"github.com/ilfey/hikilist-go/internal/domain/types"
 	loggerInterface "github.com/ilfey/hikilist-go/pkg/logger/interface"
 	"net/http"
-	"strconv"
 )
 
 type ActionBuilder struct {
-	logger    loggerInterface.Logger
-	extractor extractorInterface.RequestParams
+	log        loggerInterface.Logger
+	extractor  extractorInterface.RequestParams
+	pagination builderInterface.Pagination
 }
 
-func NewAction(container diInterface.ServiceContainer) (*ActionBuilder, error) {
+func NewAction(container diInterface.AppContainer) (*ActionBuilder, error) {
 	log, err := container.GetLogger()
 	if err != nil {
 		return nil, err
@@ -28,49 +27,26 @@ func NewAction(container diInterface.ServiceContainer) (*ActionBuilder, error) {
 		return nil, log.Propagate(err)
 	}
 
+	pagination, err := container.GetPaginationBuilder()
+	if err != nil {
+		return nil, log.Propagate(err)
+	}
+
 	return &ActionBuilder{
-		logger:    log,
-		extractor: extractor,
+		log:        log,
+		extractor:  extractor,
+		pagination: pagination,
 	}, nil
 }
 
 func (b *ActionBuilder) BuildListRequestDTOFromRequest(r *http.Request) (*dto.ActionListRequestDTO, error) {
 	var (
 		userID uint64
-		page   uint64
-		limit  uint64
-		order  types.Order
 	)
 
-	stringPage, err := b.extractor.GetParameter(r, "page")
+	pagination, err := b.pagination.BuildPaginationRequestDROFromRequest(r)
 	if err != nil {
-		page = 1
-	} else {
-		page, err = strconv.ParseUint(stringPage, 10, 64)
-		if err != nil {
-			b.logger.Error(err)
-
-			return nil, errtype.NewFieldMustBeIntegerError("page")
-		}
-	}
-
-	stringLimit, err := b.extractor.GetParameter(r, "limit")
-	if err != nil {
-		limit = 10
-	} else {
-		limit, err = strconv.ParseUint(stringLimit, 10, 64)
-		if err != nil {
-			b.logger.Error(err)
-
-			return nil, errtype.NewFieldMustBeIntegerError("limit")
-		}
-	}
-
-	stringOrder, err := b.extractor.GetParameter(r, "order")
-	if err != nil {
-		order = "-id"
-	} else {
-		order = types.Order(stringOrder)
+		return nil, b.log.Propagate(err)
 	}
 
 	if id, ok := r.Context().Value(enum.UserIDContextKey).(uint64); ok {
@@ -78,9 +54,7 @@ func (b *ActionBuilder) BuildListRequestDTOFromRequest(r *http.Request) (*dto.Ac
 	}
 
 	return &dto.ActionListRequestDTO{
-		UserID: userID,
-		Page:   page,
-		Limit:  limit,
-		Order:  order,
+		UserID:               userID,
+		PaginationRequestDTO: pagination,
 	}, nil
 }

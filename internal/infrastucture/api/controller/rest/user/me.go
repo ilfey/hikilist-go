@@ -24,7 +24,7 @@ type MeController struct {
 }
 
 func NewMeController(
-	container diInterface.ServiceContainer,
+	container diInterface.AppContainer,
 ) (*MeController, error) {
 	log, err := container.GetLogger()
 	if err != nil {

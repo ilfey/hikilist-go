@@ -23,7 +23,7 @@ type ListController struct {
 }
 
 func NewListController(
-	container diInterface.ServiceContainer,
+	container diInterface.AppContainer,
 ) (*ListController, error) {
 	log, err := container.GetLogger()
 	if err != nil {

@@ -13,7 +13,7 @@ type Collection struct {
 	log loggerInterface.Logger
 }
 
-func NewCollection(container diInterface.ServiceContainer) (*Collection, error) {
+func NewCollection(container diInterface.AppContainer) (*Collection, error) {
 	log, err := container.GetLogger()
 	if err != nil {
 		return nil, err

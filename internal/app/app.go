@@ -47,12 +47,12 @@ import (
 
 type App struct {
 	config    *config.AppConfig
-	container diInterface.ServiceContainer
+	container diInterface.AppContainer
 }
 
 func NewApp(
 	config *config.AppConfig,
-	container diInterface.ServiceContainer,
+	container diInterface.AppContainer,
 ) *App {
 	return &App{
 		config:    config,
@@ -99,6 +99,12 @@ func (a *App) Run(mWg *sync.WaitGroup) {
 		return
 	}
 
+	// Pagination.
+	if err := a.InitPagination(); err != nil {
+		log.Critical(err)
+		return
+	}
+
 	// Action.
 	if err := a.InitAction(); err != nil {
 		log.Critical(err)
@@ -123,7 +129,7 @@ func (a *App) Run(mWg *sync.WaitGroup) {
 		return
 	}
 
-	// CRUDService.
+	// User.
 	if err := a.InitUser(); err != nil {
 		log.Critical(err)
 		return
@@ -445,6 +451,25 @@ func (a *App) InitReqRes() error {
 	resp := responder.NewResponder(log)
 
 	a.container.Set(resp, reflectTypeOfNil[responderInterface.Responder]())
+
+	return nil
+}
+
+/* ===== Pagination ===== */
+
+func (a *App) InitPagination() error {
+	log, err := a.container.GetLogger()
+	if err != nil {
+		return err
+	}
+
+	// Builder.
+	builder, err := builder.NewPagination(a.container)
+	if err != nil {
+		return log.Propagate(err)
+	}
+
+	a.container.Set(builder, reflectTypeOfNil[builderInterface.Pagination]())
 
 	return nil
 }

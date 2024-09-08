@@ -13,7 +13,7 @@ type User struct {
 	log loggerInterface.Logger
 }
 
-func NewUser(container diInterface.ServiceContainer) (*User, error) {
+func NewUser(container diInterface.AppContainer) (*User, error) {
 	log, err := container.GetLogger()
 	if err != nil {
 		return nil, err

@@ -23,7 +23,7 @@ type UpdateController struct {
 }
 
 func NewUpdateController(
-	container diInterface.ServiceContainer,
+	container diInterface.AppContainer,
 ) (*UpdateController, error) {
 	log, err := container.GetLogger()
 	if err != nil {

@@ -43,7 +43,7 @@ type Router interface {
 }
 
 func NewServer(
-	container diInterface.ServiceContainer,
+	container diInterface.AppContainer,
 
 	authedControllers []controller.Controller,
 	unauthedControllers []controller.Controller,

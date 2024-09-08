@@ -23,7 +23,7 @@ type AnimeListController struct {
 }
 
 func NewAnimeListController(
-	container diInterface.ServiceContainer,
+	container diInterface.AppContainer,
 ) (*AnimeListController, error) {
 	log, err := container.GetLogger()
 	if err != nil {
