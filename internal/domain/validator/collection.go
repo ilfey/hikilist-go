@@ -131,7 +131,7 @@ func (v *Collection) ValidateCreateRequestDTO(dto *dto.CollectionCreateRequestDT
 
 func (v *Collection) ValidateListRequestDTO(dto *dto.CollectionListRequestDTO) error {
 	expectations, ok := validator.Validate(
-		dto,
+		dto.PaginationRequestDTO,
 		map[string][]options.Option{
 			"Page": {
 				options.GreaterThan[uint64](0),

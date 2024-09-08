@@ -79,7 +79,7 @@ func (v *Anime) ValidateDetailRequestDTO(dto *dto.AnimeDetailRequestDTO) error {
 
 func (v *Anime) ValidateListRequestDTO(dto *dto.AnimeListRequestDTO) error {
 	expectations, ok := validator.Validate(
-		dto,
+		dto.PaginationRequestDTO,
 		map[string][]options.Option{
 			"Page": {
 				options.GreaterThan[uint64](0),

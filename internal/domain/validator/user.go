@@ -49,7 +49,7 @@ func (v *User) ValidateCreateRequestDTO(req *dto.UserCreateRequestDTO) error {
 
 func (v *User) ValidateListRequestDTO(req *dto.UserListRequestDTO) error {
 	expectations, ok := validator.Validate(
-		req,
+		req.PaginationRequestDTO,
 		map[string][]options.Option{
 			"Page": {
 				options.GreaterThan[uint64](0),

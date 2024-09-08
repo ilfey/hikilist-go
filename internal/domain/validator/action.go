@@ -26,7 +26,7 @@ func NewAction(container diInterface.AppContainer) (*Action, error) {
 
 func (v *Action) ValidateListRequestDTO(dto *dto.ActionListRequestDTO) error {
 	expectations, ok := validator.Validate(
-		dto,
+		dto.PaginationRequestDTO,
 		map[string][]options.Option{
 			"Page": {
 				options.GreaterThan[uint64](0),
