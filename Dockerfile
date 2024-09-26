@@ -1,8 +1,14 @@
 FROM golang:1.23.1 as builder
 
+ARG GITHUB_USERNAME
+ARG GITHUB_TOKEN
+
 ENV CGO_ENABLED=0 \
     GOOS=linux \
-    GOARCH=amd64
+    GOARCH=amd64 \
+    GOPRIVATE=github.com/ilfey/hikilist-database
+
+RUN git config --global url."https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
 
 WORKDIR /usr/src/hlb
 
