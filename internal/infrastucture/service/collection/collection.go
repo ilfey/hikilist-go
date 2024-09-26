@@ -2,7 +2,7 @@ package collection
 
 import (
 	"context"
-	"github.com/ilfey/hikilist-go/internal/domain/agg"
+	"github.com/ilfey/hikilist-database/agg"
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	repositoryInterface "github.com/ilfey/hikilist-go/internal/domain/repository/interface"
 	"github.com/ilfey/hikilist-go/internal/domain/service/collection/interface"

@@ -22,11 +22,6 @@ tasks:
     desc: Run the api
     cmds:
       - go run -v ./cmd/api
-  
-  run-parser:
-    desc: Run the parser
-    cmds:
-      - go run -v ./cmd/parser
 
   test:
     desc: Run tests
@@ -51,11 +46,6 @@ tasks:
     desc: Build the api
     cmds:
       - go build -v -o {{.BIN}}/api ./cmd/api
-  
-  build-parser:
-    desc: Build the parser
-    cmds:
-      - go build -v -o {{.BIN}}/parser ./cmd/parser
   
   create-migration:
     desc: Create a new migration

@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"github.com/ilfey/hikilist-go/internal/domain/agg"
+	"github.com/ilfey/hikilist-database/agg"
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/enum"
 	"github.com/ilfey/hikilist-go/internal/domain/errtype"

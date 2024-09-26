@@ -3,8 +3,8 @@ package tokenizer
 import (
 	"context"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/ilfey/hikilist-database/agg"
 	"github.com/ilfey/hikilist-go/internal/config/tokenizer"
-	"github.com/ilfey/hikilist-go/internal/domain/agg"
 	"github.com/ilfey/hikilist-go/internal/domain/errtype"
 	repositoryInterface "github.com/ilfey/hikilist-go/internal/domain/repository/interface"
 	loggerInterface "github.com/ilfey/hikilist-go/pkg/logger/interface"

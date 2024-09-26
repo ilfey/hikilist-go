@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"github.com/ilfey/hikilist-go/internal/domain/agg"
+	"github.com/ilfey/hikilist-database/agg"
 	"testing"
 
 	"github.com/ilfey/hikilist-go/internal/infrastucture/repositories"

@@ -3,7 +3,7 @@ package repositories
 import (
 	"context"
 	"github.com/georgysavva/scany/v2/pgxscan"
-	"github.com/ilfey/hikilist-go/internal/domain/agg"
+	"github.com/ilfey/hikilist-database/agg"
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/errtype"
 	repositoryInterface "github.com/ilfey/hikilist-go/internal/domain/repository/interface"

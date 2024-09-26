@@ -3,7 +3,7 @@ package builder
 import (
 	"context"
 	"encoding/json"
-	"github.com/ilfey/hikilist-go/internal/domain/agg"
+	"github.com/ilfey/hikilist-database/agg"
 	builderInterface "github.com/ilfey/hikilist-go/internal/domain/builder/interface"
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 	"github.com/ilfey/hikilist-go/internal/domain/enum"

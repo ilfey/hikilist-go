@@ -7,6 +7,7 @@ require (
 	github.com/georgysavva/scany/v2 v2.1.3
 	github.com/golang-jwt/jwt/v5 v5.0.0
 	github.com/gorilla/mux v1.8.1
+	github.com/ilfey/hikilist-database v0.0.0-20240925223036-edb11ff7fbac
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/pkg/errors v0.9.1

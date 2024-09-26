@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"github.com/Masterminds/squirrel"
-	"github.com/ilfey/hikilist-go/internal/domain/agg"
+	"github.com/ilfey/hikilist-database/agg"
 	"github.com/ilfey/hikilist-go/internal/domain/dto"
 )
 

@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"context"
-	"github.com/ilfey/hikilist-go/internal/domain/agg"
+	"github.com/ilfey/hikilist-database/agg"
 	"github.com/ilfey/hikilist-go/internal/domain/errtype"
 	repositoryInterface "github.com/ilfey/hikilist-go/internal/domain/repository/interface"
 	diInterface "github.com/ilfey/hikilist-go/internal/domain/service/di/interface"
